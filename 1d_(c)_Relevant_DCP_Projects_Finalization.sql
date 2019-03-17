@@ -12,6 +12,10 @@ SOURCE FILES:
 ***************************************************************************************************************************************************************************************/
 /**************************************************************************************************************************************************************************************
 METHODOLOGY:
+1. Omit areawide, non-residential, and historical projects.
+2. Identify potential residential projects and confirm whether they are residential. Merge lookup back in.
+3. Assign consolidated total units value to each relevant project.
+4. Deduplicate projects with multiple submissions such as permit renewals.
 
 ***************************************************************************************************************************************************************************************/
 
