@@ -1,6 +1,6 @@
 /************************************************************************************************************************************************************************************
 AUTHOR: Mark Shapiro
-SCRIPT: Preparing HPD's HPD_2018_SCA_Inputs_geo_pts dataset for joining
+SCRIPT: Preparing HPD's data for In Construction projects, a subset of projected closings, and RFPs
 START DATE: 1/10/2019
 COMPLETION DATE: 1/10/2019
 Source file: "G:\03. Schools Planning\01_Inputs to SCA CP\Housing pipeline\00_Data\Jan 2019 SCA Housing Pipeline\Raw Data\HPD\hpd_2018_sca_inputs_geo_pts.csv"
