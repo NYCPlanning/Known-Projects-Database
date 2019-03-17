@@ -95,11 +95,15 @@ from
 	left join
 		capitalplanning.mappluto_v_18v1_1 b
 	on 
+		/*If project's BBL = a BBL in PLUTO*/
 		(a.bbl = concat(b.bbl) and a.bbl <> '') or 
 		(split_part(a.bbl,';',1) = concat(b.bbl) and split_part(a.bbl,';',1) <> '' and position(';' in a.bbl)>0) or 
 		(split_part(a.bbl,';',2) = concat(b.bbl) and split_part(a.bbl,';',2) <> '' and position(';' in a.bbl)>0) or 
-		(a.borough_code = b.borocode and a.block = b.block and a.lot ='' 			and a.borough_code is not null) or
-		(a.borough_code = b.borocode and a.block = b.block and a.lot =concat(b.lot) and a.borough_code is not null) 
+		(a.borough_code = b.borocode and a.block = b.block and a.lot =concat(b.lot) and a.borough_code is not null) or
+		
+		/*If a project encompasses an entire block, then join all polygons on that block from PLUTO*/
+		(a.borough_code = b.borocode and a.block = b.block and a.lot ='' and a.borough_code is not null)
+
 	),
 
 	/*******************************************
@@ -109,8 +113,8 @@ from
 	edc_2018_sca_input_3_limited as
 (
 	select
-		st_union(the_geom) as the_geom,
-		st_union(the_geom_webmercator) as the_geom_webmercator,
+		st_union(the_geom) 					as the_geom,
+		st_union(the_geom_webmercator) 				as the_geom_webmercator,
 		geom_source,
 		edc_project_id,
 		dcp_project_id,
@@ -138,7 +142,12 @@ from
 		edc_project_id
 )
 
-select * from edc_2018_sca_input_3_limited order by edc_project_id
+select
+	* 
+from 
+	edc_2018_sca_input_3_limited 
+order by 
+	edc_project_id
 
 ) as raw_merge
 
