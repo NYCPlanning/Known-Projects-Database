@@ -11,12 +11,19 @@ METHODOLOGY:
 1. Merge HPD Deduped file with HPD RFP projects
 2. Calculate incremental units
 ************************************************************************************************************************************************************************************/
+/**********************RUN IN CARTO BATCH***********************/
 
+select
+	*
+into
+	hpd_rfp_deduped
+from
+(
 with hpd_rfp_1 as
 (
 	select
 		a.the_geom,
-		a.project_id as RFP_ID,
+		a.project_id 			as RFP_ID,
 		a.project_name,
 		a.building_id,
 		a.primary_program_at_start,
@@ -25,9 +32,9 @@ with hpd_rfp_1 as
 		a.project_start_date,
 		a.projected_completion_date,
 		a.total_units,
-		b.unique_project_id 	as HPD_Project_ID,
+		b.unique_project_id 		as HPD_Project_ID,
 		b.total_units 			as HPD_Project_Total_Units,
-		b.hpd_incremental_units as HPD_Project_Incremental_Units
+		b.hpd_incremental_units 	as HPD_Project_Incremental_Units
 	from
 		capitalplanning.hpd_2018_sca_inputs_ms a
 	left join
@@ -46,10 +53,8 @@ with hpd_rfp_1 as
 
 	where
 		a.source = 'HPD RFPs'
-),
+)
 
-	hpd_rfp_deduped as
-(
 	select
 		the_geom,
 		RFP_ID,
@@ -61,8 +66,8 @@ with hpd_rfp_1 as
 		project_start_date,
 		projected_completion_date,
 		total_units,
-		array_to_string(array_agg(HPD_Project_ID),', ')  							as HPD_Project_IDs,
-		sum(HPD_Project_Incremental_Units) 											as HPD_Project_Incremental_Units,
+		array_to_string(array_agg(HPD_Project_ID),', ')  				as HPD_Project_IDs,
+		sum(HPD_Project_Incremental_Units) 						as HPD_Project_Incremental_Units,
 		greatest(0,total_units - sum(coalesce(HPD_Project_Incremental_Units,0)))	as Incremental_HPD_RFP_Units
 	from
 		hpd_rfp_1 a
@@ -79,9 +84,4 @@ with hpd_rfp_1 as
 		a.total_units
 	order by
 		cast(RFP_ID as integer)
-)
-
-
-select * from hpd_rfp_deduped
-
-
+) as HPD_RFP_Deduped
