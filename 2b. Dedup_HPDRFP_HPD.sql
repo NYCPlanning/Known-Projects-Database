@@ -88,7 +88,49 @@ order by
 	hpd_rfp_distance asc
 /*END OF LOOKUP CREATION*/
 
-			    
+/*Omitting inaccurate non-overlapping matches*/
+select
+			    *
+into
+			    HPD_Projects_DOB_EDC_HPDRFP_Match_2 
+from
+(
+	select
+		the_geom,
+		the_geom_webmercator,
+		unique_project_id,
+		hpd_project_id,
+		project_name,
+		building_id,
+		primary_program_at_start,
+		construction_type,
+		status,
+		project_start_date,
+		projected_completion_date,
+		total_units,
+		DOB_Match_Type,
+		dob_job_number,
+		DOB_Units_Net,
+		case when concat(unique_project_id,', ',hpd_rfp_id) 	in(select match_id from capitalplanning.lookup_proximity_hpd_hpdrfp_matches where match = 0) then null else hpd_rfp_id 				end as hpd_rfp_id,
+		case when concat(unique_project_id,', ',hpd_rfp_id) 	in(select match_id from capitalplanning.lookup_proximity_hpd_hpdrfp_matches where match = 0) then null else hpd_rfp_project_name 	end as hpd_rfp_project_name, 
+		case when concat(unique_project_id,', ',hpd_rfp_id) 	in(select match_id from capitalplanning.lookup_proximity_hpd_hpdrfp_matches where match = 0) then null else hpd_rfp_units 			end as hpd_rfp_units,
+		case when concat(unique_project_id,', ',hpd_rfp_id) 	in(select match_id from capitalplanning.lookup_proximity_hpd_hpdrfp_matches where match = 0) then null else HPD_RFP_Distance 		end as HPD_RFP_Distance,
+		case when concat(unique_project_id,', ',hpd_rfp_id) 	in(select match_id from capitalplanning.lookup_proximity_hpd_hpdrfp_matches where match = 0) then null else HPD_RFP_Match_Type 		end as HPD_RFP_Match_Type,
+  		case when concat(unique_project_id,', ',edc_project_id)	in(select match_id from capitalplanning.lookup_proximity_hpd_edc_matches 	where match = 0) then null else edc_project_id 			end as edc_project_id,
+  		case when concat(unique_project_id,', ',edc_project_id)	in(select match_id from capitalplanning.lookup_proximity_hpd_edc_matches 	where match = 0) then null else edc_project_units		end as edc_project_units,
+  		case when concat(unique_project_id,', ',edc_project_id)	in(select match_id from capitalplanning.lookup_proximity_hpd_edc_matches 	where match = 0) then null else edc_distance 			end as EDC_Distance, 
+  		case when concat(unique_project_id,', ',edc_project_id)	in(select match_id from capitalplanning.lookup_proximity_hpd_edc_matches 	where match = 0) then null else EDC_Match_Type 			end as EDC_Match_Type,
+		address,
+		borough,
+		latitude,
+		longitude,
+		bbl
+	from
+		HPD_Projects_DOB_EDC_HPDRFP_Match
+) as HPD_Projects_DOB_EDC_HPDRFP_Match_2
+
+
+/*Transposing matches from HPD_Projects_DOB_EDC_HPDRFP_Match_2 onto HPD RFP dataset*/
 select
 	*
 into
