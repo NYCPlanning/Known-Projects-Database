@@ -8,11 +8,87 @@ Sources:
 
 /************************************************************************************************************************************************************************************
 METHODOLOGY: 
-1. Merge HPD Deduped file with HPD RFP projects
-2. Calculate incremental units
+1. Match HPD RFP projects to HPD projects by BBL and spatially. Confirm proximity matches.
+2. Merge HPD Deduped file with HPD RFP projects
+3. Calculate incremental units
 ************************************************************************************************************************************************************************************/
 /**********************RUN IN CARTO BATCH***********************/
 
+select
+	*
+into
+	HPD_Projects_DOB_EDC_HPDRFP_Match 
+from
+(
+SELECT 
+		a.the_geom,
+		a.the_geom_webmercator,
+		a.unique_project_id,
+		a.hpd_project_id,
+		a.project_name,
+		a.building_id,
+		a.primary_program_at_start,
+		a.construction_type,
+		a.status,
+		a.project_start_date,
+		a.projected_completion_date,
+		a.total_units,
+		a.DOB_Match_Type,
+		a.dob_job_number,
+		a.DOB_Units_Net,
+		c.project_id 											as hpd_rfp_id,
+		c.project_name 											as hpd_rfp_project_name, 
+		c.total_units 											as hpd_rfp_units,
+		st_distance(cast(a.the_geom as geography),cast(c.the_geom as geography)) 			as HPD_RFP_Distance,
+		case when a.bbl is not null and a.bbl=c.bbl		then 'BBL'
+			 when st_intersects(a.the_geom,c.the_geom) 	then 'Spatial' 
+			 when c.project_id is not null 				then 'Proximity' end 		as HPD_RFP_Match_Type,
+  		b.edc_project_id,
+  		b.total_units 											as edc_project_units,
+  		st_distance(cast(a.the_geom as geography),cast(b.the_geom as geography)) 			as EDC_Distance, 
+  		case when st_intersects(a.the_geom,c.the_geom) 	then 'Spatial'
+  			 when b.edc_project_id is not null 			then 'Proximity' end 		as EDC_Match_Type,
+		a.address,
+		a.borough,
+		a.latitude,
+		a.longitude,
+		a.bbl
+
+FROM 
+  	hpd_dob_match_2 a
+left join
+  	capitalplanning.edc_2018_sca_input_1_limited b
+on 
+  st_dwithin(cast(a.the_geom as geography),cast(b.the_geom as geography),20) 
+/*20 meter distance chosen because larger increments would start including incorrectly matched projects.
+  This distance correctly matches HPD jobs 660 and 668 to EDC ID 3, and HPD jobs 676 and 677 to EDC ID 4. */ 
+left join
+  	capitalplanning.hpd_2018_sca_inputs_ms c
+on
+	c.source = 'HPD RFPs' and
+	(
+	a.bbl = c.bbl or
+	st_dwithin(cast(a.the_geom as geography),cast(c.the_geom as geography),20)
+	)
+order by a.unique_project_id
+) as HPD_Projects_DOB_EDC_HPDRFP_Match
+
+/*EXPORT THE FOLLOWING QUERY AS HPD_HPDRFP_PROXIMATE_MATCHES.
+  IDENTIFY WHETHER THE MATCHES IN THIS DATASET ARE ACCURATE BY FLAGGING.
+  REIMPORT AS A LOOKUP AND OMIT INACCURATE MATCHES. */
+
+SELECT
+	*
+from
+	HPD_Projects_DOB_EDC_HPDRFP_Match
+where
+	hpd_rfp_match_type = 'Proximity' 
+	--and	total_units <> HPD_RFP_Units will include when we have units for HPD RFPs
+order by
+	hpd_rfp_distance asc
+/*END OF LOOKUP CREATION*/
+
+			    
 select
 	*
 into
