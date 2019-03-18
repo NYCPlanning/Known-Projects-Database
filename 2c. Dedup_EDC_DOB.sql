@@ -9,7 +9,7 @@ Sources: edc_2018_sca_input_1_limited, dob_2018_sca_inputs_ms,
 
 /************************************************************************************************************************************************************************************
 METHODOLOGY: 
-1. Spatially match DOB, HPD Project, and HPD RFP data. 
+1. Spatially match EDC projects to DOB jobs. 
 2. Omit inaccurate matches within 20 meters which do not overlap.
 3. Calculate incremental units.
 ************************************************************************************************************************************************************************************/
