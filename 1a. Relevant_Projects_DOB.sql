@@ -76,7 +76,7 @@ where
 		projects, limited by above fields, by 21 observations (875 units_net).*/
 order by
 	job_number
-) as dob_2018_sca_inputs_ms
+) as dob_pipeline_ms
 
 /***********************************RUN IN REGULAR CARTO*****************************/
 
