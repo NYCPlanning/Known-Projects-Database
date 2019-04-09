@@ -19,7 +19,7 @@ METHODOLOGY:
 select
 	*
 into
-	dob_2018_sca_inputs_ms 
+	dob_pipeline_ms 
 from
 (
 select
