@@ -19,7 +19,7 @@ METHODOLOGY:
 select
 	*
 into
-	dob_pipeline_ms 
+	dob_2018_sca_inputs_ms 
 from
 (
 select
@@ -76,9 +76,9 @@ where
 		projects, limited by above fields, by 21 observations (875 units_net).*/
 order by
 	job_number
-) as dob_pipeline_ms
+) as dob_2018_sca_inputs_ms
 
 /***********************************RUN IN REGULAR CARTO*****************************/
 
-select cdb_cartodbfytable('capitalplanning', 'dob_pipeline_ms')
+select cdb_cartodbfytable('capitalplanning', 'dob_2018_sca_inputs_ms')
 
