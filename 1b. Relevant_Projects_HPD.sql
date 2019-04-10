@@ -172,27 +172,3 @@ from
 
 
 select cdb_cartodbfytable('capitalplanning', 'hpd_2018_sca_inputs_ms')
-
-/******************************************************************************
- The following query shows 741 projects from HPD In Construction + Projected data,
- and 138 projects from HPD RFP data
-
-	SELECT 
-		source,
-	    count(*) 
-	FROM capitalplanning.hpd_2018_sca_inputs_ms
-	group by source
-******************************************************************************/
-/*********************************GEOCODING ASSEMENT**********************************************
-Average distance between the_geom and lat/longs from HPD_2018_SCA_Inputs_Geo_Pts <.0005 meters:
-
-with distance_between_geom_and_lat_longs as
-(
-select *, st_distance(the_geom,st_setsrid(st_makepoint(longitude,latitude),4326)) as distance from hpd_2018_sca_inputs_ms where source = 'HPD Projects'
-)
-select avg(distance) from distance_between_geom_and_lat_longs
-
-There are no observations from HPD_2018_SCA_Inputs_Geo_Pts where distance b/w the_geom and lat/longs < .001 meters
-
-select * from distance_between_geom_and_lat_longs where distance > .001
-**************************************************************************************************/
