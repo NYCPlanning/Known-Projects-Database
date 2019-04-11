@@ -1,14 +1,6 @@
 /**************************************************************************************************************************************************************************************
 AUTHOR: Mark Shapiro
-SCRIPT: Merging ZAP data cross borough, flagging residences, 
-		and adding polygons
-START DATE: 1/3/2018
-COMPLETION DATE: 1/29/2018
-SOURCE FILES:
-1. dcp_zap_consolidated_ms: G:\03. Schools Planning\01_Inputs to SCA CP\Housing pipeline\00_Data\Jan 2019 SCA Housing Pipeline\Working Data\DCP_ZAP_Consolidated_MS.xlsx
-	a. This is a consolidation of raw, by-borough ZAP project entities from: G:\03. Schools Planning\01_Inputs to SCA CP\Housing pipeline\00_Data\Jan 2019 SCA Housing Pipeline\Raw Data\ZAP 
-2. HEIP ZAP Polygons: https://nycplanning.carto.com/u/capitalplanning/dataset/heip_zap_polygons
-3. MAPPLUTO: https://nycplanning.carto.com/u/capitalplanning/dataset/mappluto_v_18v1_1
+SCRIPT: Building a cleaned, geocoded database of all ZAP projects and pulling in Empire State Development Projects
 ***************************************************************************************************************************************************************************************/
 /**************************************************************************************************************************************************************************************
 METHODOLOGY:
