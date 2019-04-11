@@ -108,8 +108,8 @@ from
 			concat(a.house_number, ' ',a.street_name) 			as address,
 			a.boro_full_name 						as borough,
 			(a.min_of_projected_units+a.max_of_projected_units)/2 		as total_units, /*We have been given a range for total units, and have chosen the avg of the high and low*/
-			st_y(b.the_geom) 						as latitude,
-			st_x(b.the_geom) 						as longitude,
+			null		 						as latitude,
+			null		 						as longitude,
 			null 								as bin, 
 			concat(a.bbl) 							as bbl,
 			'HPD Projected Closings'					as Source
