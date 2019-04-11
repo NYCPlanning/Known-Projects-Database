@@ -21,6 +21,8 @@ METHODOLOGY:
   DCP_ZAP_SI_MS.csv
 2. Merge in polygons to ZAP data using HEIP polygon data,
    previous SCA 2018 inputs share, NYZMA, and ZAP BBL polygon data
+3. Correct inaccuracies in the data.
+4. Add in Empire State Development Projects.
 ***************************************************************************************************************************************************************************************/
 
 ALTER TABLE CAPITALPLANNING.dcp_zap_consolidated_ms
@@ -30,6 +32,11 @@ ADD COLUMN match_nyzma_geom numeric,
 ADD COLUMN match_pluto_geom numeric,
 ADD COLUMN match_impact_poly_latest numeric, 
 ADD COLUMN match_lookup_pluto_geom numeric; 
+
+
+/*****************************************************************
+				GEOCODING
+*****************************************************************/
 
 /*Merge in available polygons from HEIP's polygon data. 102 relevant project_ids joined successfully.*/
 update capitalplanning.dcp_zap_consolidated_ms
@@ -208,7 +215,19 @@ where
 	match_pluto_geom 			is null 	and
 	match_impact_poly_latest 		is null;
 
+											
+/*****************************************************************
+				DATA CORRECTION
+*****************************************************************/									
+											
 
+/*The following step deletes the target cert date where it is 1/1/2022. This is a default system entry and does not represent
+  actual inputs.*/
+
+update capitalplanning.dcp_zap_consolidated_ms a
+set 	system_target_certification_date 	= null
+where 	system_target_certification_date::date 	= '2022-01-01'						
+											
 
 /*The following step eliminates a false data entry where the input lists 
   the residential sqft figure as both in residential sqft and clearly 
@@ -234,7 +253,10 @@ set 	total_dwelling_units_in_project = 6074
 where project_id = 'P2009M0294';
 
 
-/*Adding in Statewide projects from lookup and their polygons from PLUTO.*/
+/*****************************************************************
+		Adding Empire State Development Projects
+*****************************************************************/																
+											
 with State_Developments_Geom as
 (
 	select
