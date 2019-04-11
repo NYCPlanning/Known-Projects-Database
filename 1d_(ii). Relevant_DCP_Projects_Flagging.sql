@@ -134,8 +134,6 @@ FROM
 		case when date_part('year',cast(a.project_completed as date)) < 2008 or date_part('year',cast(a.certified_referred as date)) < 2008 then 1 else 0 end 
 													      			as Historical_Project_Pre_2008, /*Assessing recency of the project. Potential exclusion if 1.*/ 
 		abs(coalesce(total_dwelling_units_in_project,0) - coalesce(new_dwelling_units,0)) 				as Diff_Between_Total_and_New_Units, /*Flag for future BO input.*/
-		case when a.project_id in('P2012M0255') then 1 end 								as Areawide_Flag 
-		/*Identifying Hudson Square to be treated as areawide*/
 	from
 		capitalplanning.dcp_zap_consolidated_ms a
 	left join
