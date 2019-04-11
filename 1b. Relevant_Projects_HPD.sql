@@ -111,7 +111,8 @@ from
 			st_y(b.the_geom) 						as latitude,
 			st_x(b.the_geom) 						as longitude,
 			null 								as bin, 
-			concat(a.bbl) 							as bbl
+			concat(a.bbl) 							as bbl,
+			'HPD Projected Closings'					as Source
 		from
 			capitalplanning.hpd_projected_closings_190409_ms a
 		left join
