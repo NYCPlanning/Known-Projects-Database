@@ -269,7 +269,6 @@ from
 
 	),
 
-	/*Omitting selecting projects where total units are 1.*/
 
 
 		matching_projects_1 as
@@ -277,7 +276,9 @@ from
 		select
 			*,
 			case 
-				when position('PERMIT RENEWAL' in upper(concat(project_name,project_description))) > 0 	then 'Permit renewal'
+				when position('PERMIT RENEWAL' in upper(concat(project_name,project_description))) > 0 				then 'Permit renewal'
+				
+				/*Omitting selecting projects where total units are 1 due to small-project variance.*/
 				when total_units = match_total_units and total_units <> 1 							then 'Same units'
 				when 				
 					left(
