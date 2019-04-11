@@ -51,8 +51,8 @@ FROM
 				a.residential_sq_ft > 0 									and 
 				/*Eliminating Parking application for large building (P2015M0047)*/
 				upper(concat(a.project_description,a.project_brief)) not like '%APPLICATION FOR PARKING%') 	or
-				/*Adding in Hudson Yards and Western Rail Yards*/							
-				a.project_id in('P2005M0053','P2009M0294') 		
+				/*Adding in Hudson Yards, Western Rail Yards, and 550 Washington*/							
+				a.project_id in('P2005M0053','P2009M0294','P2014M0257') 		
 			)													and
 				/*Omitting applications for modifications to existing single-family homes*/
 				upper(concat(a.project_description,' ',a.project_brief)) not like '%EXISTING SINGLE-FAMILY%' 	and
