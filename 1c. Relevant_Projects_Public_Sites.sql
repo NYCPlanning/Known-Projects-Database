@@ -43,6 +43,8 @@ from
 		a.city_planning_comments,
 		a.total_units,
 		a.aff_units
+	where
+		a.zap_project_id = 'No ZAP ID'
 ) as public_sites_2018_sca_inputs_ms
 
 /***********************************RUN IN REGULAR CARTO*****************************/
