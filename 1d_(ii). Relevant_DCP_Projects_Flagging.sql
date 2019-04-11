@@ -194,5 +194,5 @@ FROM
 				 WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%ELDERLY%' THEN 'ELDERLY'
 				 WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%SHELTER%' THEN 'SHELTER' END as Assisted_Supportive_Catch,
 
-/*End of text-catching diagnostic script*/
+/*End of text-catching diagnostic script
 ******************************************************************************************************************************************/
