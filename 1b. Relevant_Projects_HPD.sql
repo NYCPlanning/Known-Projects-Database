@@ -127,7 +127,7 @@ from
 			null								as building_id,
 			a.rfp_project_name 						as project_name,
 			null 								as primary_program_at_start,
-			null 								as construction_type,
+			null 								as construction_type,			
 			a.lead_agency,
 			concat	(
 					case when a.designated 	is true then 'RFP designated' 		else 'RFP issued'		end,
@@ -135,6 +135,7 @@ from
 				) 							as status,
 			null 								as project_start_date,
 			null 								as projected_completion_date,
+			null								as projected_fiscal_year_range,
 			null 								as address,
 			a.borough,
 			a.announced_unit_count 						as total_units,
