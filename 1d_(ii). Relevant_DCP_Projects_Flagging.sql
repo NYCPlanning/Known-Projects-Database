@@ -1,24 +1,14 @@
 /**************************************************************************************************************************************************************************************
 AUTHOR: Mark Shapiro
-SCRIPT: Merging ZAP data cross borough, flagging residences, 
-		and adding polygons
-START DATE: 1/3/2018
-COMPLETION DATE: 1/29/2018
-SOURCE FILES:
-1. dcp_zap_consolidated_ms: G:\03. Schools Planning\01_Inputs to SCA CP\Housing pipeline\00_Data\Jan 2019 SCA Housing Pipeline\Working Data\DCP_ZAP_Consolidated_MS.xlsx
-	a. This is a consolidation of raw, by-borough ZAP project entities from: G:\03. Schools Planning\01_Inputs to SCA CP\Housing pipeline\00_Data\Jan 2019 SCA Housing Pipeline\Raw Data\ZAP 
-2. HEIP ZAP Polygons: https://nycplanning.carto.com/u/capitalplanning/dataset/heip_zap_polygons
-3. MAPPLUTO: https://nycplanning.carto.com/u/capitalplanning/dataset/mappluto_v_18v1_1
+SCRIPT: Flagging DCP Project Characteristics
 ***************************************************************************************************************************************************************************************/
 /**************************************************************************************************************************************************************************************
 METHODOLOGY:
 1. Create flags for residential, potential residential, SI seat cert, initation, Pre-PAS, senior housing, and 
-   projects to exclude 
+   projects to exclude from housing pipeline.
 ***************************************************************************************************************************************************************************************/
 /*************************************************************************************
-RUN THE REST OF THIS SCRIPT IN CARTO BATCH
-
-Identify DCP projects which could be relevant to the SCA housing pipeline.
+RUN THIS SCRIPT IN CARTO BATCH
 *************************************************************************************/ 
 SELECT
 	*
@@ -55,7 +45,7 @@ FROM
 				coalesce(a.mih_dwelling_units_lower_number,0) 	+ 
 				coalesce(a.new_dwelling_units,0)		+ 
 				coalesce(a.voluntary_affordable_dwelling_units_non_mih,0)
-			) > 0 											or
+			) > 0 													or
 					
 			(
 				a.residential_sq_ft > 0 									and 
@@ -64,6 +54,7 @@ FROM
 				/*Adding in Hudson Yards and Western Rail Yards*/							
 				a.project_id in('P2005M0053','P2009M0294') 		
 			)													and
+				/*Omitting applications for modifications to existing single-family homes*/
 				upper(concat(a.project_description,' ',a.project_brief)) not like '%EXISTING SINGLE-FAMILY%' 	and
 				upper(concat(a.project_description,' ',a.project_brief)) not like '%EXISTING ONE-FAMILY%'	and
 				upper(concat(a.project_description,' ',a.project_brief)) not like '%EXISTING 1-FAMILY%' 	and
@@ -78,6 +69,7 @@ FROM
 		******************************************/
 
 	coalesce(
+		/* +1 for text which indicates a potential residence*/
 		CASE
 			when upper(concat(a.project_description,' ',a.project_brief)) 	like '%AFFORDABLE%' 	then 1 
 			when upper(concat(a.project_description,' ',a.project_brief)) 	like '%RESID%' 		then 1 
@@ -91,6 +83,7 @@ FROM
 			when upper(concat(a.project_description,' ',a.project_brief)) 	like '%HOMES%' 		then 1  
 			when (concat(a.project_description,' ',a.project_brief)) 	like '%DUs%'		then 1 
 														END  - 
+		/* -1 for text which indicates that the project is not residential, or simply a modification of a single-homes.*/
 		CASE 	 
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%RESIDENTIAL TO COMMERCIAL%' 	THEN 1
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%SINGLE-FAMILY%' 			THEN 1 
@@ -119,16 +112,10 @@ FROM
 					  									END
 		,0) 														AS Potential_Residential,
 
-		/*****************************************
-		IDENTIFYING SENIOR HOUSING PROJECTS.
-		******************************************/
-
+		/*Identifying senior housing projects*/
 		CASE WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%SENIOR%' THEN 1 ELSE 0 END 		AS SENIOR_HOUSING_flag,
 
-		/*****************************************
-		IDENTIFYING SUPPORTIVE HOUSING AND
-		ASSISTED LIVING PROJECTS.
-		******************************************/
+		/*IDENTIFYING SUPPORTIVE HOUSING AND ASSISTED LIVING PROJECTS.*/
 		CASE																											
 		  WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%NURSING%' THEN 1
 		  WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%AMBULATORY%' THEN 1
@@ -143,10 +130,10 @@ FROM
 		case when a.process_stage_name_stage_id_process_stage = 'Initiation' then 1 else 0 end 				as Initiation_Flag, /*Potential exclusion if 1*/
 		case when a.process_stage_name_stage_id_process_stage = 'Pre-Pas' then 1 else 0 end 				as Pre_PAS_Flag, /*Potential exclusion if 1*/
 		case when date_part('year',cast(a.project_completed as date)) < 2012 or date_part('year',cast(a.certified_referred as date)) < 2012 then 1 else 0 end 
-													      			as Historical_Project_Pre_2012, /*Assessing recency of the project. Potential exclusion.*/ 
+													      			as Historical_Project_Pre_2012, /*Assessing recency of the project. Potential exclusion if 1.*/ 
 		case when date_part('year',cast(a.project_completed as date)) < 2008 or date_part('year',cast(a.certified_referred as date)) < 2008 then 1 else 0 end 
-													      			as Historical_Project_Pre_2008, /*Assessing recency of the project. Potential exclusion.*/ 
-		abs(coalesce(total_dwelling_units_in_project,0) - coalesce(new_dwelling_units,0)) 				as Diff_Between_Total_and_New_Units,
+													      			as Historical_Project_Pre_2008, /*Assessing recency of the project. Potential exclusion if 1.*/ 
+		abs(coalesce(total_dwelling_units_in_project,0) - coalesce(new_dwelling_units,0)) 				as Diff_Between_Total_and_New_Units, /*Flag for future BO input.*/
 		case when a.project_id in('P2012M0255') then 1 end 								as Areawide_Flag 
 		/*Identifying Hudson Square to be treated as areawide*/
 	from
@@ -156,21 +143,6 @@ FROM
 	on
 		a.project_id = b.project_id and 
 		a.project_id is not null
-	where
-		a.project_id in (
-				'P2005M0053' /*Hudson Yards*/,
-				'P2009M0294' /*Western Rail Yards*/,
-				'P2014M0257' /*550 Washington St*/
-				)			or
-		a.project_id like '%[ESD Project]%' 	or /*State project*/
-		(
-			(
-			a.project_status not in('Record Closed','Terminated')				and
-			a.project_status not like '%Withdrawn%' /*Excluding discontinued projects*/ 	and
-			a.applicant_type <> 'DCP' /*Excluding DCP-initiated projects*/ 
-			)
-		)  and
-		a.project_id not in('P2016Q0238') /*Omitting Downtown Far Rockaway Rezoning*/
 ) as DCP_Project_Flagging
 
 /***********************************************************SUPERSEDED*****************************************************/
