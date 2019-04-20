@@ -1,8 +1,6 @@
 /************************************************************************************************************************************************************************************
 AUTHOR: Mark Shapiro
-SCRIPT: Deduping HPD data with DOB, EDC, ZAP, and DEP data
-START DATE: 1/8/2019
-COMPLETION DATE: 
+SCRIPT: Deduping HPD data with DOB data
 Sources: dob_2018_sca_inputs_ms, hpd_2018_sca_inputs_ms , address_checking_for_hpd_dob_matches
 		 relevant_dcp_projects_housing_pipeline_ms, dep_ndf_by_site,
 		 edc_2018_sca_input_1_limited
