@@ -199,8 +199,11 @@ from
 		project_start_date,
 		projected_completion_date,
 		total_units,
-		case when array_to_string(array_agg(dob_job_number),', ') as dob_job_numbers	
-		sum(units_net)					as DOB_Units_Net,
+		case 
+			when array_to_string(array_agg(dob_job_number),', ') like '%, ,%' 	then null
+			when array_to_string(array_agg(dob_job_number),', ') = ', ' 		then null
+			else array_to_string(array_agg(dob_job_number),', ') 			end 	as dob_job_numbers	
+		sum(units_net)										as DOB_Units_Net,
 		address,
 		borough,
 		latitude,
