@@ -15,7 +15,7 @@ METHODOLOGY:
 	Manually confirm the accuracy of these matches.
 3. Import the lookup from step 2 and modify dataset from step 1 accordingly.
 *************************************************************************************************************************************************************************************/
-/**********************RUN THE FOLLOWING QUERIES IN CARTO BATCH******************************/
+/**********************RUN THE FOLLOWING QUERY IN CARTO BATCH******************************/
 select
 	*
 into
@@ -83,6 +83,7 @@ from
 		a.project_id
 ) as HPD_DOB_Merge
 
+/**********************RUN THE FOLLOWING QUERY IN REGULAR CARTO******************************/
 
 /*EXPORT THE FOLLOWING QUERY AS HPD_DOB_PROXIMATE_MATCHES.
   IDENTIFY WHETHER THE MATCHES IN THIS DATASET ARE ACCURATE BY FLAGGING.
@@ -101,6 +102,9 @@ from
 
 /*End of lookup creation*/
 
+/**********************RUN THE FOLLOWING QUERIES IN CARTO BATCH******************************/
+		      
+		      
 /*Use above lookup to (reimported from Excel) to delete inaccurate proximity matches.*/			  
 			  
 select
@@ -172,4 +176,58 @@ from
 	order by
 		project_id
 ) as HPD_DOB_Match_2
+
+
+/*Group matches to the HPD Project-level*/
+		      
+select
+		      *
+into
+			  hpd_dob_match_3
+from
+(	      
+	select
+		the_geom,
+		the_geom_webmercator,
+		unique_project_id,
+		hpd_project_id,
+		project_name,
+		building_id,
+		primary_program_at_start,
+		construction_type,
+		status,
+		project_start_date,
+		projected_completion_date,
+		total_units,
+		array_to_string(array_agg(dob_job_number),', ') as dob_job_numbers	
+		sum(units_net)					as DOB_Units_Net,
+		address,
+		borough,
+		latitude,
+		longitude,
+		bbl
+	from
+		hpd_dob_match_2
+	group by
+		the_geom,
+		the_geom_webmercator,
+		unique_project_id,
+		hpd_project_id,
+		project_name,
+		building_id,
+		primary_program_at_start,
+		construction_type,
+		status,
+		project_start_date,
+		projected_completion_date,
+		total_units,
+		address,
+		borough,
+		latitude,
+		longitude,
+		bbl
+		
+	order by
+		unique_project_id
+) as HPD_DOB_Match_3
 
