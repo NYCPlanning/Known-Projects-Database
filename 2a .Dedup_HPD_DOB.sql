@@ -207,7 +207,7 @@ from
 		latitude,
 		longitude,
 		bbl,
-		total_units - sum(units_net) as hpd_incremental_units
+		greatest(total_units - sum(units_net),0) as hpd_incremental_units
 	from
 		hpd_dob_match_2
 	group by
