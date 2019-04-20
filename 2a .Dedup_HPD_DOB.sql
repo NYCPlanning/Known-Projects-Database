@@ -183,7 +183,7 @@ from
 select
 		      *
 into
-			  hpd_dob_match_3
+			  HPD_Deduped
 from
 (	      
 	select
@@ -199,7 +199,7 @@ from
 		project_start_date,
 		projected_completion_date,
 		total_units,
-		array_to_string(array_agg(dob_job_number),', ') as dob_job_numbers	
+		case when array_to_string(array_agg(dob_job_number),', ') as dob_job_numbers	
 		sum(units_net)					as DOB_Units_Net,
 		address,
 		borough,
@@ -229,5 +229,10 @@ from
 		
 	order by
 		unique_project_id
-) as HPD_DOB_Match_3
+) as hpd_deduped
+
+
+		      
+/*Run in regular Carto to display table*/		      
+select cdb_cartodbfytable('capitalplanning','hpd_deduped')
 
