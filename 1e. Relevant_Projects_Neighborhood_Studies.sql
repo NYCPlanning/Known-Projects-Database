@@ -10,9 +10,9 @@ Source Files/Folders:
 *************************************************************/
 /************************************************************
 METHODOLOGY:
-1. Append relevant BBLs and expected units from Jerome, East Harlem, ENY, DTFR, Inwood, and BSC projects
+1. Append relevant BBLs and expected units from DEP NDF projects
 2. Geocode using MAPPLUTO
-3. Join associated site values by BBL 
+2. Join associated site values by BBL 
 *************************************************************/
 
 
@@ -34,6 +34,8 @@ INSERT INTO capitalplanning.dep_ndf_polygon_matching_ms
 		UNITS,
 		BBL
 )
+
+/*Add Jerome Neighborhood Study*/
 SELECT
 
 		'JEROME' as NEIGHBORHOOD,		
@@ -46,6 +48,7 @@ SELECT
 FROM 
 		capitalplanning.dep_rwcds_jerome a
 UNION
+/*Add DTFR Neighborhood Study*/
 SELECT
 
 		'DOWNTOWN FAR ROCKAWAY'	as NEIGHBORHOOD,	
@@ -58,6 +61,7 @@ SELECT
 FROM
 		capitalplanning.dep_rwcds_far_rockaway b
 UNION
+/*Add East Harlem Neighborhood Study*/
 SELECT
 
 		'EAST HARLEM' as NEIGHBORHOOD,	
@@ -70,6 +74,8 @@ SELECT
 FROM
 		capitalplanning.dep_rwcds_east_harlem c
 UNION
+
+/*Add Inwood Neighborhood Study*/
 SELECT
 
 		'INWOOD' as NEIGHBORHOOD,	
@@ -82,6 +88,8 @@ SELECT
 FROM
 		capitalplanning.dep_rwcds_inwood d
 UNION
+
+/*Add ENY Neighborhood Study*/
 SELECT
 
 		'EAST NEW YORK' as NEIGHBORHOOD,	
@@ -93,6 +101,8 @@ SELECT
 FROM
 		capitalplanning.dep_rwcds_east_new_york e
 UNION
+
+/*Add BSC Neighborhood Study*/
 SELECT
 
 		'BAY ST CORRIDOR' as NEIGHBORHOOD,	
@@ -106,6 +116,8 @@ FROM
 		capitalplanning.dep_rwcds_bay_st_corridor f
 /***********************************************/
 UNION
+
+/*Add manually collected rezoning commitment sites.*/
 SELECT		
 		g.NEIGHBORHOOD_STUDY AS NEIGHBORHOOD,
 		g.commitment_site as site,
@@ -120,15 +132,11 @@ from
 UPDATE capitalplanning.dep_ndf_polygon_matching_ms
 set bbl = '1014255988'
 where bbl = '10142.55989';
-			    
-/*
-Omitting City Priority sites from RWCDS models and ghost rows pulled in from raw data.
-City priority sites are replaced by Rezoning Commitment sites.
-*/
-DELETE from capitalplanning.dep_ndf_polygon_matching_ms 
-where status in('','City Priority');
 
-/*Omitting projected/potential projects if they are included in list of rezoning commitments.*/
+/*Omitting potentially inaccurate City Priority sites from RWCDS models and ghost rows pulled in from raw data*/
+DELETE from capitalplanning.dep_ndf_polygon_matching_ms where status in('','City Priority');
+
+/*Identifying various 'Projected' sites as actual Rezoning Commitments, based on matching BBLs.*/			    
 with replacing_projected_with_commitment as
 (
 	SELECT
@@ -144,51 +152,57 @@ with replacing_projected_with_commitment as
 		a.status <> 'Rezoning Commitment' 
 )
 
-
+/*Deleting sites identified as above, as they are included in the Rezoning Commitments list*/
 delete from capitalplanning.dep_ndf_polygon_matching_ms a
 using replacing_projected_with_commitment b
 where a.bbl = b.bbl and b.commitment_match = 1 and a.status <> 'Rezoning Commitment'
 
-/*Joining in polygon data from PLUTO*/
+
+			    
+/*************************
+	GEOCODING
+*************************/
 with geom_match as
 (
 SELECT 
 	a.cartodb_id,
-    	b.the_geom,
+    b.the_geom,
 	b.the_geom_webmercator,
-    	a.bbl,
-    	a.units,
-    	a.status,
-    	a.neighborhood
+    a.bbl,
+    a.units,
+    a.status,
+    a.neighborhood
 FROM 
 	capitalplanning.dep_ndf_polygon_matching_ms a
 LEFT JOIN
 	capitalplanning.mappluto_v_18v1_1 b
-on 
-	a.bbl = cast(b.bbl as TEXT) and 
-	a.bbl is not null
+on a.bbl = cast(b.bbl as TEXT) and a.bbl is not null
 )
 
 UPDATE capitalplanning.dep_ndf_polygon_matching_ms
 SET 
-	the_geom = geom_match.the_geom,
-	the_geom_webmercator = geom_match.the_geom_webmercator
+	the_geom 		= geom_match.the_geom,
+	the_geom_webmercator 	= geom_match.the_geom_webmercator
 FROM 
 	geom_match
-WHERE dep_ndf_polygon_matching_ms.bbl = geom_match.bbl and geom_match.bbl is not null;
+WHERE 
+	dep_ndf_polygon_matching_ms.bbl = geom_match.bbl and 
+	geom_match.bbl is not null;
 
 UPDATE capitalplanning.dep_ndf_polygon_matching_ms a
 SET
-	Site = b.Site
+	Site = coalesce(a.site,b.Site)
 from
 	capitalplanning.list_of_bbls_by_development_site_2019_01_16 b
-where 	
-	a.bbl = b.bbl and 
-	a.bbl is not null;
+where (
+		a.bbl = b.bbl and 
+	  	a.bbl is not null
+	  ) or
+	  (
+		a.bbl = '1014255988' and b.bbl = '10142.5598889' /*Addressing typographical error for BBL 10142.55989*/ 
+	  );
 
-/*Workaround for 15 BBLs which are not current and do not have BBLs. Assigning them a random polygon from another BBL on their site.
-List of relevant projects will be by site--therefore this reassignment provides no inaccurate information. However, there may be
-missing geographic data from some site projects.*/
+/*Workaround for 15 BBLs which are not current and do not have BBLs. Assigning them a random polygon from another BBL on their site.*/
 with distinct_site_geoms as
 (
 	select distinct site, the_geom
@@ -208,31 +222,31 @@ update capitalplanning.dep_ndf_polygon_matching_ms
 set Project_ID = cartodb_id
 
 
-/*	Create Site-based polygons and create a dataset titled dep_ndf_by_site with the following query: */
+/*Create Site-based polygons and create a dataset titled dep_ndf_by_site with the following query: */
 
-select
-	trim(concat(site,' ',neighborhood,' ',upper(status))) as Project_ID,
-	site,
-	neighborhood,
-	st_union(the_geom) as the_geom, 
-	st_union(the_geom_webmercator) as the_geom_webmercator,
-	sum(coalesce(units,0)) as Units,
-	array_to_string(array_agg(bbl),', ') as included_bbls
-from
-	capitalplanning.dep_ndf_polygon_matching_ms
-group by
-	trim(concat(site,' ',neighborhood,' ',upper(status))),
-	site,
-	neighborhood
-order by
-	neighborhood,
-	project_id
+	select
+		trim(concat(site,' ',neighborhood,' ',upper(status))) as Project_ID,
+		site,
+		neighborhood,
+		st_union(the_geom) as the_geom, 
+		st_union(the_geom_webmercator) as the_geom_webmercator,
+		sum(coalesce(units,0)) as Units,
+		array_to_string(array_agg(bbl),', ') as included_bbls
+	from
+		capitalplanning.dep_ndf_polygon_matching_ms
+	group by
+		trim(concat(site,' ',neighborhood,' ',upper(status))),
+		site,
+		neighborhood
+	order by
+		neighborhood,
+		project_id
 
 	
 
 
 /*******************************CHECKING QUERY**************************************************************************************************************************** 
-15/1,047 BBLs are not geocoded after joining MAPPLUTO. They are then geocoded using a random polygon from other another BBL in their site.
+15/1,047 sites are not geocoded after joining MAPPLUTO. They are then geocoded using a random polygon from other another BBL in their site.
 
 Queries:
 SELECT * FROM capitalplanning.dep_ndf_polygon_matching_ms where the_geom is null 
