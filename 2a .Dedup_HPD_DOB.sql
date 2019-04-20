@@ -50,7 +50,7 @@ from
 		coalesce(b.partial_permit_issued_date,c.partial_permit_issued_date,d.partial_permit_issued_date) 		as partial_permit_issued_date,
 		coalesce(b.job_completion_date,c.job_completion_date,d.job_completion_date) 					as job_completion_date
 	from 
-		capitalplanning.hpd_2018_sca_inputs_ms a
+		(SELECT * FROM capitalplanning.hpd_2018_sca_inputs_ms WHERE SOURCE = 'HPD Projected Closings') a
 	left join 
 		capitalplanning.address_checking_for_hpd_dob_matches e
 	on
@@ -79,8 +79,6 @@ from
 		b.address 	is null 																	and
 		c.bbl 		is null 																	and
 		d.job_type = 'New Building' 
-	where 
-		a.source = 'HPD Projects'
 	order by
 		a.project_id
 ) as HPD_DOB_Merge
