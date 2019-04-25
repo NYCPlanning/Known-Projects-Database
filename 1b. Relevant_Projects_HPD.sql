@@ -55,6 +55,8 @@ from
 		projected_fiscal_year_range,
 		address,
 		borough,
+		min_of_projected_units,
+		max_of_projected_units
 		total_units,
 		latitude,
 		longitude,
@@ -109,6 +111,8 @@ from
 			a.projected_fiscal_year_range,
 			concat(a.house_number, ' ',a.street_name) 			as address,
 			a.boro_full_name 						as borough,
+			a.min_of_projected_units,
+			a.max_of_projected_units,
 			(a.min_of_projected_units+a.max_of_projected_units)/2 		as total_units, /*We have been given a range for total units, and have chosen the avg of the high and low*/
 			null		 						as latitude,
 			null		 						as longitude,
@@ -141,6 +145,8 @@ from
 			null								as projected_fiscal_year_range,
 			null 								as address,
 			a.borough,
+			null,
+			null,
 			a.announced_unit_count 						as total_units,
 			null 								as latitude,
 			null 								as longitude,
