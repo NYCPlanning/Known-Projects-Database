@@ -64,6 +64,9 @@ from
 		bbl,
 		source
 	from(
+
+/*  OMITTING CODE FOR IN CONSTRUCTION PROJECTS 
+		
 		select
 			the_geom,
 			concat(project_id, building_id) 				as project_id,
@@ -96,6 +99,7 @@ from
 		where
 			status = 'In Construction' /*Limiting to In Construction projects as we have received a more recent update of projected closings from HPD*/
 		union
+*/
 		SELECT
 			b.the_geom,
 			concat(a.project_id,a.building_id) 				as project_id,
