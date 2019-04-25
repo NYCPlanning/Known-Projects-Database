@@ -56,7 +56,7 @@ from
 		address,
 		borough,
 		min_of_projected_units,
-		max_of_projected_units
+		max_of_projected_units,
 		total_units,
 		latitude,
 		longitude,
