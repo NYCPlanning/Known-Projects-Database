@@ -158,4 +158,4 @@ order by
 Step 4: Create dataset
 ********************************************/
 
-select cdb_cartodbfytable('capitalplanning', 'edc_2018_sca_input_1_limited');
+select cdb_cartodbfytable('capitalplanning', 'edc_2018_sca_input_1_limited')
