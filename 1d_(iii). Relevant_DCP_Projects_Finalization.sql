@@ -301,7 +301,7 @@ from
 			matching_projects
 	),
 
-	/*Export matching_projects_1 and review non-confirmed matches. Apply same values in confirmed_match_reason field to matches which are manually identified.
+	/*Export matching_projects_1 and review non-confirmed matches > 50 units. Apply same values in confirmed_match_reason field to matches which are manually identified.
 	  Reupload this dataset as lookup_zap_overlapping_projects_ms.
 	*/
 
