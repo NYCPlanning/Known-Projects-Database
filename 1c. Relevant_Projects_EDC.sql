@@ -150,6 +150,8 @@ order by
 	edc_project_id
 
 ) as raw_merge
+order by
+	edc_project_id asc
 
 
 /*******************************************
