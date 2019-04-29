@@ -1,8 +1,6 @@
 /************************************************************************************************************************************************************************************
 AUTHOR: Mark Shapiro
-SCRIPT: Deduping EDC data with DOB, HPD Project, HPD RFP data
-START DATE: 2/1/2019
-COMPLETION DATE: 2/1/2019
+SCRIPT: Deduping EDC data with DOB
 Sources: edc_2018_sca_input_1_limited, dob_2018_sca_inputs_ms,
 		 hpd_projects_dob_edc_hpdrfp_zap_dep_match, hpd_2018_sca_inputs_ms
 *************************************************************************************************************************************************************************************/
