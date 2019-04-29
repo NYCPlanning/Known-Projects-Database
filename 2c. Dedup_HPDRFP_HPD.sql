@@ -27,31 +27,29 @@ from
 		a.projected_completion_date,
 		a.total_units,
 		a.bbl,
-		a.dob_job_numbers,
-		a.dob_total_units,
+--		a.dob_job_numbers,
+--		a.dob_total_units,
 		b.unique_project_id 		as HPD_Project_ID,
 		b.total_units 			as HPD_Project_Total_Units,
 		b.hpd_incremental_units 	as HPD_Project_Incremental_Units
 		st_distance(a.the_geom::geography,b.the_geom::geography) as Distance,
 		case 
-			when a.bbl = b.bbl 			and b.bbl not in('','0')	then 'BBL'
-			when position(b.bbl in a.bbl) > 0 	and b.bbl not in('','0')	then 'BBL'
+			when a.bbl = b.bbl and b.bbl not in('','0')				then 'BBL'
 			when st_intersects(a.the_geom,b.the_geom)				then 'Spatial'
-			when b.unique_project_id is not null and b.unique_project_id<>''	then 'Proximity'
+			when st_dwithin(a.the_geom::geography,b.the_geom::geography,20)		then 'Proximity'
 												end as Match_Type		
 	from
-		hpd_rfp_dob_1 a
+		capitalplanning.hpd_2018_sca_inputs_ms a
 	left join
-		capitalplanning.hpd_2018_sca_inputs_ms b
+		capitalplanning.HPD_Deduped b
 	on
-		b.source = 'HPD Projected Closings' and
 		(
 			/*BBL-Match*/
-			(a.bbl = b.bbl 			and b.bbl not in('','0')) or
-			(position(b.bbl in a.bbl) > 0 	and b.bbl not in('','0')) or
+			(a.bbl = b.bbl 	and b.bbl not in('','0')) or
 			/*Spatial Match*/
 			st_dwithin(a.the_geom::geography,b.the_geom::geography,20)
 		)
+	where a.source = 'HPD RFPs'
 ) as HPDRFP_HPD_Match
 									 
 									 
@@ -89,8 +87,8 @@ FROM
 		projected_completion_date,
 		total_units,
 		bbl,
-		dob_job_numbers,
-		dob_total_units,
+--		dob_job_numbers,
+--		dob_total_units,
 		case when concat(HPD_Project_ID,', ',rfp_id)	in(select match_id from capitalplanning.lookup_proximity_hpd_hpdrfp_matches where match = 0) then null else hpd_project_id 			end as hpd_project_id,
 		case when concat(HPD_Project_ID,', ',rfp_id)	in(select match_id from capitalplanning.lookup_proximity_hpd_hpdrfp_matches where match = 0) then null else hpd_project_total_units 		end as hpd_project_total_units,
 		case when concat(HPD_Project_ID,', ',rfp_id)	in(select match_id from capitalplanning.lookup_proximity_hpd_hpdrfp_matches where match = 0) then null else hpd_project_incremental_units 	end as hpd_project_incremental_units
@@ -101,7 +99,7 @@ FROM
 select
 	*
 into						
-	hpd_rfp_deduped
+	hpd_rfp_hpd_1
 from									 
 (
 	select							
@@ -116,14 +114,14 @@ from
 		projected_completion_date,
 		total_units,
 		bbl,
-		dob_job_numbers,
-		dob_total_units,
+--		dob_job_numbers,
+--		dob_total_units,
 		case 
 			when array_to_string(array_agg(hpd_project_id),', ') like '%, ,%' 	then null
 			when array_to_string(array_agg(hpd_project_id),', ') = ', ' 		then null
 			else array_to_string(array_agg(hpd_project_id),', ')			end as HPD_Project_IDs,
 		sum(hpd_incremental_units) as HPD_Incremental_Units,
-		greatest(total_units - coalesce(dob_total_units,0) - coalesce(sum(hpd_incremental_units),0),0) as HPD_RFP_Incremental_Units
+--		greatest(total_units - coalesce(dob_total_units,0) - coalesce(sum(hpd_incremental_units),0),0) as HPD_RFP_Incremental_Units
 	from
 		HPDRFP_HPD_Match_filtered
 	group by
@@ -138,11 +136,11 @@ from
 		projected_completion_date,
 		total_units,
 		bbl,
-		dob_job_numbers,
-		dob_total_units
+--		dob_job_numbers,
+--		dob_total_units
 	order by
 		rfp_id::numeric
-) as hpd_rfp_deduped
+) as hpd_rfp_hpd_1
 									 
 /*Run in regular Carto to display table*/		      
 select cdb_cartodbfytable('capitalplanning','hpd_rfp_deduped')
