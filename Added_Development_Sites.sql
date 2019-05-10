@@ -13,24 +13,24 @@ into
 from
 	(
 		select
-			cartodb_id,
 			the_geom,
 			mapid,
 			objectid,
 			shape_length,
 			shape_area,
-			area_sqft
+			area_sqft,
+			'KS' as source
 		from
 			capitalplanning.addeddevelopmentsites_addeddevsites_ks_1
 		union
 		select
-			cartodb_id,
 			the_geom,
 			mapid,
 			objectid,
 			shape_length,
 			shape_area,
-			null
+			null,
+			'RL' as source
 		from
 			capitalplanning.addeddevelopmentsites_addeddevsites_rl_1			
 	) as added_development_sites
