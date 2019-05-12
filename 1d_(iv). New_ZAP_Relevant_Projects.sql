@@ -331,7 +331,7 @@ FROM
 		a.*,
 		b.project_status 				as previous_project_status,
 		b.process_stage 				as previous_process_stage,
-		b.remaining_likely_to_be_built 			as remaining_likely_to_be_built,
+		b.remaining_likely_to_be_built 	as remaining_likely_to_be_built,
 		b.rationale 					as rationale,
 		case when 
 		(a.si_school_seat <> 'true' or a.si_school_seat is null) 				and
@@ -518,14 +518,15 @@ from
 			(
 				-- no_si_seat = 1 and 
 				(
-				dwelling_units = 1 or 
+				dwelling_units = 1 										or 
 				potential_residential = 1
-				) 							and 
-				historical_project_pre_2012 =0 				and
+				) 														and 
+				historical_project_pre_2012 =0 							and
 				project_status not in('Record Closed', 'Terminated') 	and
-				project_status not like '%Withdrawn%' 			and
-				applicant_type <> 'DCP' 				and
-				project_id <> 'P2016Q0238'  /*Omitting DTFR rezoning from ZAP*/
+				project_status not like '%Withdrawn%' 					and
+				applicant_type <> 'DCP' 								and
+				project_id <> 'P2016Q0238'  							and /*Omitting DTFR rezoning from ZAP*/
+				project_id <> 'P2016R0149'									/*Omitting BSC rezoning from ZAP*/
 				-- and pre_pas_flag<>1 and
 				-- initiation_flag<>1
 			) or
@@ -540,7 +541,7 @@ from
 				     (select 
 				      	zap_project_id 
 				      from 
-				      	capitalplanning.public_sites_190410_ms 
+				      	capitalplanning.table_190510_public_sites_ms_v3 
 				     )  or
 			project_id like '%[ESD Project]%' /*State project*/
 		order by project_id
@@ -557,7 +558,7 @@ from
 		from
 			relevant_dcp_projects
 		where
-			dwelling_units=0 			and
+			dwelling_units=0 				and
 			additional_rezoning = 0 		and
 			public_sites_project = 0		and
 			state_project = 0
@@ -579,6 +580,7 @@ from
 	 	on a.project_id = b.project_id
 	),
 
+	/*ADD IN NEW POTENTIAL RESIDENTIAL LOOKUP HERE*/
 
 	/*Limiting to projects which have confirmed dwelling units, or are the additional
 	  large rezonings (HY, WRY, 550 Washington), Public Sites Projects, or State Projects*/
@@ -601,6 +603,7 @@ from
 	relevant_dcp_projects_3 as
 	(
 		select
+			row_number() over() as cartodb_id /*Important to generate CartoDB_ID for mapping purposes*/,
 			the_geom,
 			the_geom_webmercator,
 			project_id,
@@ -693,6 +696,7 @@ from
 		matching_projects as
 	(
 		select
+			a.cartodb_id,
 			a.project_id,
 			b.project_id as match_project_id,
 			a.project_name,
@@ -762,6 +766,10 @@ from
 			matching_projects
 	),
 
+
+	/*CHECK HERE IF THERE ARE ANY NEW OVERLAPS*/
+
+
 	/*Export matching_projects_1 and review non-confirmed matches > 50 units. Apply same values in confirmed_match_reason field to matches which are manually identified.
 	  Reupload this dataset as lookup_zap_overlapping_projects_ms.
 	*/
@@ -791,8 +799,8 @@ from
 		SELECT
 			a.*,
 			case 
-				when a.project_id = 'P2005M0053' then a.total_units - b.DIB_Units 
-/*				else coalesce(a.total_units,c.total_units,c.aff_units)*/ end as total_units_1
+				when a.project_id = 'P2005M0053' then a.total_units - coalesce(b.DIB_Units,0) 
+				else a.total_units end 									as total_units_1
 		FROM
 			relevant_projects_4 a
 		left join
@@ -812,8 +820,31 @@ from
 	Project_ID P2009M0294 included to include Western Rail Yards. Note that 16 observations are missing Total_Units. These must be collected from planners. 
 	**********************************************************************************************************************************************************************/
 
+	/*Comparing the ZAP Pull of 5/10/2019 to the ZAP Pull of January 2019. Note to MQL about comparison below:
+
+	We have unit counts for all but one new project and geometries for all but 3 new projects.
+
+	The new ZAP pull omits 23 projects which existed in the old ZAP Pull. 16 of these are due to application withdrawals/record closures. 5 are due to overlaps (which have only recently been factored into the script). The remaining two are non site-specific projects which previously had listed unit counts but no longer do.
+
+	The new ZAP pull has 24 new projects (which is within reason -- in the old pull, we have 585 projects over 7 years of data). At first glance, some of these projects are relevant to neighborhood rezonings, a public sites RFP we've been looking for more information for, and there's a BSC PLACES application for 2,557 units (which I assume should be omitted because it's areawide).
+
+	9 existing projects have had changed unit counts > 20 in the last half year. All the changes look within reason. 58 existing projects have had status changes (primarily changes from Active to either On-Hold or Complete).*/
+
 		select
-			* 
+			a.*,
+			case when b.project_id is not null then 1 else 0 end 	as In_Previous_ZAP,
+			b.total_units 											as previous_zap_total_units,
+			b.project_status 										as previous_zap_project_status
 		from
-			relevant_projects_5
+			relevant_projects_5 a
+		left join
+			relevant_dcp_projects_housing_pipeline_ms b
+		on
+			a.project_id = b.project_id
+
 ) AS DCP_FINAL
+
+/**********************RUN IN REGULAR CARTO**************************/
+
+
+select cdb_cartodbfytable('capitalplanning', 'relevant_dcp_projects_housing_pipeline_ms_v2')
