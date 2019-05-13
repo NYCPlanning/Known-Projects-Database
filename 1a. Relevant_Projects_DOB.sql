@@ -68,7 +68,7 @@ from
 	capitalplanning.devdb_housing_pts_2019_02_08 
 where
 	status 		<>'Withdrawn' 	and 
-	x_inactive 	= 'false' 	and /*Non-permitted job w/o update since two years ago*/
+	x_inactive 	= 'false' 		and /*Non-permitted job w/o update since two years ago*/
 	(
 		upper(occ_init) like '%RESIDENTIAL%' or
 		upper(occ_prop) like '%RESIDENTIAL%'

@@ -182,8 +182,8 @@ BBLs, the first merge creates doubles. I then use st_union to aggregate these do
 
 select
 	project_id,
-	count(*) 			as Match_Count,
-	st_union(the_geom) 		as the_geom,
+	count(*) 						as Match_Count,
+	st_union(the_geom) 				as the_geom,
 	st_union(the_geom_webmercator) 	as the_geom_webmercator
 into
 	zap_project_missing_geom_lookup_1
@@ -191,7 +191,7 @@ from
 (
 	select
 		a.project_id,
-		b.the_geom		as the_geom,	
+		b.the_geom				as the_geom,	
 		a.THE_GEOM_WEBMERCATOR 	as the_geom_webmercator
 	from
 		capitalplanning.zap_project_missing_geom_lookup a
@@ -220,14 +220,14 @@ set
 	match_lookup_pluto_geom = 	1
 from zap_project_missing_geom_lookup_1 b
 where 
-	a.project_id 				= b.project_id 	and 
-	a.project_id 				is not null 	and
-	b.the_geom 				is not null 	and
-	match_heip_geom 			is null 	and
-	match_dcp_2018_sca_inputs_share_geom 	is null 	and
-	match_nyzma_geom 			is null 	and
-	match_pluto_geom 			is null 	and
-	match_impact_poly_latest 		is null;
+	a.project_id 								= b.project_id 	and 
+	a.project_id 								is not null		and
+	b.the_geom 									is not null		and
+	match_heip_geom 							is null 		and
+	match_dcp_2018_sca_inputs_share_geom 		is null 		and
+	match_nyzma_geom 							is null 		and
+	match_pluto_geom 							is null 		and
+	match_impact_poly_latest 					is null;
 
 
 							
@@ -734,7 +734,7 @@ from
 
 	),
 
-
+	/*ONLY ONE ADDITIONAL ACCURATE OVERLAP IN THE DATA to add*/
 
 		matching_projects_1 as
 	(
@@ -744,7 +744,7 @@ from
 				when position('PERMIT RENEWAL' in upper(concat(project_name,project_description))) > 0 				then 'Permit renewal'
 				
 				/*Omitting selecting projects where total units are 1 due to small-project variance.*/
-				when total_units = match_total_units and total_units <> 1 							then 'Same units'
+				when total_units = match_total_units and total_units <> 1 											then 'Same units'
 				when 				
 					left(
 						upper(project_name),position('STREET' IN upper(project_name))-1
@@ -753,12 +753,12 @@ from
 						upper(matched_project_name),position('STREET' IN upper(matched_project_name))-1
 					) and
 					position('STREET' in upper(project_name)) > 0 and 
-					position('STREET' in upper(matched_project_name)) >0							then 'Same project name' 
+					position('STREET' in upper(matched_project_name)) >0											then 'Same project name' 
 																		
 				
 				when
 					upper(project_name) like '%TWO BRIDGES%' and 
-					match_project_id in('P2012M0479','P2014M0022')								then 'Two Bridges duplicate'																									
+					match_project_id in('P2012M0479','P2014M0022')													then 'Two Bridges duplicate'																									
 				when
 					project_id = 'P2005M0053' and matched_project_name like '%DIB%'						then 'HY DIB' end 	as Confirmed_Match_Reason_Automatic,
 			null																											as Confirmed_Match_Reason_Manual
@@ -848,3 +848,186 @@ from
 
 
 select cdb_cartodbfytable('capitalplanning', 'relevant_dcp_projects_housing_pipeline_ms_v2')
+
+
+
+/*********************MODIFYING THESE PROJECTS WITH PLANNER INPUTS****************/
+
+/*Compile planner inputs*/
+
+select
+	*
+into
+	planner_inputs_consolidated_ms
+from
+(
+	select
+		boro,
+		cd,
+		map_id, /*Manually convert this field to numeric*/
+		source,
+		project_id,
+		project_name,
+		status,
+		total_units_from_planner,
+		notes_on_total_ks_assumed_units,
+		ks_assumed_units,
+		units_remaining_not_accounted_for_in_other_sources,
+		lead_planner
+		/*Manually convert all of the following fields to numeric in Carto*/
+		,outdated_overlapping_project,
+		non_residential_project_incl_group_quarters,
+		withdrawn_project,
+		inactive_project,
+		other_reason_to_omit,
+		corrected_existing_geometry,
+		corrected_existing_unit_count,
+		updated_unit_count,
+		should_be_in_old_zap_pull,
+		should_be_in_new_zap_pull,
+		planner_added_project
+	from 
+		capitalplanning.bronx_planner_inputs_housing_pipeline
+	union
+	select
+		boro,
+		cd,
+		map_id, /*Manually convert this field to int*/
+		source,		
+		project_id,
+		project_name,
+		status,
+		total_units_from_planner,
+		notes_on_total_ks_assumed_units,
+		ks_assumed_units,
+		units_remaining_not_accounted_for_in_other_sources,
+		lead_planner
+		/*Manually convert all of the following fields to numeric in Carto*/
+		,outdated_overlapping_project,
+		non_residential_project_incl_group_quarters,
+		withdrawn_project,
+		inactive_project,
+		other_reason_to_omit,
+		corrected_existing_geometry,
+		corrected_existing_unit_count,
+		updated_unit_count,
+		should_be_in_old_zap_pull,
+		should_be_in_new_zap_pull,
+		planner_added_project
+	from 
+		capitalplanning.brooklyn_planner_inputs_housing_pipeline
+	union
+	select
+		boro,
+		cd,
+		map_id,
+		source,
+		project_id,
+		project_name,
+		status,
+		total_units_from_planner,
+		notes_on_total_ks_assumed_units,
+		ks_assumed_units,
+		units_remaining_not_accounted_for_in_other_sources,
+		lead_planner
+		/*Manually convert all of the following fields to numeric in Carto*/
+		,outdated_overlapping_project,
+		non_residential_project_incl_group_quarters,
+		withdrawn_project,
+		inactive_project,
+		other_reason_to_omit,
+		corrected_existing_geometry,
+		corrected_existing_unit_count,
+		updated_unit_count,
+		should_be_in_old_zap_pull,
+		should_be_in_new_zap_pull,
+		planner_added_project
+	from 
+		capitalplanning.manhattan_planner_inputs_housing_pipeline
+	union
+	select
+		boro,
+		cd,
+		map_id,
+		source,
+		project_id,
+		project_name,
+		status,
+		total_units as total_units_from_planner,
+		notes_on_total_ks_assumed_units,
+		null as ks_assumed_units,
+		units_remaining_not_accounted_for_in_other_sources,
+		lead_planner
+		/*Manually convert all of the following fields to numeric in Carto*/
+		,outdated_overlapping_project,
+		non_residential_project_incl_group_quarters,
+		withdrawn_project,
+		inactive_project,
+		other_reason_to_omit,
+		corrected_existing_geometry,
+		corrected_existing_unit_count,
+		updated_unit_count,
+		should_be_in_old_zap_pull,
+		should_be_in_new_zap_pull,
+		planner_added_project
+	from 
+		capitalplanning.staten_island_planner_inputs_housing_pipeline
+	union
+	select
+		boro,
+		cd,
+		map_id,
+		source,
+		project_id,
+		project_name,
+		status,
+		total_units as total_units_from_planner,
+		notes_on_total_ks_assumed_units,
+		units_ks as ks_assumed_units,
+		units_remaining_not_accounted_for_in_other_sources,
+		lead_planner
+		/*Manually convert all of the following fields to numeric in Carto*/
+		,outdated_overlapping_project,
+		non_residential_project_incl_group_quarters,
+		withdrawn_project,
+		inactive_project,
+		other_reason_to_omit,
+		corrected_existing_geometry,
+		corrected_existing_unit_count,
+		updated_unit_count,
+		should_be_in_old_zap_pull,
+		should_be_in_new_zap_pull,
+		planner_added_project
+	from 
+		capitalplanning.queens_planner_inputs_housing_pipeline
+) as planner_inputs
+
+
+/**********************RUN IN REGULAR CARTO**************************/
+
+
+select cdb_cartodbfytable('capitalplanning', 'planner_inputs_consolidated_ms')
+
+
+/*Join the planner inputs to the mapped developments. Then do the intersect and delete those projects which are based on the flag*/
+
+
+select
+	a.*,
+	b.*
+from
+	added_development_sites_20190510_ms a
+left join
+	planner_inputs_consolidated_ms b
+on
+	a.mapid = b.mapid	
+
+
+select
+	*
+into
+	relevant_dcp_projects_housing_pipeline_ms_v3
+from
+	(
+		select
+	)
