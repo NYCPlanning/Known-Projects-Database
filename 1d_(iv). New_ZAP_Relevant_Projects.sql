@@ -162,13 +162,13 @@ set
 	match_impact_poly_latest = 	1
 from capitalplanning.Impact_Poly_Latest b
 where 
-	a.project_id 				= b.projectid 	and 
-	a.project_id 				is not null 	and
-	b.the_geom 				is not null 	and
-	match_heip_geom 			is null 	and
-	match_dcp_2018_sca_inputs_share_geom 	is null 	and
-	match_nyzma_geom 			is null 	and
-	match_pluto_geom 			is null;
+	a.project_id 				= b.projectid 				and 
+	a.project_id 							is not null 	and
+	b.the_geom 								is not null 	and
+	match_heip_geom 						is null 		and
+	match_dcp_2018_sca_inputs_share_geom 	is null 		and
+	match_nyzma_geom 						is null 		and
+	match_pluto_geom 						is null;
 
 
 /********************************************************************************************
@@ -276,7 +276,7 @@ where project_id = 'P2009M0294';
 with State_Developments_Geom as
 (
 	select
-		b.the_geom 	as the_geom,
+		b.the_geom 		as the_geom,
 		a.project_name,
 		a.total_units 	as new_dwelling_units,
 		a.borough,
@@ -292,7 +292,7 @@ with State_Developments_Geom as
 	State_Developments_Geom_1 as
 (
 	select
-		st_union(the_geom) 					as the_geom,
+		st_union(the_geom) 									as the_geom,
 		project_name,
 		new_dwelling_units,
 		borough,
@@ -334,7 +334,7 @@ FROM
 		b.remaining_likely_to_be_built 	as remaining_likely_to_be_built,
 		b.rationale 					as rationale,
 		case when 
-		(a.si_school_seat <> 'true' or a.si_school_seat is null) 				and
+		(a.si_school_seat <> 'true' or a.si_school_seat is null) 								and
 		upper(concat(a.project_description,' ',a.project_brief)) not like '%SCHOOL SEAT CERT%' 	and 
 		upper(substring(a.project_name,1,3)) <> 'SS '
 							then 1 ELSE 0 end as No_SI_Seat, 
@@ -1011,16 +1011,54 @@ select cdb_cartodbfytable('capitalplanning', 'planner_inputs_consolidated_ms')
 
 /*Join the planner inputs to the mapped developments. Then do the intersect and delete those projects which are based on the flag*/
 
-
 select
-	a.*,
-	b.*
+	*
+into
+	mapped_planner_inputs_consolidated_inputs_ms
 from
-	added_development_sites_20190510_ms a
-left join
-	planner_inputs_consolidated_ms b
-on
-	a.mapid = b.mapid	
+(
+	select
+			row_number() over() as cartodb_id,
+			a.the_geom,
+			a.objectid,
+			a.shape_length,
+			a.shape_area,
+			a.area_sqft
+			boro,
+			cd,
+			map_id, /*Manually convert this field to numeric*/
+			project_id,
+			project_name,
+			status,
+			total_units_from_planner,
+			notes_on_total_ks_assumed_units,
+			ks_assumed_units,
+			units_remaining_not_accounted_for_in_other_sources,
+			lead_planner
+			/*Manually convert all of the following fields to numeric in Carto*/
+			,outdated_overlapping_project,
+			non_residential_project_incl_group_quarters,
+			withdrawn_project,
+			inactive_project,
+			other_reason_to_omit,
+			corrected_existing_geometry,
+			corrected_existing_unit_count,
+			updated_unit_count,
+			should_be_in_old_zap_pull,
+			should_be_in_new_zap_pull,
+			planner_added_project
+	from
+		added_development_sites_20190510_ms a
+	left join
+		planner_inputs_consolidated_ms b
+	on
+		a.mapid = b.map_id	
+) as mapped_planner_inputs_consolidated_inputs_ms
+
+
+/**********************RUN IN REGULAR CARTO**************************/
+
+select cdb_cartodbfytable('capitalplanning', 'mapped_planner_inputs_consolidated_inputs_ms')
 
 
 select
