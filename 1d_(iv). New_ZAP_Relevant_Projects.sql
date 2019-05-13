@@ -473,7 +473,7 @@ from
 						'P2005M0053' /*Hudson Yards*/,
 						'P2009M0294' /*Western Rail Yards*/,
 						'P2014M0257' /*550 Washington St*/
-						) then 1 end as Additional_Rezoning,
+						) then 1 else 0 end as Additional_Rezoning,
 			
 			/*Ensuring that additional Public Sites which have been manually found in ZAP are caught*/
 			case 
@@ -508,9 +508,9 @@ from
 				      		from 
 				      			capitalplanning.table_190510_public_sites_ms_v3 
 				     	) 
-				     		then 1 end as Public_Sites_Project,
+				     		then 1 else 0 end  as Public_Sites_Project,
 		    case 
-		    	when project_id like '%ESD%' then 1 end as State_Project
+		    	when project_id like '%ESD%' then 1 else 0 end as State_Project
 				
 		from 
 			dcp_project_flags_v2
@@ -571,13 +571,20 @@ from
 		select 
 				a.*,
 				b.confirmed_potential_residential,
+				-- coalesce(b.confirmed_potential_residential,c.confirmed_potential_residential),
 				b.total_units_from_description as potential_residential_total_units,
+				-- coalesce(b.total_units_from_description,c.units) as potential_residential_total_units,
 				b.need_manual_research as need_manual_research_flag
 	 	from 
 	 		relevant_dcp_projects a
 	 	left join
-	 		potential_residential_zap_project_check_ms b
-	 	on a.project_id = b.project_id
+	 		capitalplanning.potential_residential_zap_project_check_ms b
+	 	on 
+	 		a.project_id = b.project_id
+	 	-- left join
+	 	-- 	capitalplanning.20190510_potential_residential_zap_project_check_ms_v2 c
+	 	-- on
+	 	-- 	a.project_id = c.project_id
 	),
 
 	/*ADD IN NEW POTENTIAL RESIDENTIAL LOOKUP HERE*/
@@ -622,7 +629,9 @@ from
 			anticipated_year_built,
 			project_completed,
 			certified_referred,
-			system_target_certification_date as target_certified_date,
+			dcp_target_certification_date,
+			system_target_certification_date,
+			coalesce(dcp_target_certification_date,system_target_certification_date) as target_certified_date,
 			project_status_date as latest_status_date,
 
 		/*	The following field is calculated by coalescing total units taken from the description of projects deemed residential using text search and
@@ -734,8 +743,6 @@ from
 
 	),
 
-	/*ONLY ONE ADDITIONAL ACCURATE OVERLAP IN THE DATA to add*/
-
 		matching_projects_1 as
 	(
 		select
@@ -760,18 +767,16 @@ from
 					upper(project_name) like '%TWO BRIDGES%' and 
 					match_project_id in('P2012M0479','P2014M0022')													then 'Two Bridges duplicate'																									
 				when
-					project_id = 'P2005M0053' and matched_project_name like '%DIB%'						then 'HY DIB' end 	as Confirmed_Match_Reason_Automatic,
-			null																											as Confirmed_Match_Reason_Manual
+					project_id = 'P2005M0053' and matched_project_name like '%DIB%'									then 'HY DIB' end 	as Confirmed_Match_Reason_Automatic,
+			null																														as Confirmed_Match_Reason_Manual
 		from
 			matching_projects
 	),
 
 
-	/*CHECK HERE IF THERE ARE ANY NEW OVERLAPS*/
-
 
 	/*Export matching_projects_1 and review non-confirmed matches > 50 units. Apply same values in confirmed_match_reason field to matches which are manually identified.
-	  Reupload this dataset as lookup_zap_overlapping_projects_ms.
+	  Reupload this dataset as lookup_zap_overlapping_projects_ms and the updated ZAP pull (excluding projects which existed in the old ZAP pull) as lookup_zap_overlaps_ms_v2 .
 	*/
 
 		relevant_projects_4 as
@@ -787,6 +792,14 @@ from
 								from lookup_zap_overlapping_projects_ms 
 								where 
 									confirmed_match_reason_automatic 	in('Permit renewal','Same units','Same project name','Two Bridges duplicate') or
+									confirmed_match_reason_manual	    = 1 
+							) and
+			project_id not in
+							(
+								select match_project_id 
+								from lookup_zap_overlapping_projects_ms_v2 
+								where 
+								--	confirmed_match_reason_automatic 	in('Permit renewal','Same units','Same project name','Two Bridges duplicate') or
 									confirmed_match_reason_manual	    = 1 
 							)
 		order by project_id
@@ -1020,13 +1033,11 @@ from
 	select
 			row_number() over() as cartodb_id,
 			a.the_geom,
-			a.objectid,
-			a.shape_length,
-			a.shape_area,
-			a.area_sqft
+			a.the_geom_webmercator,
 			boro,
 			cd,
 			map_id, /*Manually convert this field to numeric*/
+			b.source,
 			project_id,
 			project_name,
 			status,
@@ -1046,11 +1057,15 @@ from
 			updated_unit_count,
 			should_be_in_old_zap_pull,
 			should_be_in_new_zap_pull,
-			planner_added_project
+			planner_added_project,
+			a.objectid,
+			a.shape_length,
+			a.shape_area,
+			a.area_sqft
 	from
-		added_development_sites_20190510_ms a
-	left join
 		planner_inputs_consolidated_ms b
+	left join
+		added_development_sites_20190510_ms a
 	on
 		a.mapid = b.map_id	
 ) as mapped_planner_inputs_consolidated_inputs_ms
@@ -1059,6 +1074,134 @@ from
 /**********************RUN IN REGULAR CARTO**************************/
 
 select cdb_cartodbfytable('capitalplanning', 'mapped_planner_inputs_consolidated_inputs_ms')
+
+
+SELECT
+	a.* 
+	,b.map_id /*Manually convert this field to numeric*/
+	,b.source
+	,b.project_id as planner_project_id
+	,b.project_name as planner_project_name
+	,b.status as planner_status
+	,total_units_from_planner
+	,notes_on_total_ks_assumed_units
+	,case 
+		when length(ks_assumed_units)<2 or position('units' in ks_assumed_units)<1 then null
+		else substring(ks_assumed_units,1,position('units' in ks_assumed_units)-1)::numeric end as ks_assumed_units
+	,units_remaining_not_accounted_for_in_other_sources
+	,lead_planner
+	/*Manually convert all of the following fields to numeric in Carto*/
+	,b.outdated_overlapping_project
+	,non_residential_project_incl_group_quarters
+	,withdrawn_project
+	,inactive_project
+	,other_reason_to_omit
+	,corrected_existing_geometry
+	,corrected_existing_unit_count
+	,updated_unit_count
+	,should_be_in_old_zap_pull
+	,should_be_in_new_zap_pull
+	,planner_added_project
+from
+	relevant_dcp_projects_housing_pipeline_ms_v2 a
+inner join
+	mapped_planner_inputs_consolidated_inputs_ms b
+on
+	st_intersects(a.the_geom,b.the_geom)
+where
+	outdated_overlapping_project = 1 or
+	non_residential_project_incl_group_quarters = 1 or
+	withdrawn_project = 1 or
+	inactive_project = 1 or
+	other_reason_to_omit = 1
+
+
+
+
+/*Removing projects which planners indicated should be omitted due to overlaps, non-residential, withdrawals, inactivity, or otherwise*/
+
+SELECT
+	*
+into
+	relevant_dcp_projects_housing_pipeline_ms_v2_1
+from
+(
+	SELECT
+		*,
+		CASE 
+			when project_id in(select project_id from capitalplanning.mapped_planner_inputs_consolidated_inputs_ms where source in('ZAP','DCP','DCP ZAP') and outdated_overlapping_project 					= 1) then 'Planner Noted Overlap'
+			when project_id in(select project_id from capitalplanning.mapped_planner_inputs_consolidated_inputs_ms where source in('ZAP','DCP','DCP ZAP') and non_residential_project_incl_group_quarters 	= 1) then 'Planner Noted Non-Residential'
+			when project_id in(select project_id from capitalplanning.mapped_planner_inputs_consolidated_inputs_ms where source in('ZAP','DCP','DCP ZAP') and withdrawn_project 							= 1) then 'Planner Noted Withdrawn'
+			when project_id in(select project_id from capitalplanning.mapped_planner_inputs_consolidated_inputs_ms where source in('ZAP','DCP','DCP ZAP') and inactive_project 								= 1) then 'Planner Noted Inactive'
+			when project_id in(select project_id from capitalplanning.mapped_planner_inputs_consolidated_inputs_ms where source in('ZAP','DCP','DCP ZAP') and other_reason_to_omit 							= 1) then 'Planner Noted Other Reason to Omit'
+			else null end as Planner_Noted_Omission
+	from
+		relevant_dcp_projects_housing_pipeline_ms_v2
+) relevant_dcp_projects_housing_pipeline_ms_v2_1
+
+
+/*Replace ZAP unit count and ZAP geom, where appropriate, with planner input. There are 60 planner inputs on unit count and all are within reason. Hudson Yards also has a planner input of 13,508 (EAS) joined on,
+  but the unit count in relevant_dcp_projects_housing_pipeline_ms_v2_1 reflects HY after DIB deductions, so we are omitting this match. There are 11 location corrections and 1 location addition as well.*/
+
+
+/*THIS IS WHERE YOU SHOULD UPDATE THE UNIT COUNT AND THE GEOMETRY. THEN YOU'RE DONE!!!!!!*/
+
+SELECT
+	a.*,
+	case 
+		when a.project_id <> 'P2005M0053' /*HY*/ then coalesce(
+																	b.updated_unit_count,
+																	b.total_units_from_planner,
+																	a.total_units_1,
+																	case 
+																		when length(ks_assumed_units)<2 or position('units' in ks_assumed_units)<1 then null
+																		else substring(ks_assumed_units,1,position('units' in ks_assumed_units)-1)::numeric end
+																) 
+		else a.total_units_1 end 																														as total_units_2
+	,b.map_id /*Manually convert this field to numeric*/
+	,b.the_geom as planner_geom
+	,b.source
+	,b.project_id as planner_project_id
+	,b.project_name as planner_project_name
+	,b.status as planner_status
+	,total_units_from_planner
+	,notes_on_total_ks_assumed_units
+	,case 
+		when length(ks_assumed_units)<2 or position('units' in ks_assumed_units)<1 then null
+		else substring(ks_assumed_units,1,position('units' in ks_assumed_units)-1)::numeric end as ks_assumed_units
+	,units_remaining_not_accounted_for_in_other_sources
+	,lead_planner
+	/*Manually convert all of the following fields to numeric in Carto*/
+	,b.outdated_overlapping_project
+	,non_residential_project_incl_group_quarters
+	,withdrawn_project
+	,inactive_project
+	,other_reason_to_omit
+	,corrected_existing_geometry
+	,corrected_existing_unit_count
+	,updated_unit_count
+	,should_be_in_old_zap_pull
+	,should_be_in_new_zap_pull
+	,planner_added_project
+from
+	relevant_dcp_projects_housing_pipeline_ms_v2_1 a
+inner join
+	mapped_planner_inputs_consolidated_inputs_ms b
+on
+	a.project_id = b.project_id
+
+
+-- where b.project_id is not null and a.total_units_1 <> b.total_units_from_planner
+
+
+
+
+
+
+
+SELECT
+
+
 
 
 select
