@@ -1144,65 +1144,64 @@ from
   but the unit count in relevant_dcp_projects_housing_pipeline_ms_v2_1 reflects HY after DIB deductions, so we are omitting this match. There are 11 location corrections and 1 location addition as well.*/
 
 
-/*THIS IS WHERE YOU SHOULD UPDATE THE UNIT COUNT AND THE GEOMETRY. THEN YOU'RE DONE!!!!!!*/
-
 SELECT
-	a.*,
-	case 
-		when a.project_id <> 'P2005M0053' /*HY*/ then coalesce(
-																	b.updated_unit_count,
-																	b.total_units_from_planner,
-																	a.total_units_1,
-																	case 
-																		when length(ks_assumed_units)<2 or position('units' in ks_assumed_units)<1 then null
-																		else substring(ks_assumed_units,1,position('units' in ks_assumed_units)-1)::numeric end
-																) 
-		else a.total_units_1 end 																														as total_units_2
-	,b.map_id /*Manually convert this field to numeric*/
-	,b.the_geom as planner_geom
-	,b.source
-	,b.project_id as planner_project_id
-	,b.project_name as planner_project_name
-	,b.status as planner_status
-	,total_units_from_planner
-	,notes_on_total_ks_assumed_units
-	,case 
-		when length(ks_assumed_units)<2 or position('units' in ks_assumed_units)<1 then null
-		else substring(ks_assumed_units,1,position('units' in ks_assumed_units)-1)::numeric end as ks_assumed_units
-	,units_remaining_not_accounted_for_in_other_sources
-	,lead_planner
-	/*Manually convert all of the following fields to numeric in Carto*/
-	,b.outdated_overlapping_project
-	,non_residential_project_incl_group_quarters
-	,withdrawn_project
-	,inactive_project
-	,other_reason_to_omit
-	,corrected_existing_geometry
-	,corrected_existing_unit_count
-	,updated_unit_count
-	,should_be_in_old_zap_pull
-	,should_be_in_new_zap_pull
-	,planner_added_project
+	*
+into
+	relevant_dcp_projects_housing_pipeline_ms_v2_2
+from
+(
+	select
+		a.*,
+		case 
+			when a.project_id <> 'P2005M0053' /*HY*/ then coalesce
+																	(
+																		b.updated_unit_count,
+																		b.total_units_from_planner,
+																		a.total_units_1,
+																		case 
+																			when length(ks_assumed_units)<2 or position('units' in ks_assumed_units)<1 then null
+																			else substring(ks_assumed_units,1,position('units' in ks_assumed_units)-1)::numeric end
+																	) 
+			else a.total_units_1 end 																														as total_units_2
+		,case
+			when b.updated_unit_count is not null then 'Planner'
+			when b.total_units_from_planner is not null and b.total_units_from_planner<>a.total_units_1 and a.project_id <> 'P2005M0053' then 'Planner'
+			when a.total_units_1 is not null and a.total_units_1 <> 0 then 'ZAP'
+			when b.ks_assumed_units is not null and b.ks_assumed_units<>'' then 'PLUTO FAR Estimate'
+			else null end as Total_Unit_Source
+		,b.map_id /*Manually convert this field to numeric*/
+		,b.the_geom as planner_geom
+		,b.the_geom_webmercator as planner_geom_webmercator
+		,b.source
+		,b.project_id as planner_project_id
+		,b.project_name as planner_project_name
+		,b.status as planner_status
+		,total_units_from_planner
+		,notes_on_total_ks_assumed_units
+		,case 
+			when length(ks_assumed_units)<2 or position('units' in ks_assumed_units)<1 then null
+			else substring(ks_assumed_units,1,position('units' in ks_assumed_units)-1)::numeric end as ks_assumed_units
+		,units_remaining_not_accounted_for_in_other_sources
+		,lead_planner
+		/*Manually convert all of the following fields to numeric in Carto*/
+		,b.outdated_overlapping_project
+		,non_residential_project_incl_group_quarters
+		,withdrawn_project
+		,inactive_project
+		,other_reason_to_omit
+		,corrected_existing_geometry
+		,corrected_existing_unit_count
+		,updated_unit_count
+		,should_be_in_old_zap_pull
+		,should_be_in_new_zap_pull
+		,planner_added_project
 from
 	relevant_dcp_projects_housing_pipeline_ms_v2_1 a
 inner join
 	mapped_planner_inputs_consolidated_inputs_ms b
 on
 	a.project_id = b.project_id
-
-
--- where b.project_id is not null and a.total_units_1 <> b.total_units_from_planner
-
-
-
-
-
-
-
-SELECT
-
-
-
+) x
 
 select
 	*
@@ -1211,4 +1210,47 @@ into
 from
 	(
 		select
-	)
+			cartodb_id,
+			coalesce(planner_geom,the_geom) as the_geom,
+			coalesce(planner_geom_webmercator,the_geom_webmercator) as the_geom_webmercator,
+			project_id,
+			project_name,
+			borough, 
+			project_description,
+			project_brief,
+			total_units_2 as total_units,
+			total_unit_source,
+			case when total_unit_source = 'ZAP' then total_units_source end as ZAP_Unit_Source,
+			applicant_type,
+			Rezoning_Flag,
+			senior_housing_flag, 
+			Assisted_Living_Supportive_Housing_flag, 
+			project_status,
+			previous_project_status,
+			process_stage,
+			previous_process_stage,
+			anticipated_year_built,
+			project_completed,
+			certified_referred,
+			dcp_target_certification_date,
+			system_target_certification_date,
+			target_certified_date,
+			latest_status_date,
+			no_si_seat,
+			initiation_flag,
+			pre_pas_flag,
+			Diff_Between_Total_and_New_Units,
+			Historical_Project_Pre_2012,
+			Historical_Project_Pre_2008
+		from
+			capitalplanning.relevant_dcp_projects_housing_pipeline_ms_v2_2
+		where
+			Planner_Noted_Omission is null
+	) x
+	order by
+		project_id asc
+
+
+/**********************RUN IN REGULAR CARTO**************************/
+
+select cdb_cartodbfytable('capitalplanning', 'relevant_dcp_projects_housing_pipeline_ms_v3')
