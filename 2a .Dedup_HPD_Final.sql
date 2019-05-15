@@ -22,31 +22,31 @@ from
 (
 	select
 		a.*,
-		case when b.address is not null 								then 1 end	as Address_Match,
-		case when c.bbl is not null 									then 1 end	as bbl_match,
-		case when 	st_intersects(a.the_geom,d.the_geom)						then 1 end	as spatial_match,
-		case when 	st_dwithin(cast(a.the_geom as geography),cast(d.the_geom as geography),20) 	then 1 end	as proximity_match,
-		coalesce(b.the_geom,c.the_geom,d.the_geom) 									as dob_geom,
+		case when b.address is not null 								then 1 end								as Address_Match,
+		case when c.bbl is not null 									then 1 end								as bbl_match,
+		case when 	st_intersects(a.the_geom,d.the_geom)				then 1 end								as spatial_match,
+		case when 	st_dwithin(cast(a.the_geom as geography),cast(d.the_geom as geography),20) 	then 1 end		as proximity_match,
+		coalesce(b.the_geom,c.the_geom,d.the_geom) 																as dob_geom,
 		coalesce
 			(	
 				st_distance(cast(a.the_geom as geography),cast(b.the_geom as geography)),
 				st_distance(cast(a.the_geom as geography),cast(c.the_geom as geography)),
 				st_distance(cast(a.the_geom as geography),cast(d.the_geom as geography))
-			) 																								as Geom_Distance,
-		coalesce(b.job_number,c.job_number,d.job_number) 								as dob_job_number,
-		coalesce(b.job_type,c.job_type,d.job_type) 									as dob_job_type,
-		coalesce(b.address,c.address,d.address) 									as dob_address,
-		coalesce(b.status,c.status,d.status) 										as dob_status,
-		coalesce(b.units_init,c.units_init,d.units_init) 								as units_init,
-		coalesce(b.units_prop,c.units_prop,d.units_prop) 								as units_prop,
-		coalesce(b.units_net,c.units_net,d.units_net) 									as units_net,
-		coalesce(b.units_incomplete,c.units_incomplete,d.units_incomplete) 						as units_incomplete,
-		coalesce(b.latest_cofo,c.latest_cofo,d.latest_cofo) 								as latest_cofo,
-		coalesce(b.most_recent_status_date,c.most_recent_status_date,d.most_recent_status_date) 			as most_recent_status_date,
+			) 																									as Geom_Distance,
+		coalesce(b.job_number,c.job_number,d.job_number) 														as dob_job_number,
+		coalesce(b.job_type,c.job_type,d.job_type) 																as dob_job_type,
+		coalesce(b.address,c.address,d.address) 																as dob_address,
+		coalesce(b.status,c.status,d.status) 																	as dob_status,
+		coalesce(b.units_init,c.units_init,d.units_init) 														as units_init,
+		coalesce(b.units_prop,c.units_prop,d.units_prop) 														as units_prop,
+		coalesce(b.units_net,c.units_net,d.units_net) 															as units_net,
+		coalesce(b.units_incomplete,c.units_incomplete,d.units_incomplete) 										as units_incomplete,
+		coalesce(b.latest_cofo,c.latest_cofo,d.latest_cofo) 													as latest_cofo,
+		coalesce(b.most_recent_status_date,c.most_recent_status_date,d.most_recent_status_date) 				as most_recent_status_date,
 		coalesce(b.completed_application_date,c.completed_application_date,d.completed_application_date) 		as completed_application_date,
-		coalesce(b.full_permit_issued_date,c.full_permit_issued_date,d.full_permit_issued_date) 			as full_permit_issued_date,
+		coalesce(b.full_permit_issued_date,c.full_permit_issued_date,d.full_permit_issued_date) 				as full_permit_issued_date,
 		coalesce(b.partial_permit_issued_date,c.partial_permit_issued_date,d.partial_permit_issued_date) 		as partial_permit_issued_date,
-		coalesce(b.job_completion_date,c.job_completion_date,d.job_completion_date) 					as job_completion_date
+		coalesce(b.job_completion_date,c.job_completion_date,d.job_completion_date) 							as job_completion_date
 	from 
 		(SELECT * FROM capitalplanning.hpd_2018_sca_inputs_ms WHERE SOURCE = 'HPD Projected Closings') a
 	left join 
