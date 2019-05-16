@@ -53,21 +53,21 @@ from
 		capitalplanning.address_checking_for_hpd_dob_matches e
 	on
 		a.address= e.hpd_unmatched_in_construction_addresses 	and
-		e.dob_address <> '' 					and 
+		e.dob_address <> '' 									and 
 		a.project_name = e.hpd_project_name
 	left join
 		capitalplanning.dob_2018_sca_inputs_ms b 
 	on 
 		upper(concat(coalesce(e.dob_address,a.address),' ',a.borough)) =
-		upper(concat(b.address,' ',b.borough)) 			and
-		a.address is not null 					and
+		upper(concat(b.address,' ',b.borough)) 					and
+		a.address is not null 									and
 		b.job_type<>'Demolition'
 	left join
 		capitalplanning.dob_2018_sca_inputs_ms c
 	on 
-		a.bbl = c.bbl 		and
-		a.bbl is not null 	and 
-		b.address is null 	and
+		a.bbl = c.bbl 											and
+		a.bbl is not null 										and 
+		b.address is null 										and
 		c.job_type<>'Demolition'
 	left join
 		capitalplanning.dob_2018_sca_inputs_ms d

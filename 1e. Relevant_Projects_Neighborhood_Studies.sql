@@ -15,6 +15,7 @@ METHODOLOGY:
 2. Join associated site values by BBL 
 *************************************************************/
 
+/**********************************RUN IN REGULAR CARTO*****************************/
 
 ALTER TABLE capitalplanning.dep_ndf_polygon_matching_ms
 ADD COLUMN PROJECT_ID TEXT, 
@@ -181,7 +182,7 @@ on a.bbl = cast(b.bbl as TEXT) and a.bbl is not null
 
 UPDATE capitalplanning.dep_ndf_polygon_matching_ms
 SET 
-	the_geom 		= geom_match.the_geom,
+	the_geom 				= geom_match.the_geom,
 	the_geom_webmercator 	= geom_match.the_geom_webmercator
 FROM 
 	geom_match
@@ -222,8 +223,15 @@ update capitalplanning.dep_ndf_polygon_matching_ms
 set Project_ID = cartodb_id
 
 
-/*Create Site-based polygons and create a dataset titled dep_ndf_by_site with the following query: */
+/*******************************************RUN IN CARTO BATCH******************************************/
 
+/*Create Site-based polygons, create a dataset titled dep_ndf_by_site_pre with the following query: */
+SELECT
+	*
+INTO
+	dep_ndf_by_site_pre
+FROM
+(
 	select
 		trim(concat(site,' ',neighborhood,' ',upper(status))) as Project_ID,
 		site,
@@ -241,8 +249,52 @@ set Project_ID = cartodb_id
 	order by
 		neighborhood,
 		project_id
-
+) x
 	
+
+/*Integrating planner input on unit count and KS assumed unit calculations for where no unit count exists*/
+select
+	*
+INTO
+	dep_ndf_by_site
+from
+(
+	SELECT
+		a.project_id,
+		a.site,
+		a.neighborhood,
+		a.the_geom,
+		a.the_geom_webmercator,
+		CASE 
+			when A.PROJECT_ID LIKE '%REZONING COMMITMENT%' then	coalesce
+																	(
+																		case
+																			when a.project_id = 'Beach 21st Street DOWNTOWN FAR ROCKAWAY REZONING COMMITMENT' then 224 END/*Inserting information from HPD RFPs*/,
+																		case
+																			when a.project_id = 'Inwood Library INWOOD REZONING COMMITMENT' then 175 END/*Inserting information from HPD RFPs*/,
+																		b.total_units_from_planner, 
+																		case 
+																			when length(b.ks_assumed_units)<2 or position('units' in b.ks_assumed_units)<1 then null
+																			else substring(b.ks_assumed_units,1,position('units' in b.ks_assumed_units)-1)::numeric end
+																	)
+			else a.units end as units,
+		a.included_bbls
+	from
+		dep_ndf_by_site_pre a
+	left join
+		mapped_planner_inputs_consolidated_inputs_ms b
+	on
+		a.project_id = b.project_id or
+		/*Performing manual matches based on planner inputs not labeled as the appropriate rezoning commitment*/
+		(a.project_id = 'Phipps House EAST NEW YORK REZONING COMMITMENT' 		and b.project_id = '67 EAST NEW YORK REZONING COMMITMENT') or
+		(a.project_id = 'Dinsmore - Chestnut EAST NEW YORK REZONING COMMITMENT'	and b.project_id = '66 EAST NEW YORK REZONING COMMITMENT')
+
+) x 
+
+
+/************************RUN IN REGULAR CARTO*********************/
+
+select cdb_cartodbfytable('capitalplanning', 'dep_ndf_by_site')
 
 
 /*******************************CHECKING QUERY**************************************************************************************************************************** 
