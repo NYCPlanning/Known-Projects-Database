@@ -53,156 +53,6 @@ select cdb_cartodbfytable('capitalplanning', 'added_development_sites_20190510_M
 /**********************************RUN IN CARTO BATCH*****************/
 
 
-select
-	*
-into
-	all_planner_inputs
-from
-	(
-		select
-			source,
-			map_id
-			project_id,
-			project_name,
-			boro as borough,
-			cd,
-			status,
-			total_units,
-			null as ks_assumed_units,
-			lead_planner,
-			request_for_update,
-			portion_built_2025,
-			portion_built_2035,
-			portion_built_2055,
-			outdated_overlapping_project,
-			non_residential_project,
-			withdrawn_project,
-			inactive_project,
-			other_reason_to_omit,
-			corrected_existing_unit_count,
-			updated_unit_count,
-			should_be_in_old_zap_pull,
-			should_be_in_new_zap_pull,
-			planner_added_project
-		from
-			capitalplanning.table_20190510_queens_planner_inputs_housing_pipeline
-		union
-		select
-			source,
-			map_id
-			project_id,
-			project_name,
-			boro as borough,
-			cd,
-			status,
-			total_units,
-			null as ks_assumed_units,
-			lead_planner,
-			request_for_update,
-			portion_built_2025,
-			portion_built_2035,
-			portion_built_2055,
-			outdated_overlapping_project,
-			non_residential_project,
-			withdrawn_project,
-			inactive_project,
-			other_reason_to_omit,
-			corrected_existing_unit_count,
-			updated_unit_count,
-			should_be_in_old_zap_pull,
-			should_be_in_new_zap_pull,
-			planner_added_project
-		from
-			capitalplanning.table_20190510_staten_island_planner_inputs_housing_pipeline
-		union
-		select
-			source,
-			map_id
-			project_id,
-			project_name,
-			boro as borough,
-			cd,
-			status,
-			total_units_from_planner as total_units,
-			ks_assumed_units,
-			lead_planner,
-			request_for_update,
-			portion_built_2025,
-			portion_built_2035,
-			portion_built_2055,
-			outdated_overlapping_project,
-			non_residential_project,
-			withdrawn_project,
-			inactive_project,
-			other_reason_to_omit,
-			corrected_existing_unit_count,
-			updated_unit_count,
-			should_be_in_old_zap_pull,
-			should_be_in_new_zap_pull,
-			planner_added_project
-		from
-			capitalplanning.table_20190510_manhattan_planner_inputs_housing_pipeline
-		union
-		select
-			source,
-			map_id
-			project_id,
-			project_name,
-			boro as borough,
-			cd,
-			status,
-			total_units_from_planner as total_units,
-			ks_assumed_units,
-			lead_planner,
-			request_for_update,
-			portion_built_2025,
-			portion_built_2035,
-			portion_built_2055,
-			outdated_overlapping_project,
-			non_residential_project,
-			withdrawn_project,
-			inactive_project,
-			other_reason_to_omit,
-			corrected_existing_unit_count,
-			updated_unit_count,
-			should_be_in_old_zap_pull,
-			should_be_in_new_zap_pull,
-			planner_added_project
-		from
-			capitalplanning.table_20190510_bronx_planner_inputs_housing_pipeline
-		union
-		select
-			source,
-			map_id
-			project_id,
-			project_name,
-			boro as borough,
-			cd,
-			status,
-			total_units_from_planner as total_units,
-			ks_assumed_units,
-			lead_planner,
-			request_for_update,
-			portion_built_2025,
-			portion_built_2035,
-			portion_built_2055,
-			outdated_overlapping_project,
-			non_residential_project,
-			withdrawn_project,
-			inactive_project,
-			other_reason_to_omit,
-			corrected_existing_unit_count,
-			updated_unit_count,
-			should_be_in_old_zap_pull,
-			should_be_in_new_zap_pull,
-			planner_added_project
-		from
-			capitalplanning.table_20190510_brooklyn_planner_inputs_housing_pipeline
-	) as all_planner_inputs
-	order by
-		borough, project_id
-
-
 /*Joining in planner inputs, starting with Queens planner inputs.*/
 
 
@@ -241,7 +91,7 @@ from
 		should_be_in_new_zap_pull,
 		planner_added_project
 	from 
-		capitalplanning.bronx_planner_inputs_housing_pipeline
+		capitalplanning.table_20190516_bronx_planner_inputs_housing_pipeline
 	union
 	select
 		boro,
@@ -269,7 +119,7 @@ from
 		should_be_in_new_zap_pull,
 		planner_added_project
 	from 
-		capitalplanning.brooklyn_planner_inputs_housing_pipeline
+		capitalplanning.table_20190516_brooklyn_planner_inputs_housing_pipeline
 	union
 	select
 		boro,
@@ -297,7 +147,7 @@ from
 		should_be_in_new_zap_pull,
 		planner_added_project
 	from 
-		capitalplanning.manhattan_planner_inputs_housing_pipeline
+		capitalplanning.table_20190516_manhattan_planner_inputs_housing_pipeline
 	union
 	select
 		boro,
@@ -325,7 +175,7 @@ from
 		should_be_in_new_zap_pull,
 		planner_added_project
 	from 
-		capitalplanning.staten_island_planner_inputs_housing_pipeline
+		capitalplanning.table_20190516_staten_island_planner_inputs_housing_pipeline
 	union
 	select
 		boro,
@@ -353,7 +203,7 @@ from
 		should_be_in_new_zap_pull,
 		planner_added_project
 	from 
-		capitalplanning.queens_planner_inputs_housing_pipeline
+		capitalplanning.table_20190516_queens_planner_inputs_housing_pipeline
 ) as planner_inputs
 
 

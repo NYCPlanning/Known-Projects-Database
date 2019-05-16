@@ -33,14 +33,20 @@ from
 		a.zap_project_id_3,
 		a.zap_project_id_4,
 		a.city_planning_comments,
-		b.total_units_from_planner as total_units,
+		coalesce
+			(
+				b.total_units_from_planner,
+				case 
+					when length(ks_assumed_units)<2 or position('units' in ks_assumed_units)<1 then null
+					else substring(ks_assumed_units,1,position('units' in ks_assumed_units)-1)::numeric end
+			) as total_units,
 		a.aff_units,
 		a.cm,
 		a.developer,
 		a.program,
 		a.current_agency
 	from
-		(select * from capitalplanning.table_190510_public_sites_ms_v3 where unique_project_id in('Pipeline 1','Pipeline 13','Pipeline 17','Pipeline 22','Pipeline 26','Pipeline 29') /*Selecting public sites not accounted for in other sources*/) a
+		(select * from capitalplanning.table_190510_public_sites_ms_v3_1 where project_found_in = '' and omit_from_public_sites_relevant_projects = 0 /*Selecting public sites not accounted for in other sources*/) a
 	left join
 		capitalplanning.mapped_planner_inputs_consolidated_inputs_ms b
 	on
@@ -49,7 +55,7 @@ from
 	left join
 		capitalplanning.mappluto_v_18v1_1 c
 	on
-		a.unique_project_id = 'Pipeline 1' and c.bbl = 1004910016
+		a.bbls_if_not_in_pipeline_or_planner_inputs =  c.bbl and c.bbl is not null
 ) x
 
 /***********************************RUN IN REGULAR CARTO*****************************/

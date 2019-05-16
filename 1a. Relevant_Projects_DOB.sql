@@ -31,13 +31,15 @@ select
 	boro 												as borough,
 	occ_init,
 	occ_prop,
+	case when UPPER(concat(occ_init,occ_prop)) like '%ASSISTED LIVING%' then 1 else 0 end as Assisted_Living_Flag,
 
-	/*Flag for MQL*/
 	case 
 		when 	/*Creating a Partial Complete status*/
 			job_type = 'New Building' 		and 
 			status = 'Complete' 			and 
 			co_latest_certtype = 'T- TCO' 	and
+
+			/*LOOK FOR DOCUMENTATION ON PARTIAL COMPLETE STATUS IN DOE DATA*/
 			(
 				(cast(co_latest_units as double precision)/cast(units_net as double precision) < .8  	and units_net >= 20) or
 				(units_net - co_latest_units >=5 														and units_net between 5 and 19)
@@ -51,8 +53,7 @@ select
 		-- 	co_latest_units is null		
 		-- 									then 'Permit Issued'
 
-											else status end
-														as status,
+		else status end									as status,
 	status_date 										as most_recent_status_date,
 	right(status_a,4) 									as pre_filing_year,
 	status_d 											as completed_application_date,
@@ -71,24 +72,46 @@ select
 	latitude,
 	longitude,
 	geo_bin												as bin,
-	geo_bbl												as bbl
+	geo_bbl												as bbl,
+	
 
 from 
 	capitalplanning.devdb_housing_pts_20190215
 where
 	status 		<>'Withdrawn' 				and 
 	x_inactive 	= 'false' 					and /*Non-permitted job w/o update since two years ago*/
-	(
-		upper(occ_init) like '%RESIDENTIAL%' or
-		upper(occ_prop) like '%RESIDENTIAL%'
-	) /*Limiting to projects which were or at one point will be residential. Decreases count of uncompleted
-		projects, limited by above fields, by 21 observations (875 units_net).*/ 
-											and
 	units_net <> 0
 order by
 	job_number
 ) as dob_2018_sca_inputs_ms
 
+
+
+/*Omitting old dups from table*/
+SELECT
+	*
+into
+	dob_2018_sca_inputs_ms
+from
+(
+	SELECT
+		a.*
+	from
+		capitalplanning.dob_2018_sca_inputs_ms_pre a
+	left join
+		capitalplanning.qc_potentialdups b
+	on
+		a.job_type = b.job_type 					and
+		a.bin = b.geo_bin							and
+		a.bbl = b.geo_bbl							and
+		a.most_recent_status_date < b.status_date
+	where
+		b.job_type is null
+
+) x
+
+
+/************************FURTHER ANALYSIS******************************/
 
 /*Collecting DOB jobs which overlap with each other*/
 
@@ -138,6 +161,10 @@ from
 	        not (tab1.job_number = '210069753' and tab2.job_number = '210069432')   and 
 	        not (tab1.job_number = '420652225' and tab2.job_number = '420652537')   
 ) x
+
+
+
+
 
 
 /*Limiting the above list of overlaps to a potential list of dups based on job type and status date. Omitting BIN/BBL matches if they are "million BINs" and addresses do not match.*/

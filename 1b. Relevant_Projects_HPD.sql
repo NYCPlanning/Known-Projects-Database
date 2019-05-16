@@ -62,33 +62,29 @@ from
 	--	longitude,
 	--	bin,
 		bbl,
+		NYCHA_Flag,
 		source
 	from(
 
 
 		SELECT
 			b.the_geom,
-			concat(a.project_id,a.building_id) 				as project_id,
-			a.project_id 							as hpd_project_id,
+			concat(a.project_id,'/',a.building_id) 						as project_id,
+			a.project_id 												as hpd_project_id,
 			a.building_id,
-			null 								as project_name,
-	--		null 								as primary_program_at_start,
-			a.reporting_construction_type 					as construction_type,
-			null 								as lead_agency,
-			'Projected' 							as Status,
-	--		null 								as project_start_date,
-	--		null 								as projected_completion_date,
+			null 														as project_name,
+			a.reporting_construction_type 								as construction_type,
+			null 														as lead_agency,
+			'Projected' 												as Status,
 			a.projected_fiscal_year_range,
-			concat(a.house_number, ' ',a.street_name) 			as address,
-			a.boro_full_name 						as borough,
+			concat(a.house_number, ' ',a.street_name) 					as address,
+			a.boro_full_name 											as borough,
 			a.min_of_projected_units,
 			a.max_of_projected_units,
 			(a.min_of_projected_units+a.max_of_projected_units)/2 		as total_units, /*We have been given a range for total units, and have chosen the avg of the high and low*/
-	--		null		 						as latitude,
-	--		null		 						as longitude,
-	--		null 								as bin, 
-			concat(a.bbl) 							as bbl,
-			'HPD Projected Closings'					as Source
+			concat(a.bbl) 												as bbl,
+			0 															as NYCHA_Flag,
+			'HPD Projected Closings'									as Source
 		from
 			capitalplanning.hpd_projected_closings_190409_ms a
 		left join
@@ -98,41 +94,38 @@ from
 			(a.bbl 	= 2027380037 and b.bbl = 2027380035) /*Accounting for project at 720 Tiffany Street which will clearly be on lot with BBL 2027380035, but is listed as a nonexistant lot 2027380037*/
 		union
 		select
-			st_union(coalesce(b.the_geom,c.the_geom)) 			as the_geom,
-			concat(a.cartodb_id) 						as project_id,
-			null 								as hpd_project_id,
-			null								as building_id,
-			a.rfp_project_name 						as project_name,
-	--		null 								as primary_program_at_start,
-			null 								as construction_type,			
+			st_union(coalesce(b.the_geom,c.the_geom)) 						as the_geom,
+			concat(a.cartodb_id) 											as project_id,
+			null 															as hpd_project_id,
+			null															as building_id,
+			a.rfp_project_name 												as project_name,
+			null 															as construction_type,			
 			a.lead_agency,
-			concat	(
+			concat	
+				(
 					case when a.designated 	is true then 'RFP designated' 		else 'RFP issued'		end,
 					case when a.closed 	is true then '; financing closed' 	else '; financing not closed' 	end
-				) 							as status,
-	--		null 								as project_start_date,
-	--		null 								as projected_completion_date,
-			null								as projected_fiscal_year_range,
-			null 								as address,
+				) 															as status,
+			null															as projected_fiscal_year_range,
+			null 															as address,
 			a.borough,
 			null,
 			null,
-			a.announced_unit_count 						as total_units,
-	--		null 								as latitude,
-	--		null 								as longitude,
-	--		null 								as bin,
+			a.announced_unit_count 											as total_units,
 			array_to_string(array_agg(concat(coalesce(b.bbl,c.bbl))),', ') 	as bbl,
-			'HPD RFPs' 							as Source
+			case when lead_agency like '%NYCHA%' then 1 else 0 end as NYCHA_Flag,
+			'HPD RFPs' 														as Source
 		from
-			capitalplanning.hpd_rfps_2019_03_18 a
+			capitalplanning.hpd_rfps_2019_05_16 a
 		left join
 			capitalplanning.hpd_rfps_1 b
 		on 
 			(a.rfp_project_name = b.rq__p_n) 																										or 
-			(a.rfp_project_name = 'NYCHA Twin Park West'						and b.bbl in (2031430234,2031430236,2031430240)) 	or 
-			(a.rfp_project_name = 'MWBE Site D - 359 E. 157th Street / 784 Courtlandt Avenue' 	and b.bbl in(2024040001, 2024040002)) 			or 
-			(a.rfp_project_name = 'NYCHA Betances V' 						and b.bbl in(2022870026, 2022870071)) 			or
-			(a.rfp_project_name = 'NYCHA Betances VI'						and b.bbl =2022910001)
+			(a.rfp_project_name = 'NYCHA Twin Park West'										and b.bbl in (2031430234,2031430236,2031430240)) 	or 
+			(a.rfp_project_name = 'MWBE Site D - 359 E. 157th Street / 784 Courtlandt Avenue' 	and b.bbl in(2024040001, 2024040002)) 				or 
+			(a.rfp_project_name = 'NYCHA Betances V' 											and b.bbl in(2022870026, 2022870071)) 				or
+			(a.rfp_project_name = 'NYCHA Betances VI'											and b.bbl =2022910001)								or
+			(a.rfp_project_name = 'Broadway Triangle'											and upper(b.rq__p_n) like '%BROADWAY TRIANGLE%')
 		left join
 			capitalplanning.mappluto_v_18v1_1 c
 		on
@@ -150,7 +143,7 @@ from
 		) as compilation
 	order by 
 		source, 
-		cast(project_id as bigint)
+		project_id
 ) as hpd_2018_sca_inputs_ms
 
 

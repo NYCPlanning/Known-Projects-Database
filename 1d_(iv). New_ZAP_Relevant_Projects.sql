@@ -113,7 +113,7 @@ Then merge in polygons by Project_ID using this updated BBL file.
 
 update capitalplanning.v2_20190510_project_bbl_advanced_find_view_ms a
 set 
-	the_geom 		= b.the_geom,
+	the_geom 				= b.the_geom,
 	the_geom_webmercator 	= b.the_geom_webmercator
 from capitalplanning.mappluto_v_18v1_1 b
 where 

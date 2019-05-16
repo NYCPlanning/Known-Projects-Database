@@ -35,7 +35,6 @@ from
 		case when edc_id in(1,3) then 2025 else build_year end 	as build_year, /*R. Holbrook from EDC identifying Bedford-Union and Spofford as 2025 build years*/
 		borough,
 		total_units,
-		senior_units,
 		null 							as bbl,
 		null 							as borough_code,
 		null 							as block,
@@ -54,9 +53,8 @@ from
 		comments_on_phasing,
 		build_year,
 		'Brooklyn' 						as borough, /*Updated project information solely for
-										      Coney North and West in BK*/
+										      		  Coney North and West in BK*/
 		total_units,
-		null 							as senior_units,
 		bbl,
 		borough_code,
 		block,

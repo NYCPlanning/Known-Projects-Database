@@ -236,6 +236,7 @@ FROM
 		trim(concat(site,' ',neighborhood,' ',upper(status))) as Project_ID,
 		site,
 		neighborhood,
+		status,
 		st_union(the_geom) as the_geom, 
 		st_union(the_geom_webmercator) as the_geom_webmercator,
 		sum(coalesce(units,0)) as Units,
@@ -245,10 +246,14 @@ FROM
 	group by
 		trim(concat(site,' ',neighborhood,' ',upper(status))),
 		site,
-		neighborhood
-	order by
 		neighborhood,
-		project_id
+		status
+	order by
+		trim(concat(site,' ',neighborhood,' ',upper(status))),
+		neighborhood,
+		site,
+		status
+
 ) x
 	
 
@@ -256,13 +261,15 @@ FROM
 select
 	*
 INTO
-	dep_ndf_by_site
+	dep_ndf_by_site_pre_1
 from
 (
-	SELECT
+	SELECT	
 		a.project_id,
-		a.site,
+		a.site as project_name,
+		/*Add a status field*/
 		a.neighborhood,
+		a.status,
 		a.the_geom,
 		a.the_geom_webmercator,
 		CASE 
@@ -287,9 +294,33 @@ from
 		a.project_id = b.project_id or
 		/*Performing manual matches based on planner inputs not labeled as the appropriate rezoning commitment*/
 		(a.project_id = 'Phipps House EAST NEW YORK REZONING COMMITMENT' 		and b.project_id = '67 EAST NEW YORK REZONING COMMITMENT') or
-		(a.project_id = 'Dinsmore - Chestnut EAST NEW YORK REZONING COMMITMENT'	and b.project_id = '66 EAST NEW YORK REZONING COMMITMENT')
+		(a.project_id = 'Dinsmore - Chestnut EAST NEW YORK REZONING COMMITMENT'	and b.project_id = '66 EAST NEW YORK REZONING COMMITMENT') or
+		(a.project_id = 'Jersey Street Garage BAY STREET CORRIDOR REZONING COMMITMENT' and b.project_id = 'Current 6')
 
 ) x 
+
+
+/*Add an improved Project ID */
+
+select
+	*
+INTO
+	dep_ndf_by_site
+from
+(
+	SELECT
+		concat(initcap(a.neighborhood),' ', initcap(a.status),' ', row_number() over(partition by a.neighborhood, a.status )) 	as project_id,
+		case
+			when a.status = 'Rezoning Commitment' then a.project_name end 										as project_name,
+		initcap(a.neighborhood) as neighborhood,
+		initcap(a.status) as status,
+		a.the_geom,
+		a.the_geom_webmercator,
+		a.units,
+		a.included_bbls
+	from
+		dep_ndf_by_site_pre_1 a
+) x
 
 
 /************************RUN IN REGULAR CARTO*********************/
