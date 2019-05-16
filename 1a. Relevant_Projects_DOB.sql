@@ -31,19 +31,26 @@ select
 	boro 												as borough,
 	occ_init,
 	occ_prop,
+
+	/*Flag for MQL*/
 	case 
 		when 	/*Creating a Partial Complete status*/
 			job_type = 'New Building' 		and 
 			status = 'Complete' 			and 
 			co_latest_certtype = 'T- TCO' 	and
-			cast(co_latest_units as double precision)/cast(units_net as double precision) < .8 
+			(
+				(cast(co_latest_units as double precision)/cast(units_net as double precision) < .8  	and units_net >= 20) or
+				(units_net - co_latest_units >=5 														and units_net between 5 and 19)
+			)
 											then 'Partial Complete'
-		when	/*~100 NB jobs have been labeled as complete without associated COs. Reverting to status
-			  'Permit Issued'*/	
-			job_type = 'New Building' 	and
-			status = 'Complete'			and
-			co_latest_units is null		
-											then 'Permit Issued'
+
+		-- when	/*~100 NB jobs have been labeled as complete without associated COs. Reverting to status
+		-- 	  'Permit Issued'*/	
+		-- 	job_type = 'New Building' 	and
+		-- 	status = 'Complete'			and
+		-- 	co_latest_units is null		
+		-- 									then 'Permit Issued'
+
 											else status end
 														as status,
 	status_date 										as most_recent_status_date,
@@ -164,6 +171,56 @@ from
 	) x
 
 
+/*Deduplicating list of DOB relevant projects*/
+
+SELECT
+	*
+into
+	dob_2018_sca_inputs_ms
+from
+(
+	SELECT
+		*
+	from
+		dob_2018_sca_inputs_ms_pre
+	where
+		job_number not in
+		(
+			SELECT
+				dup_job_number
+			from
+				dob_overlaps_lim
+			where
+				dup_job_number not in
+				(
+					321063503, /*List of matched projects which actually represent different developments. See superseded section for more explanation*/
+					321063512,
+					321063521,
+					321063530,
+					321063549,
+					321063558,
+					321063567,
+					321063576,
+					321063585,
+					321063594,
+					321063601,
+					321063610
+				)	
+		)
+) x
+
+/************************************RUN IN REGULAR CARTO*****************************/
+
+select cdb_cartodbfytable('capitalplanning', 'dob_2018_sca_inputs_ms')
+
+
+
+
+
+
+/***********************************************************SUPERSEDED*************************************************/
+
+
 /*Limiting to the list of overlaps which have been found in other data sources in the housing pipeline. Only 38 distinct dup_jobs.
   After review, find that only matches based on address as well are accurate. The following jobs are all part of 1 development (1560 60th street) and
   represent many structures, according to https://newyorkyimby.com/2015/01/permits-filed-for-large-borough-park-development-at-1560-60th-street.html. These
@@ -219,46 +276,3 @@ from
 		)
 
 ) x
-
-
-/*Deduplicating list of DOB relevant projects*/
-
-SELECT
-	*
-into
-	dob_2018_sca_inputs_ms
-from
-(
-	SELECT
-		*
-	from
-		dob_2018_sca_inputs_ms_pre
-	where
-		job_number not in
-		(
-			SELECT
-				dup_job_number
-			from
-				dob_overlaps_lim
-			where
-				dup_job_number not in
-				(
-					321063503,
-					321063512,
-					321063521,
-					321063530,
-					321063549,
-					321063558,
-					321063567,
-					321063576,
-					321063585,
-					321063594,
-					321063601,
-					321063610
-				)	
-		)
-) x
-
-/************************************RUN IN REGULAR CARTO*****************************/
-
-select cdb_cartodbfytable('capitalplanning', 'dob_2018_sca_inputs_ms')
