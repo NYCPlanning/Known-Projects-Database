@@ -1024,6 +1024,15 @@ from DCP_PROJECT_FLAGS_V2 A LEFT JOIN relevant_dcp_projects_housing_pipeline_ms_
 LEFT JOIN
 mapped_planner_inputs_consolidated_inputs_ms C
 ON ST_INTERSECTS(A.THE_GEOM,C.THE_GEOM)
-WHERE B.PROJECT_ID IS NULL AND C.THE_GEOM IS NOT NULL AND A.PROJECT_STATUS NOT LIKE '%Closed%' and a.project_status not like '%Withdrawn%' 
+WHERE B.PROJECT_ID IS NULL AND C.THE_GEOM IS NOT NULL AND A.PROJECT_STATUS NOT LIKE '%Closed%' and a.project_status not like '%Withdrawn%' and
+a.historical_project_pre_2012 = 0 and 
+		outdated_overlapping_project is null 				and 
+		non_residential_project_incl_group_quarters is null and 
+		withdrawn_project is null							and 
+		inactive_project is null							and 
+		other_reason_to_omit is null						and 
+		should_be_in_old_zap_pull is null					and 
+		should_be_in_new_zap_pull is null					and
+
 
 CREATE EXTENSION pg_trgm;
