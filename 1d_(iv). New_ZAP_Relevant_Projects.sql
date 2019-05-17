@@ -43,6 +43,9 @@ Sources: edc_2018_sca_input_1_limited, dob_2018_sca_inputs_ms,
 
 /********************************RUN IN REGULAR CARTO*******************************************/
 
+select cdb_cartodbfytable('capitalplanning', 'dcp_zap_consolidated_20190510_ms')
+
+
 ALTER TABLE CAPITALPLANNING.dcp_zap_consolidated_20190510_ms
 ADD COLUMN ULURP_NUMBER TEXT,
 ADD COLUMN match_heip_geom numeric,
@@ -454,6 +457,8 @@ FROM
 		a.project_id is not null
 ) as DCP_Project_Flagging
 
+
+select cdb_cartodbfytable('capitalplanning', 'DCP_PROJECT_FLAGS_V2')
 
 
 SELECT
@@ -1003,3 +1008,22 @@ from
 /**********************RUN IN REGULAR CARTO**************************/
 
 select cdb_cartodbfytable('capitalplanning', 'relevant_dcp_projects_housing_pipeline_ms_v3')
+
+
+select A.* from DCP_PROJECT_FLAGS_V2 A LEFT JOIN relevant_dcp_projects_housing_pipeline_ms_v3 B ON A.PROJECT_ID = B.PROJECT_ID WHERE B.PROJECT_ID IS NULL
+
+
+/*Pull out explicit ZAP projects which are not in pipeline, and borough additions which are not explicit but are in ZAP*/
+
+select A.*, c.map_id, c.project_id as project_id_map, c.project_name as project_name_map, c.status as status_map, c.total_units_from_planner, c.source 
+
+, case when a.project_name <> '' and (position(upper(a.project_name) in upper(c.project_name))>0 or position(upper(c.project_name) in upper(a.project_name))>0) then 1 else 0 end as name_match
+
+from DCP_PROJECT_FLAGS_V2 A LEFT JOIN relevant_dcp_projects_housing_pipeline_ms_v3 B ON A.PROJECT_ID = B.PROJECT_ID 
+
+LEFT JOIN
+mapped_planner_inputs_consolidated_inputs_ms C
+ON ST_INTERSECTS(A.THE_GEOM,C.THE_GEOM)
+WHERE B.PROJECT_ID IS NULL AND C.THE_GEOM IS NOT NULL AND A.PROJECT_STATUS NOT LIKE '%Closed%' and a.project_status not like '%Withdrawn%' 
+
+CREATE EXTENSION pg_trgm;
