@@ -139,7 +139,7 @@ with dcp_project_bbls_zap_ms_consolidated as
 
 update capitalplanning.dcp_zap_consolidated_20190510_ms a
 set 
-	the_geom = 		coalesce(a.the_geom,b.the_geom),
+	the_geom = 				coalesce(a.the_geom,b.the_geom),
 	THE_GEOM_WEBMERCATOR=	coalesce(a.THE_GEOM_WEBMERCATOR,b.THE_GEOM_WEBMERCATOR),
 	match_pluto_geom = 	1
 from dcp_project_bbls_zap_ms_consolidated b
@@ -160,7 +160,7 @@ Merging in polygon data from Impact_Poly_Latest, last updated in April 2018.
 
 update capitalplanning.dcp_zap_consolidated_20190510_ms a
 set 
-	the_geom = 			coalesce(a.the_geom,b.the_geom),
+	the_geom = 					coalesce(a.the_geom,b.the_geom),
 	THE_GEOM_WEBMERCATOR =		coalesce(a.THE_GEOM_WEBMERCATOR,b.THE_GEOM_WEBMERCATOR),
 	match_impact_poly_latest = 	1
 from capitalplanning.Impact_Poly_Latest b
@@ -409,7 +409,6 @@ FROM
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%FLOATING%' 			THEN 1
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%TRANSITIONAL%' 			THEN 1
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%FOSTER%' 				THEN 1
-			-- WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%PARKING%' 			THEN 1
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%ILLUMIN%' 			THEN 1
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%RESIDENCE DISTRICT%' 		THEN 1
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%LANDMARKS PRESERVATION COMMISSION%' THEN 1
@@ -426,20 +425,44 @@ FROM
 					  									END
 		,0) 														AS Potential_Residential,
 
-		/*Identifying senior housing projects*/
-		CASE WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%SENIOR%' THEN 1 ELSE 0 END 		AS SENIOR_HOUSING_flag,
+		/*Identifying NYCHA Projects*/
+		CASE 
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%NYCHA%' THEN 1   		
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%BTP%' THEN 1  		
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%HOUSING AUTHORITY%' THEN 1  		
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%NEXT GEN%' THEN 1  		
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%NEXT-GEN%' THEN 1  		
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%NEXTGEN%' THEN 1  		
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%BUILD TO PRESERVE%' THEN 1 ELSE 0 END 		AS NYCHA_Flag,
 
-		/*IDENTIFYING SUPPORTIVE HOUSING AND ASSISTED LIVING PROJECTS.*/
+		CASE 
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%CORRECTIONAL%' THEN 1   		
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%NURSING%' THEN 1  		
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%MENTAL%' THEN 1  		
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%MEDICAL%' THEN 1  		
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%DORMITOR%' THEN 1  		
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%HOSPITAL%' THEN 1  		
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%COLLEGE%' THEN 1  		
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%MILITARY%' THEN 1  		
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%GROUP HOME%' THEN 1  		
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%SHELTER%' THEN 1  		
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%BARRACK%' THEN 1 ELSE 0 END 		AS GQ_fLAG,
+
+
+		/*Identifying definite senior housing projects*/
+		CASE 
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%SENIOR%' THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%ELDERLY%' THEN 1 	
+		  WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%AIRS%' THEN 1
+		  WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%A.I.R.S%' THEN 1 else 0 end as Senior_Housing_Flag,
+
+
+		/*IDENTIFYING Potential Senior Housing Institutions.*/
 		CASE																											
-		  WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%NURSING%' THEN 1
 		  WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%AMBULATORY%' THEN 1
 		  WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%MEDICAL%' THEN 1
-		  WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%AIRS%' THEN 1
-		  WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%A.I.R.S%' THEN 1
 		  WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%CONTINUING CARE%' THEN 1
-		  WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%ASSISTED LIVING%' THEN 1
-		  WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%ELDERLY%' THEN 1
-		  WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%SHELTER%' THEN 1 ELSE 0 END 		as Assisted_Living_Supportive_Housing_flag,
+		  WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%ASSISTED LIVING%' THEN 1 else 0 end 		as Potential_Senior_Housing_Flag,
 
 		case when a.process_stage_name_stage_id_process_stage = 'Initiation' then 1 else 0 end 				as Initiation_Flag, /*Potential exclusion if 1*/
 		case when a.process_stage_name_stage_id_process_stage = 'Pre-Pas' then 1 else 0 end 				as Pre_PAS_Flag, /*Potential exclusion if 1*/
@@ -464,7 +487,7 @@ select cdb_cartodbfytable('capitalplanning', 'DCP_PROJECT_FLAGS_V2')
 SELECT
 	*
 into
-	relevant_dcp_projects_housing_pipeline_ms_v2
+	relevant_dcp_projects_housing_pipeline_ms_v2_pre
 from
 (
 	with relevant_dcp_projects as
@@ -531,7 +554,8 @@ from
 				project_status not like '%Withdrawn%' 					and
 				applicant_type <> 'DCP' 								and
 				project_id <> 'P2016Q0238'  							and /*Omitting DTFR rezoning from ZAP*/
-				project_id <> 'P2016R0149'									/*Omitting BSC rezoning from ZAP*/
+				project_id <> 'P2016R0149'								and	/*Omitting BSC rezoning from ZAP*/
+				project_id <> 'P2012M0255'									/*Omitting Hudson Square rezoning from ZAP as it is no longer residential*/
 				-- and pre_pas_flag<>1 and
 				-- initiation_flag<>1
 			) or
@@ -543,10 +567,13 @@ from
 				      ) or
 			/*Including projects from Public Sites*/
 			project_id in
-				     (select 
+				     (
+				      select 
 				      	zap_project_id 
 				      from 
 				      	capitalplanning.table_190510_public_sites_ms_v3 
+				      where 
+				      	zap_project_id not like 'P2016R0149' /*Omitting BSC rezoning identification in Public Sites*/
 				     )  or
 			project_id like '%[ESD Project]%' /*State project*/
 		order by project_id
@@ -586,13 +613,14 @@ from
 	 		capitalplanning.potential_residential_zap_project_check_ms b
 	 	on 
 	 		a.project_id = b.project_id
-	 	-- left join
-	 	-- 	capitalplanning.20190510_potential_residential_zap_project_check_ms_v2 c
-	 	-- on
-	 	-- 	a.project_id = c.project_id
+	 	left join
+	 	 	capitalplanning.table_20190510_potential_residential_project_check_ms_v2 c /*This is a list of projects identified as potentially residential, which
+	 	 																			   existed in the new ZAP pull but not the old ZAP pull. Take the full
+	 	 																			   potential residential project list and only selecting the projects
+	 	 																			   which exist in the new list but not the old list*/ 
+	 	on
+	 		a.project_id = c.project_id
 	),
-
-	/*ADD IN NEW POTENTIAL RESIDENTIAL LOOKUP HERE*/
 
 	/*Limiting to projects which have confirmed dwelling units, or are the additional
 	  large rezonings (HY, WRY, 550 Washington), Public Sites Projects, or State Projects*/
@@ -625,8 +653,6 @@ from
 			project_brief,
 			applicant_type,
 			case when substring(lead_action,1,2) = 'ZM' then 1 else 0 end as Rezoning_Flag,
-			case when project_id = 'P2017R0349' then 1 else senior_housing_flag end as senior_housing_flag, --Flagging additional senior housing project
-			case when project_id = 'P2018X0001' then 1 else Assisted_Living_Supportive_Housing_flag end as Assisted_Living_Supportive_Housing_flag, --Flagging additional supportive housing project
 			project_status,
 			previous_project_status,
 			process_stage_name_stage_id_process_stage as process_stage,
@@ -672,7 +698,9 @@ from
 									coalesce(mih_dwelling_units_higher_number,mih_dwelling_units_lower_number,0) + coalesce(voluntary_affordable_dwelling_units_non_mih,0) else null end,
 									/*	Two observations where voluntary affordable units is listed and total_dwelling_units is not, and the voluntary_affordable units are confirmed by the project
 										description.*/
-							case when residential_sq_ft/850 < 1 and residential_sq_ft is not null then 1 else residential_sq_ft/850 end /*Average DUs/sqft. Confirmed by T. Smith*/
+							case when residential_sq_ft/1000 < 1 and residential_sq_ft is not null then 1
+								 when b.the_geom is not null then residential_sq_ft/850
+								 else residential_sq_ft/1000 end /*1,000 sqft/du except for 850 sqft/du in Manhattan Core*/
 							) end 
 
 																																									as total_units,
@@ -691,6 +719,10 @@ from
 			dwelling_units as dwelling_units_flag,
 			confirmed_potential_residential as potential_residential_flag,
 			need_manual_research_flag,
+			NYCHA_Flag,
+			GQ_Flag,
+			Senior_Housing_Flag,
+			Potential_Senior_Housing_Flag,
 			initiation_flag,
 			pre_pas_flag,
 			Diff_Between_Total_and_New_Units,
@@ -702,12 +734,24 @@ from
 			match_pluto_geom,
 			match_impact_poly_latest
 	from 
-		relevant_dcp_projects_2
-	),
+		relevant_dcp_projects_2 a
+	left join
+		capitalplanning.manhattan_cbd b
+	on
+		st_intersects(a.the_geom,b.the_geom) 
+	)
+	select * from relevant_dcp_projects_3
+) x
 
+SELECT
+	*
+into
+	relevant_dcp_projects_housing_pipeline_ms_v2
+from
+(
 	/*Identifying DCP projects which are permit renewals or changes of previous DCP projects. Omitting the outdated DCP project*/
 
-		matching_projects as
+	with	matching_projects as
 	(
 		select
 			a.cartodb_id,
@@ -725,9 +769,9 @@ from
 			b.total_units as match_total_units,
 			st_distance(a.the_geom,b.the_geom) as Distance
 		from
-			relevant_dcp_projects_3 a
+			relevant_dcp_projects_housing_pipeline_ms_v2_pre a
 		inner join
-			relevant_dcp_projects_3 b
+			relevant_dcp_projects_housing_pipeline_ms_v2_pre b
 		on 
 			coalesce(a.certified_referred,a.target_certified_date) >= coalesce(b.certified_referred,b.target_certified_date) and
 			a.project_id <> b.project_id and
@@ -789,7 +833,7 @@ from
 		select
 			*
 		from
-			relevant_dcp_projects_3
+			relevant_dcp_projects_housing_pipeline_ms_v2_pre
 		where
 			project_id not in
 							(
@@ -887,6 +931,7 @@ from
 			when project_id in(select project_id from capitalplanning.mapped_planner_inputs_consolidated_inputs_ms where source in('ZAP','DCP','DCP ZAP') and non_residential_project_incl_group_quarters 	= 1) then 'Planner Noted Non-Residential'
 			when project_id in(select project_id from capitalplanning.mapped_planner_inputs_consolidated_inputs_ms where source in('ZAP','DCP','DCP ZAP') and withdrawn_project 							= 1) then 'Planner Noted Withdrawn'
 			when project_id in(select project_id from capitalplanning.mapped_planner_inputs_consolidated_inputs_ms where source in('ZAP','DCP','DCP ZAP') and inactive_project 								= 1) then 'Planner Noted Inactive'
+			when project_id in(select project_id from capitalplanning.mapped_planner_inputs_consolidated_inputs_ms where source in('ZAP','DCP','DCP ZAP') and Exclude_NYCHA_Flag 							= 1) then 'Planner Noted NYCHA Exclusion'
 			when project_id in(select project_id from capitalplanning.mapped_planner_inputs_consolidated_inputs_ms where source in('ZAP','DCP','DCP ZAP') and other_reason_to_omit 							= 1) then 'Planner Noted Other Reason to Omit'
 			else null end as Planner_Noted_Omission
 	from
@@ -918,12 +963,12 @@ from
 																	) 
 			else a.total_units_1 end 																														as total_units_2
 		,case
-			when b.updated_unit_count is not null then 'Planner'
-			when b.total_units_from_planner is not null and b.total_units_from_planner<>a.total_units_1 and a.project_id <> 'P2005M0053' then 'Planner'
-			when a.total_units_1 is not null and a.total_units_1 <> 0 then 'ZAP'
-			when b.ks_assumed_units is not null and b.ks_assumed_units<>'' then 'PLUTO FAR Estimate'
+			when b.updated_unit_count is not null 																							then 'Planner'
+			when b.total_units_from_planner is not null and b.total_units_from_planner<>a.total_units_1 and a.project_id <> 'P2005M0053' 	then 'Planner'
+			when a.total_units_1 is not null and a.total_units_1 <> 0 																		then 'ZAP'
+			when b.ks_assumed_units is not null and b.ks_assumed_units<>'' 																	then 'PLUTO FAR Estimate'
 			else null end as Total_Unit_Source
-		,b.map_id /*Manually convert this field to numeric*/
+		,b.map_id /*Manually convert this field to numeric in Carto interface*/
 		,b.the_geom as planner_geom
 		,b.the_geom_webmercator as planner_geom_webmercator
 		,b.source
@@ -937,11 +982,12 @@ from
 			else substring(ks_assumed_units,1,position('units' in ks_assumed_units)-1)::numeric end as ks_assumed_units
 		,units_remaining_not_accounted_for_in_other_sources
 		,lead_planner
-		/*Manually convert all of the following fields to numeric in Carto*/
+		/*Manually convert all of the following fields to numeric in Carto interface*/
 		,b.outdated_overlapping_project
 		,non_residential_project_incl_group_quarters
 		,withdrawn_project
 		,inactive_project
+		,Exclude_NYCHA_flag
 		,other_reason_to_omit
 		,corrected_existing_geometry
 		,corrected_existing_unit_count
@@ -951,7 +997,7 @@ from
 		,planner_added_project
 from
 	relevant_dcp_projects_housing_pipeline_ms_v2_1 a
-inner join
+left join
 	mapped_planner_inputs_consolidated_inputs_ms b
 on
 	a.project_id = b.project_id
@@ -977,8 +1023,10 @@ from
 			case when total_unit_source = 'ZAP' then total_units_source end as ZAP_Unit_Source,
 			applicant_type,
 			Rezoning_Flag,
-			senior_housing_flag, 
-			Assisted_Living_Supportive_Housing_flag, 
+			NYCHA_flag
+			,GQ_Flag
+			,Senior_Housing_Flag
+			,Potential_Senior_Housing_Flag,
 			project_status,
 			previous_project_status,
 			process_stage,
@@ -1010,29 +1058,161 @@ from
 select cdb_cartodbfytable('capitalplanning', 'relevant_dcp_projects_housing_pipeline_ms_v3')
 
 
-select A.* from DCP_PROJECT_FLAGS_V2 A LEFT JOIN relevant_dcp_projects_housing_pipeline_ms_v3 B ON A.PROJECT_ID = B.PROJECT_ID WHERE B.PROJECT_ID IS NULL
+/*********************RUN IN CARTO BATCH**************************/
 
 
-/*Pull out explicit ZAP projects which are not in pipeline, and borough additions which are not explicit but are in ZAP*/
+/*
+	Final comparison of planner inputs to ZAP projects. What non-identified ZAP projects are in the planner-inputs? Identifying and including these projects  
+	from DCP_PROJECT_FLAGS_V2
+*/
 
-select A.*, c.map_id, c.project_id as project_id_map, c.project_name as project_name_map, c.status as status_map, c.total_units_from_planner, c.source 
-
-, case when a.project_name <> '' and (position(upper(a.project_name) in upper(c.project_name))>0 or position(upper(c.project_name) in upper(a.project_name))>0) then 1 else 0 end as name_match
-
-from DCP_PROJECT_FLAGS_V2 A LEFT JOIN relevant_dcp_projects_housing_pipeline_ms_v3 B ON A.PROJECT_ID = B.PROJECT_ID 
-
+SELECT
+	*
+into
+	table_20190517_unidentified_zap_projects_planner_additions_ms
+from
+(
+select 
+		A.*, 
+		c.map_id, 
+		c.project_id as project_id_map, 
+		c.project_name as project_name_map, 
+		c.status as status_map, 
+		c.total_units_from_planner,
+		c.ks_assumed_units,
+		c.source, 
+		case when a.project_name <> '' and (position(upper(a.project_name) in upper(c.project_name))>0 or position(upper(c.project_name) in upper(a.project_name))>0) then 1 else 0 end as name_match
+from 
+	DCP_PROJECT_FLAGS_V2 A 
+LEFT JOIN 
+	relevant_dcp_projects_housing_pipeline_ms_v3 B 
+ON 
+	A.PROJECT_ID = B.PROJECT_ID 
 LEFT JOIN
-mapped_planner_inputs_consolidated_inputs_ms C
-ON ST_INTERSECTS(A.THE_GEOM,C.THE_GEOM)
-WHERE B.PROJECT_ID IS NULL AND C.THE_GEOM IS NOT NULL AND A.PROJECT_STATUS NOT LIKE '%Closed%' and a.project_status not like '%Withdrawn%' and
-a.historical_project_pre_2012 = 0 and 
-		outdated_overlapping_project is null 				and 
-		non_residential_project_incl_group_quarters is null and 
-		withdrawn_project is null							and 
-		inactive_project is null							and 
-		other_reason_to_omit is null						and 
-		should_be_in_old_zap_pull is null					and 
-		should_be_in_new_zap_pull is null					and
+	mapped_planner_inputs_consolidated_inputs_ms C
+ON 
+	ST_INTERSECTS(A.THE_GEOM,C.THE_GEOM)
+WHERE 
+	B.PROJECT_ID IS NULL AND 
+	C.THE_GEOM IS NOT NULL AND 
+	A.PROJECT_STATUS NOT LIKE '%Closed%' and 
+	a.project_status not like '%Withdrawn%' and
+	a.historical_project_pre_2012 = 0 and 
+	outdated_overlapping_project is null 				and 
+	non_residential_project_incl_group_quarters is null and 
+	withdrawn_project is null							and 
+	inactive_project is null							and
+	exclude_nycha_flag is null 							and
+	other_reason_to_omit is null						and 
+	should_be_in_old_zap_pull is null					and 
+	should_be_in_new_zap_pull is null					
+) x
 
 
-CREATE EXTENSION pg_trgm;
+/*Reupload this table back into Carto as table_20190517_unidentified_zap_projects_planner_additions_ms_1 after creating a name_match_manual field which
+  supports the automatic name match field. Include projects in which name_match = 1 or name_match_manual = 1 from dcp_project_flags_v2
+  and append them into relevant_dcp_projects_housing_pipeline_ms_v3
+*/
+
+SELECT
+	*
+into
+	relevant_dcp_projects_housing_pipeline_ms_v4
+from
+(
+	SELECT
+		*
+	from
+		relevant_dcp_projects_housing_pipeline_ms_v3
+	WHERE
+		TOTAL_UNITS <> 0
+	union
+	SELECT
+		row_number() over() + (select max(cartodb_id) from relevant_dcp_projects_housing_pipeline_ms_v3) as cartodb_id,
+		a.the_geom,
+		a.the_geom_webmercator,
+		a.project_id,
+		a.project_name,
+		a.borough, 
+		a.project_description,
+		a.project_brief,
+		coalesce(
+					b.total_units_from_planner,
+					case 
+						when a.PROJECT_ID = 'P2017M0394' THEN 588
+						when length(b.ks_assumed_units)<2 or position('units' in b.ks_assumed_units)<1 then null
+						else substring(b.ks_assumed_units,1,position('units' in b.ks_assumed_units)-1)::numeric end
+				) as total_units,
+		case when b.total_units_from_planner is not null then 'Planner'
+			 when b.ks_assumed_units <> '' then 'PLUTO FAR Estimate' end total_unit_source,
+		null as ZAP_Unit_Source,
+		a.applicant_type,
+		case when substring(a.lead_action,1,2) = 'ZM' then 1 else 0 end as Rezoning_Flag,
+		a.NYCHA_flag
+		,a.GQ_Flag
+		,a.Senior_Housing_Flag
+		,a.Potential_Senior_Housing_Flag
+		,a.project_status,
+		a.previous_project_status,
+		a.process_stage_name_stage_id_process_stage as process_stage,
+		a.previous_process_stage,
+		a.anticipated_year_built,
+		a.project_completed,
+		a.certified_referred,
+		a.dcp_target_certification_date,
+		a.system_target_certification_date,
+		coalesce(a.dcp_target_certification_date,a.system_target_certification_date) as target_certified_date,
+		a.project_status_date as latest_status_date,
+		a.no_si_seat,
+		a.initiation_flag,
+		a.pre_pas_flag,
+		a.Diff_Between_Total_and_New_Units,
+		a.Historical_Project_Pre_2012,
+		a.Historical_Project_Pre_2008
+	from
+		dcp_project_flags_v2 a
+	inner join
+		table_20190517_unidentified_zap_projects_planner_additions_ms_1 b
+	on
+		a.project_id = b.project_id and
+		(
+			name_match = 1 or
+			name_match_manual = 1
+		)
+	WHERE 
+		coalesce(
+					b.total_units_from_planner,
+					case 
+						when a.PROJECT_ID = 'P2017M0394' THEN 588
+						when length(b.ks_assumed_units)<2 or position('units' in b.ks_assumed_units)<1 then null
+						else substring(b.ks_assumed_units,1,position('units' in b.ks_assumed_units)-1)::numeric end
+				) <> 0
+) x
+
+/*Removing duplicates which exist both in the planners inputs and ZAP*/
+
+
+SELECT
+	*
+into
+	relevant_dcp_projects_housing_pipeline_ms_v5
+from
+(
+	SELECT
+		*,
+		row_number() over(partition by project_id) as project_id_instance
+	from
+		relevant_dcp_projects_housing_pipeline_ms_v4
+) x
+	where 
+		project_id_instance = 1 or
+		(project_id_instance = 1 and total_unit_source = 'ZAP') 
+
+
+
+
+
+/*Ensure that there are no added projects in ZAP already. If there are, replace the information.*/
+/*Pull out added projects from ZAP. If there are, replace the information.*/
+
+select cdb_cartodbfytable('capitalplanning', 'relevant_dcp_projects_housing_pipeline_ms_v5')
