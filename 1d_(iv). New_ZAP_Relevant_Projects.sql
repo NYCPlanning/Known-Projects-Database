@@ -1156,7 +1156,7 @@ from
 		a.NYCHA_flag,
 		a.GQ_Flag,
 		a.Senior_Housing_Flag,
-		a.Assisted_Living_Flag
+		a.Assisted_Living_Flag,
 		a.project_status,
 		a.previous_project_status,
 		a.process_stage_name_stage_id_process_stage as process_stage,
