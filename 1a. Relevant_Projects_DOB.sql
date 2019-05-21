@@ -87,6 +87,26 @@ order by
 
 
 
+/*Limiting to the duplicates to delete (will delete anything with an instance > 1*/
+
+
+select
+	*
+into
+	qc_potentialdups_1
+from
+(
+	select
+		*,
+		row_number() over(partition by job_type, geo_address order by status_date::date desc, job_number desc) as instance
+	from
+		qc_potentialdups
+) x
+
+
+
+
+
 /*Omitting old dups from table*/
 SELECT
 	*
@@ -99,22 +119,20 @@ from
 		case
 			when a.status like '%Complete%' then 0
 			when a.status like '%Partial Complete' then a.units_net - a.latest_cofo
-			else a.units_net end 														- a.units_net as units_net_complete, 
+			else a.units_net end 														- a.units_net 	as units_net_complete, 
 		case
 			when a.status like '%Complete%' then 0
 			when a.status like '%Partial Complete' then a.units_net - a.latest_cofo
-			else a.units_net end 														as units_net_incomplete
+			else a.units_net end 																		as units_net_incomplete
 	from
 		capitalplanning.dob_2018_sca_inputs_ms_pre a
 	left join
-		capitalplanning.qc_potentialdups b
+		capitalplanning.qc_potentialdups_1 b
 	on
-		a.job_type = b.job_type 					and
-		a.bin = b.geo_bin							and
-		a.bbl = b.geo_bbl							and
-		a.most_recent_status_date < b.status_date
+		a.job_number = b.job_number and
+		b.instance > 1
 	where
-		b.job_type is null
+		b.job_number is null
 
 ) x
 	order by

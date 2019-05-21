@@ -23,6 +23,7 @@ from
 	select
 		a.cartodb_id,
 		coalesce(b.the_geom,c.the_geom) as the_geom,
+		coalesce(b.the_geom_webmercator,c.the_geom_webmercator) as the_geom_webmercator,
 		a.unique_project_id,
 		concat('Public Site Pipeline ',a.project_id) as Public_Sites_ID,
 		a.boro,
@@ -40,11 +41,17 @@ from
 					when length(ks_assumed_units)<2 or position('units' in ks_assumed_units)<1 then null
 					else substring(ks_assumed_units,1,position('units' in ks_assumed_units)-1)::numeric end
 			) as total_units,
-		,a.aff_units,
+		a.aff_units,
 		a.cm,
 		a.developer,
 		a.program,
-		a.current_agency
+		a.current_agency,
+		b.rationale_2019,
+		b.phasing_notes_2019,
+		b.additional_notes_2019,
+		b.portion_built_2025,
+		b.portion_built_2035,
+		b.portion_built_2055
 	from
 		(select * from capitalplanning.table_190510_public_sites_ms_v3_1 where project_found_in = '' and omit_from_public_sites_relevant_projects = 0 /*Selecting public sites not accounted for in other sources*/) a
 	left join
@@ -62,3 +69,32 @@ from
 
 select cdb_cartodbfytable('capitalplanning', 'public_sites_2018_sca_inputs_ms')
 		
+
+select
+	*
+into
+	public_sites_2018_sca_inputs_ms_1
+from
+(
+	select
+		a.cartodb_id,
+		a.the_geom,
+		a.the_geom_webmercator,
+		a.unique_project_id,
+		a.public_sites_id,
+		a.boro,
+		a.lead,
+		a.project,
+		a.city_planning_comments,
+		a.total_units,
+		a.rationale_2019,
+		a.phasing_notes_2019,
+		a.additional_notes_2019,
+		a.portion_built_2025,
+		a.portion_built_2035,
+		a.portion_built_2055
+	from
+		public_sites_2018_sca_inputs_ms a
+) x
+
+select cdb_cartodbfytable('capitalplanning', 'public_sites_2018_sca_inputs_ms_1')
