@@ -79,7 +79,8 @@ from
 		ks_assumed_units,
 		units_remaining_not_accounted_for_in_other_sources,
 		lead_planner,
-		remaining_units_likely_to_be_built 	as remaining_units_likely_to_be_built_2018,
+		initcap(remaining_units_likely_to_be_built)
+										 	as remaining_units_likely_to_be_built_2018,
 		rationale							as rationale_2018,
 		rationale_for_likely_to_be_built	as rationale_2019,
 		phasing_if_known					as phasing_notes_2019,
@@ -120,7 +121,8 @@ from
 		ks_assumed_units,
 		units_remaining_not_accounted_for_in_other_sources,
 		lead_planner,
-		remaining_units_likely_to_be_built 	as remaining_units_likely_to_be_built_2018,
+		initcap(remaining_units_likely_to_be_built)
+										 	as remaining_units_likely_to_be_built_2018,
 		rationale							as rationale_2018,
 		rationale_for_likely_to_be_built	as rationale_2019,
 		phasing_if_known					as phasing_notes_2019,
@@ -161,7 +163,8 @@ from
 		ks_assumed_units,
 		units_remaining_not_accounted_for_in_other_sources,
 		lead_planner,
-		remaining_units_likely_to_be_built 	as remaining_units_likely_to_be_built_2018,
+		initcap(remaining_units_likely_to_be_built)
+										 	as remaining_units_likely_to_be_built_2018,
 		rationale							as rationale_2018,
 		rationale_for_likely_to_be_built_other_comments
 											as rationale_2019,
@@ -203,7 +206,8 @@ from
 		null as ks_assumed_units,
 		units_remaining_not_accounted_for_in_other_sources,
 		lead_planner,
-		remaining_units_likely_to_be_built 	as remaining_units_likely_to_be_built_2018,
+		initcap(remaining_units_likely_to_be_built)
+										 	as remaining_units_likely_to_be_built_2018,
 		rationale							as rationale_2018,
 		rationale_for_likely_to_be_built	as rationale_2019,
 		phasing_if_known					as phasing_notes_2019,
@@ -244,13 +248,14 @@ from
 		units_ks as ks_assumed_units,
 		units_remaining_not_accounted_for_in_other_sources,
 		lead_planner,
-		mql_view,
-		remaining_units_likely_to_be_built 	as remaining_units_likely_to_be_built_2018,
+		initcap(remaining_units_likely_to_be_built)
+										 	as remaining_units_likely_to_be_built_2018,
 		rationale							as rationale_2018,
 		rationale_for_likely_to_be_built	as rationale_2019,
 		phasing_if_known					as phasing_notes_2019,
 		note 								as additional_notes_2019,
 		''									as ZAP_Checked_Project_ID_2019,
+		mql_view,
 		suggestion,
 		must_get_boro_input,
 		response_to_mql_view,
@@ -279,6 +284,10 @@ from
 
 select cdb_cartodbfytable('capitalplanning', 'planner_inputs_consolidated_ms')
 
+
+update mapped_planner_added_projects_ms
+set updated_unit_count =  798, corrected_existing_unit_count = 1
+where project_id = 'P2012M0309'
 
 /*Join the planner inputs to the mapped developments. Then do the intersect and delete those projects which are based on the flag*/
 
@@ -310,6 +319,21 @@ from
 			phasing_notes_2019,
 			additional_notes_2019,
 			ZAP_Checked_Project_ID_2019,
+			case 
+				when
+					trim(rationale_2019) 			<> '' or
+					trim(phasing_notes_2019)		<> '' or
+					trim(additional_notes_2019) 	<> '' then 
+					concat_ws
+						(
+							' | ',
+							nullif(trim(rationale_2019),''),
+							nullif(trim(phasing_notes_2019),''),
+							nullif(trim(additional_notes_2019),'')
+						)	
+				when
+					trim(rationale_2018) <> '' then concat('2018 INPUT: ', trim(rationale_2018))
+				else null end as planner_input,
 			mql_view,
 			suggestion,
 			must_get_boro_input,
@@ -438,6 +462,7 @@ from
 			rationale_2019,
 			phasing_notes_2019,
 			additional_notes_2019,
+			planner_input,
 			mql_view,
 			suggestion,
 			must_get_boro_input,
@@ -466,6 +491,7 @@ from
 		order by
 			map_id asc
 ) x
+
 
 
 /**********************RUN IN REGULAR CARTO**************************/

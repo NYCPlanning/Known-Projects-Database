@@ -27,6 +27,9 @@ ADD COLUMN SITE TEXT,
 DROP COLUMN NAME,
 DROP COLUMN DESCRIPTION;
 
+delete from capitalplanning.dep_ndf_polygon_matching_ms
+where neighborhood is not null
+
 INSERT INTO capitalplanning.dep_ndf_polygon_matching_ms
 (
 		NEIGHBORHOOD,
@@ -127,6 +130,7 @@ SELECT
 		trim(concat(g.bbl)) as BBL
 from
 		capitalplanning.neighborhood_study_rezoning_commitments_ms g
+
 
 
 /*Resolving a typographical error in the raw data*/
@@ -275,12 +279,22 @@ from
 		CASE 
 			when A.PROJECT_ID LIKE '%REZONING COMMITMENT%' then	coalesce
 																	(
+																		case 
+																			when a.project_id = '(Projected RFP) DSNY 123rd Street Parking Lot (Site 3) EAST HARLEM REZONING COMMITMENT' 	then 115 end
+																			/*Inserting information from planner Joseph Huennekens. See email at the following link:
+																			"G:\03. Schools Planning\01_Inputs to SCA CP\Housing pipeline\00_Data\Jan 2019 SCA Housing Pipeline\Working Data\DEP NDF\RE East Harlem Rezoning Commitment.msg"
+																			*/
+																		case 
+																			when a.project_id = '54 Central Avenue BAY STREET CORRIDOR REZONING COMMITMENT' 								then 64 end
+																			/*Inserting information from planner Joseph Helferty. See email at the following link:
+																			"G:\03. Schools Planning\01_Inputs to SCA CP\Housing pipeline\00_Data\Jan 2019 SCA Housing Pipeline\Working Data\DEP NDF\RE BSC housing commitment sites.msg"
+																			*/
 																		case
-																			when a.project_id = 'Christopher-Glenmore EAST NEW YORK REZONING COMMITMENT' then 230 END/*Inserting information from HPD RFP ID 21*/,
+																			when a.project_id = 'Christopher-Glenmore EAST NEW YORK REZONING COMMITMENT' 									then 230 END/*Inserting information from HPD RFP ID 21*/,
 																		case
-																			when a.project_id = 'Beach 21st Street DOWNTOWN FAR ROCKAWAY REZONING COMMITMENT' then 224 END/*Inserting information from HPD RFP ID 11*/,
+																			when a.project_id = 'Beach 21st Street DOWNTOWN FAR ROCKAWAY REZONING COMMITMENT' 								then 224 END/*Inserting information from HPD RFP ID 11*/,
 																		case
-																			when a.project_id = 'Inwood Library INWOOD REZONING COMMITMENT' then 175 END/*Inserting information from HPD RFP ID 14*/,
+																			when a.project_id = 'Inwood Library INWOOD REZONING COMMITMENT' 												then 175 END/*Inserting information from HPD RFP ID 14*/,
 																		c.total_units_ms,
 																		b.total_units_from_planner, 
 																		case 
@@ -293,8 +307,26 @@ from
 		coalesce(c.rationale_for_assignments_for_likelihood_to_be_built,b.rationale_2019) as rationale_2019,
 		b.phasing_notes_2019,
 		b.additional_notes_2019,
-		coalesce(c.portion_built_2025,b.portion_built_2025) as portion_built_2025,
-		coalesce(c.portion_built_2035,b.portion_built_2035) as portion_built_2035,
+		coalesce(
+					/*Inserting information from planner Joseph hELFERY. See email at the following link:
+					"G:\03. Schools Planning\01_Inputs to SCA CP\Housing pipeline\00_Data\Jan 2019 SCA Housing Pipeline\Working Data\DEP NDF\RE BSC housing commitment sites.msg"
+					*/
+					case when a.project_id = '54 Central Avenue BAY STREET CORRIDOR REZONING COMMITMENT' then .5 end,
+					c.portion_built_2025,
+					b.portion_built_2025
+				) as portion_built_2025,
+		coalesce(
+					/*Inserting information from planner Joseph Helferty. See email at the following link:
+					"G:\03. Schools Planning\01_Inputs to SCA CP\Housing pipeline\00_Data\Jan 2019 SCA Housing Pipeline\Working Data\DEP NDF\RE BSC housing commitment sites.msg"
+					*/
+					case when a.project_id = '54 Central Avenue BAY STREET CORRIDOR REZONING COMMITMENT' then .5 end,
+					/*Inserting information from planner Joseph Huennekens. See email at the following link:
+					"G:\03. Schools Planning\01_Inputs to SCA CP\Housing pipeline\00_Data\Jan 2019 SCA Housing Pipeline\Working Data\DEP NDF\RE East Harlem Rezoning Commitment.msg"
+					*/
+					case when a.project_id = '(Projected RFP) DSNY 123rd Street Parking Lot (Site 3) EAST HARLEM REZONING COMMITMENT' 	then 1 end,
+					c.portion_built_2035,
+					b.portion_built_2035
+				) as portion_built_2035,
 		coalesce(c.portion_built_2055,b.portion_built_2055) as portion_built_2055
 	from
 		dep_ndf_by_site_pre a

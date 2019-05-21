@@ -65,7 +65,7 @@ from
 	left join
 		capitalplanning.dob_2018_sca_inputs_ms c
 	on 
-		a.bbl = c.bbl 											and
+		a.bbl::bigint = c.bbl									and
 		a.bbl is not null 										and 
 		b.address is null 										and
 		c.job_type<>'Demolition'
@@ -73,7 +73,6 @@ from
 		capitalplanning.dob_2018_sca_inputs_ms d
 	on
 		st_dwithin(cast(a.the_geom as geography),cast(d.the_geom as geography),20) /*Meters*/ 	and
-		a.latitude 	is not null 																and
 		b.address 	is null 																	and
 		c.bbl 		is null 																	and
 		d.job_type = 'New Building' 

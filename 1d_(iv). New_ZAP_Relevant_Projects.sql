@@ -427,7 +427,7 @@ FROM
 
 		/*Identifying NYCHA Projects*/
 		CASE 
-			when a.project_id = 'P2012Q0062'													then 0 /*NYCHA only a small part of Hallets Point*/
+			when a.project_id = 'P2012Q0062'											  then 0 /*NYCHA only a small part of this Hallets Point*/
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%NYCHA%' THEN 1   		
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%BTP%' THEN 1  		
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%HOUSING AUTHORITY%' THEN 1  		
@@ -458,7 +458,13 @@ FROM
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%A.I.R.S%' THEN 1 
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%CONTINUING CARE%' THEN 1
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%NURSING%' THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%ASSISTED LIVING%' THEN 1 else 0 end as Senior_Housing_Flag,
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%SARA%' THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%S.A.R.A%' THEN 1 end as Senior_Housing_Flag,
+		CASE
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%ASSISTED LIVING%' THEN 1 else 0 end as Assisted_Living_Flag,
+
+
+
 
 
 		case when a.process_stage_name_stage_id_process_stage = 'Initiation' then 1 else 0 end 				as Initiation_Flag, /*Potential exclusion if 1*/
@@ -719,6 +725,7 @@ from
 			NYCHA_Flag,
 			GQ_Flag,
 			Senior_Housing_Flag,
+			Assisted_Living_Flag,
 			initiation_flag,
 			pre_pas_flag,
 			Diff_Between_Total_and_New_Units,
@@ -1023,6 +1030,7 @@ from
 			NYCHA_flag,
 			GQ_Flag,
 			Senior_Housing_Flag,
+			Assisted_Living_Flag,
 			project_status,
 			previous_project_status,
 			process_stage,
@@ -1148,6 +1156,7 @@ from
 		a.NYCHA_flag,
 		a.GQ_Flag,
 		a.Senior_Housing_Flag,
+		a.Assisted_Living_Flag
 		a.project_status,
 		a.previous_project_status,
 		a.process_stage_name_stage_id_process_stage as process_stage,
@@ -1221,6 +1230,7 @@ from
 		b.rationale_2019,
 		b.phasing_notes_2019,
 		b.additional_notes_2019,
+		b.planner_input,
 		b.portion_built_2025,
 		b.portion_built_2035,
 		b.portion_built_2055,
