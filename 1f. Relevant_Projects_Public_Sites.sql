@@ -40,7 +40,7 @@ from
 					when length(ks_assumed_units)<2 or position('units' in ks_assumed_units)<1 then null
 					else substring(ks_assumed_units,1,position('units' in ks_assumed_units)-1)::numeric end
 			) as total_units,
-		a.aff_units,
+		,a.aff_units,
 		a.cm,
 		a.developer,
 		a.program,

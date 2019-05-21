@@ -276,16 +276,26 @@ from
 			when A.PROJECT_ID LIKE '%REZONING COMMITMENT%' then	coalesce
 																	(
 																		case
-																			when a.project_id = 'Beach 21st Street DOWNTOWN FAR ROCKAWAY REZONING COMMITMENT' then 224 END/*Inserting information from HPD RFPs*/,
+																			when a.project_id = 'Christopher-Glenmore EAST NEW YORK REZONING COMMITMENT' then 230 END/*Inserting information from HPD RFP ID 21*/,
 																		case
-																			when a.project_id = 'Inwood Library INWOOD REZONING COMMITMENT' then 175 END/*Inserting information from HPD RFPs*/,
+																			when a.project_id = 'Beach 21st Street DOWNTOWN FAR ROCKAWAY REZONING COMMITMENT' then 224 END/*Inserting information from HPD RFP ID 11*/,
+																		case
+																			when a.project_id = 'Inwood Library INWOOD REZONING COMMITMENT' then 175 END/*Inserting information from HPD RFP ID 14*/,
+																		c.total_units_ms,
 																		b.total_units_from_planner, 
 																		case 
 																			when length(b.ks_assumed_units)<2 or position('units' in b.ks_assumed_units)<1 then null
-																			else substring(b.ks_assumed_units,1,position('units' in b.ks_assumed_units)-1)::numeric end
+																			else replace(substring(b.ks_assumed_units,1,position('units' in b.ks_assumed_units)-1),', ','')::numeric end
 																	)
 			else a.units end as units,
-		a.included_bbls
+		a.included_bbls,
+		b.remaining_units_likely_to_be_built_2018,
+		coalesce(c.rationale_for_assignments_for_likelihood_to_be_built,b.rationale_2019) as rationale_2019,
+		b.phasing_notes_2019,
+		b.additional_notes_2019,
+		coalesce(c.portion_built_2025,b.portion_built_2025) as portion_built_2025,
+		coalesce(c.portion_built_2035,b.portion_built_2035) as portion_built_2035,
+		coalesce(c.portion_built_2055,b.portion_built_2055) as portion_built_2055
 	from
 		dep_ndf_by_site_pre a
 	left join
@@ -295,7 +305,11 @@ from
 		/*Performing manual matches based on planner inputs not labeled as the appropriate rezoning commitment*/
 		(a.project_id = 'Phipps House EAST NEW YORK REZONING COMMITMENT' 		and b.project_id = '67 EAST NEW YORK REZONING COMMITMENT') or
 		(a.project_id = 'Dinsmore - Chestnut EAST NEW YORK REZONING COMMITMENT'	and b.project_id = '66 EAST NEW YORK REZONING COMMITMENT') or
-		(a.project_id = 'Jersey Street Garage BAY STREET CORRIDOR REZONING COMMITMENT' and b.project_id = 'Current 6')
+		(a.project_id = 'Jersey Street Garage BAY STREET CORRIDOR REZONING COMMITMENT' and b.project_id = 'Current 6')					
+	left join
+		table_190401_dtfr_and_inwood_commitment_sites_edc_input_v1_jd_m c
+	on
+		POSITION(UPPER(C.COMMITMENT_SITE) IN UPPER(A.PROJECT_ID)) > 0
 
 ) x 
 
@@ -317,7 +331,12 @@ from
 		a.the_geom,
 		a.the_geom_webmercator,
 		a.units,
-		a.included_bbls
+		a.included_bbls,
+		rationale_2019,
+		phasing_notes_2019,
+		portion_built_2025,
+		portion_built_2035,
+		portion_built_2055
 	from
 		dep_ndf_by_site_pre_1 a
 ) x

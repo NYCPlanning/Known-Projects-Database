@@ -53,6 +53,7 @@ select cdb_cartodbfytable('capitalplanning', 'added_development_sites_20190510_M
 /**********************************RUN IN CARTO BATCH*****************/
 
 
+
 /*Joining in planner inputs, starting with Queens planner inputs.*/
 
 
@@ -78,6 +79,12 @@ from
 		ks_assumed_units,
 		units_remaining_not_accounted_for_in_other_sources,
 		lead_planner,
+		remaining_units_likely_to_be_built 	as remaining_units_likely_to_be_built_2018,
+		rationale							as rationale_2018,
+		rationale_for_likely_to_be_built	as rationale_2019,
+		phasing_if_known					as phasing_notes_2019,
+		'' 									as additional_notes_2019,
+		''									as ZAP_Checked_Project_ID_2019,
 		mql_view,
 		suggestion,
 		must_get_boro_input,
@@ -113,6 +120,12 @@ from
 		ks_assumed_units,
 		units_remaining_not_accounted_for_in_other_sources,
 		lead_planner,
+		remaining_units_likely_to_be_built 	as remaining_units_likely_to_be_built_2018,
+		rationale							as rationale_2018,
+		rationale_for_likely_to_be_built	as rationale_2019,
+		phasing_if_known					as phasing_notes_2019,
+		'' 									as additional_notes_2019,
+		''									as ZAP_Checked_Project_ID_2019,
 		mql_view,
 		suggestion,
 		must_get_boro_input,
@@ -148,6 +161,13 @@ from
 		ks_assumed_units,
 		units_remaining_not_accounted_for_in_other_sources,
 		lead_planner,
+		remaining_units_likely_to_be_built 	as remaining_units_likely_to_be_built_2018,
+		rationale							as rationale_2018,
+		rationale_for_likely_to_be_built_other_comments
+											as rationale_2019,
+		phasing_if_known					as phasing_notes_2019,
+		'' 									as additional_notes_2019,
+		''									as ZAP_Checked_Project_ID_2019,
 		mql_view,
 		suggestion,
 		must_get_boro_input,
@@ -183,6 +203,12 @@ from
 		null as ks_assumed_units,
 		units_remaining_not_accounted_for_in_other_sources,
 		lead_planner,
+		remaining_units_likely_to_be_built 	as remaining_units_likely_to_be_built_2018,
+		rationale							as rationale_2018,
+		rationale_for_likely_to_be_built	as rationale_2019,
+		phasing_if_known					as phasing_notes_2019,
+		'' 									as additional_notes_2019,
+		field_20							as ZAP_Checked_Project_ID,
 		mql_view,
 		suggestion,
 		must_get_boro_input,
@@ -219,6 +245,12 @@ from
 		units_remaining_not_accounted_for_in_other_sources,
 		lead_planner,
 		mql_view,
+		remaining_units_likely_to_be_built 	as remaining_units_likely_to_be_built_2018,
+		rationale							as rationale_2018,
+		rationale_for_likely_to_be_built	as rationale_2019,
+		phasing_if_known					as phasing_notes_2019,
+		note 								as additional_notes_2019,
+		''									as ZAP_Checked_Project_ID_2019,
 		suggestion,
 		must_get_boro_input,
 		response_to_mql_view,
@@ -272,6 +304,12 @@ from
 			ks_assumed_units,
 			units_remaining_not_accounted_for_in_other_sources,
 			lead_planner,
+			remaining_units_likely_to_be_built_2018,
+			rationale_2018,
+			rationale_2019,
+			phasing_notes_2019,
+			additional_notes_2019,
+			ZAP_Checked_Project_ID_2019,
 			mql_view,
 			suggestion,
 			must_get_boro_input,
@@ -285,7 +323,7 @@ from
 			withdrawn_project,
 			inactive_project,
 			case when 
-				b.source not like '%DCP%' and b.source not like '%HPD%' and upper(b.source) not like '%CITY HALL%'
+				b.source not like '%DCP%' and b.source not like '%HPD%' and upper(b.source) not like '%CITY HALL%' and b.project_id <> 'P2012Q0062' /*Correcting Halletts Point inclusion*/
 				and (b.project_name like '%NYCHA%' or upper(b.project_name) like '%BUILD TO PRESERVE%') then 1 end as Exclude_NYCHA_Flag,
 			other_reason_to_omit,
 			corrected_existing_geometry,
@@ -311,6 +349,7 @@ from
 
 /**********************RUN IN REGULAR CARTO**************************/
 
+
 select cdb_cartodbfytable('capitalplanning', 'mapped_planner_inputs_consolidated_inputs_ms')
 
 
@@ -329,7 +368,7 @@ from
 	from
 		capitalplanning.mapped_planner_inputs_consolidated_inputs_ms a
 	left join
-		capitalplanning.table_20190517_unidentified_zap_projects_planner_additions_ms_1 b
+		capitalplanning.table_20190520_unidentified_zap_projects_planner_additions_ms_v b
 	on
 		a.map_id = b.map_id and 
 		(
@@ -360,7 +399,7 @@ from
 		b.map_id is null 									and
 		a.project_id not in
 							(
-								select project_id from relevant_dcp_projects_housing_pipeline_ms_v4
+								select project_id from relevant_dcp_projects_housing_pipeline_ms_v5
 							)
 
 ) x
@@ -382,8 +421,7 @@ from
 			map_id,
 			boro,
 			cd,
-			project_name
-			status,
+			project_name,
 			coalesce(
 						total_units_from_planner,
 					case
@@ -394,7 +432,12 @@ from
 			case
 				when total_units_from_planner is not null then 'DCP'
 				when ks_assumed_units <> '' then 'PLUTO FAR Estimate' end as Total_Units_Source,
-			lead_planner,
+			status,
+			remaining_units_likely_to_be_built_2018,
+			rationale_2018,
+			rationale_2019,
+			phasing_notes_2019,
+			additional_notes_2019,
 			mql_view,
 			suggestion,
 			must_get_boro_input,
@@ -427,4 +470,4 @@ from
 
 /**********************RUN IN REGULAR CARTO**************************/
 
-select cdb_cartodbfytable('capitalplanning', 'mapped_planner_added_projects_ms')
+select cdb_cartodbfytable('capitalplanning', 'mapped_planner_inputs_added_projects_ms_1')

@@ -95,7 +95,15 @@ into
 from
 (
 	SELECT
-		a.*
+		a.*,
+		case
+			when a.status like '%Complete%' then 0
+			when a.status like '%Partial Complete' then a.units_net - a.latest_cofo
+			else a.units_net end 														- a.units_net as units_net_complete, 
+		case
+			when a.status like '%Complete%' then 0
+			when a.status like '%Partial Complete' then a.units_net - a.latest_cofo
+			else a.units_net end 														as units_net_incomplete
 	from
 		capitalplanning.dob_2018_sca_inputs_ms_pre a
 	left join
@@ -109,9 +117,19 @@ from
 		b.job_type is null
 
 ) x
+	order by
+		job_number asc
 
 
-/************************FURTHER ANALYSIS******************************/
+
+/************************************RUN IN REGULAR CARTO*****************************/
+
+select cdb_cartodbfytable('capitalplanning', 'dob_2018_sca_inputs_ms')
+
+
+
+
+/************************FURTHER SUPERSEDED ANALYSIS******************************/
 
 /*Collecting DOB jobs which overlap with each other*/
 
@@ -236,9 +254,6 @@ from
 		)
 ) x
 
-/************************************RUN IN REGULAR CARTO*****************************/
-
-select cdb_cartodbfytable('capitalplanning', 'dob_2018_sca_inputs_ms')
 
 
 

@@ -63,6 +63,9 @@ from
 	--	bin,
 		bbl,
 		NYCHA_Flag,
+		Likely_to_be_Built_by_2025_Flag,
+		Excluded_Project_Flag,
+		rationale_for_exclusion,
 		source
 	from(
 
@@ -84,6 +87,9 @@ from
 			(a.min_of_projected_units+a.max_of_projected_units)/2 		as total_units, /*We have been given a range for total units, and have chosen the avg of the high and low*/
 			concat(a.bbl) 												as bbl,
 			0 															as NYCHA_Flag,
+			null as Likely_to_be_Built_by_2025_Flag,
+			null as Excluded_Project_Flag,
+			null as rationale_for_exclusion,
 			'HPD Projected Closings'									as Source
 		from
 			capitalplanning.hpd_projected_closings_190409_ms a
@@ -91,7 +97,7 @@ from
 			capitalplanning.mappluto_v_18v2 b
 		on
 			a.bbl 	= b.bbl or
-			(a.bbl 	= 2027380037 and b.bbl = 2027380035) /*Accounting for project at 720 Tiffany Street which will clearly be on lot with BBL 2027380035, but is listed as a nonexistant lot 2027380037*/
+			(a.bbl 	= 2027380037 and b.bbl = 2027380035) /*Accounting for project at 720 Tiffany Street which will clearly be on lot with BBL 2027380035, but is listed as a nonexistent lot 2027380037*/
 		union
 		select
 			st_union(coalesce(b.the_geom,c.the_geom)) 						as the_geom,
@@ -114,6 +120,12 @@ from
 			a.announced_unit_count 											as total_units,
 			array_to_string(array_agg(concat(coalesce(b.bbl,c.bbl))),', ') 	as bbl,
 			case when lead_agency like '%NYCHA%' then 1 else 0 end as NYCHA_Flag,
+			case
+				when rfp_project_name = 'NYCHA Harborview Terrace' then 0 /*Project no longer in NYCHA pipeline*/
+				when estimated_build_year_by_2025 is true then 1 else 0 end as Likely_to_be_Built_by_2025_Flag,
+			case
+				when announced_unit_count = 0 then 1 else 0 end 			as Excluded_Project_Flag,
+			rationale_for_exclusion,
 			'HPD RFPs' 														as Source
 		from
 			capitalplanning.hpd_rfps_2019_05_16 a
@@ -139,7 +151,13 @@ from
 					case when a.closed 	is true	then '; financing closed' 	else '; financing not closed' 	end
 				),
 			a.borough,
-			a.announced_unit_count
+			a.announced_unit_count,
+			case when lead_agency like '%NYCHA%' then 1 else 0 end,
+			case
+				when estimated_build_year_by_2025 is true then 1 else 0 end,
+			case
+				when announced_unit_count = 0 then 1 else 0 end,
+			rationale_for_exclusion
 		) as compilation
 	order by 
 		source, 

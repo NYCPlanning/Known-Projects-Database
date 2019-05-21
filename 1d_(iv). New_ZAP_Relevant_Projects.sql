@@ -218,7 +218,7 @@ group by
 
 update capitalplanning.dcp_zap_consolidated_20190510_ms a
 set 
-	the_geom = 			coalesce(a.the_geom,b.the_geom),
+	the_geom = 					coalesce(a.the_geom,b.the_geom),
 	THE_GEOM_WEBMERCATOR=		coalesce(a.THE_GEOM_WEBMERCATOR,b.THE_GEOM_WEBMERCATOR),
 	match_lookup_pluto_geom = 	1
 from zap_project_missing_geom_lookup_1 b
@@ -340,7 +340,7 @@ FROM
 		(a.si_school_seat <> 'true' or a.si_school_seat is null) 								and
 		upper(concat(a.project_description,' ',a.project_brief)) not like '%SCHOOL SEAT CERT%' 	and 
 		upper(substring(a.project_name,1,3)) <> 'SS '
-							then 1 ELSE 0 end as No_SI_Seat, 
+							then 0 ELSE 1 end as SI_Seat_Cert, 
 							/*Potential exclusion if null. 
 							A few instances in project brief where school seat certification is mentioned. 
 							Also omitting 'SS ' from Project_Name.*/
@@ -427,6 +427,7 @@ FROM
 
 		/*Identifying NYCHA Projects*/
 		CASE 
+			when a.project_id = 'P2012Q0062'													then 0 /*NYCHA only a small part of Hallets Point*/
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%NYCHA%' THEN 1   		
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%BTP%' THEN 1  		
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%HOUSING AUTHORITY%' THEN 1  		
@@ -438,14 +439,14 @@ FROM
 		CASE 
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%CORRECTIONAL%' THEN 1   		
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%NURSING%' THEN 1  		
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%MENTAL%' THEN 1  		
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%MEDICAL%' THEN 1  		
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '% MENTAL%' THEN 1  		
+			-- WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%MEDICAL%' THEN 1  		
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%DORMITOR%' THEN 1  		
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%HOSPITAL%' THEN 1  		
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%COLLEGE%' THEN 1  		
+			-- WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%HOSPITAL%' THEN 1  		
+			-- WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%COLLEGE%' THEN 1  		
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%MILITARY%' THEN 1  		
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%GROUP HOME%' THEN 1  		
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%SHELTER%' THEN 1  		
+			-- WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%SHELTER%' THEN 1  		
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%BARRACK%' THEN 1 ELSE 0 END 		AS GQ_fLAG,
 
 
@@ -453,16 +454,12 @@ FROM
 		CASE 
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%SENIOR%' THEN 1
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%ELDERLY%' THEN 1 	
-		  WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%AIRS%' THEN 1
-		  WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%A.I.R.S%' THEN 1 else 0 end as Senior_Housing_Flag,
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%AIRS%' THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%A.I.R.S%' THEN 1 
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%CONTINUING CARE%' THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%NURSING%' THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%ASSISTED LIVING%' THEN 1 else 0 end as Senior_Housing_Flag,
 
-
-		/*IDENTIFYING Potential Senior Housing Institutions.*/
-		CASE																											
-		  WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%AMBULATORY%' THEN 1
-		  WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%MEDICAL%' THEN 1
-		  WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%CONTINUING CARE%' THEN 1
-		  WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%ASSISTED LIVING%' THEN 1 else 0 end 		as Potential_Senior_Housing_Flag,
 
 		case when a.process_stage_name_stage_id_process_stage = 'Initiation' then 1 else 0 end 				as Initiation_Flag, /*Potential exclusion if 1*/
 		case when a.process_stage_name_stage_id_process_stage = 'Pre-Pas' then 1 else 0 end 				as Pre_PAS_Flag, /*Potential exclusion if 1*/
@@ -544,7 +541,7 @@ from
 			dcp_project_flags_v2
 		where
 			(
-				-- no_si_seat = 1 and 
+				-- si_seat_cert = 0 and 
 				(
 				dwelling_units = 1 										or 
 				potential_residential = 1
@@ -602,10 +599,10 @@ from
 	(
 		select 
 				a.*,
-				b.confirmed_potential_residential,
-				-- coalesce(b.confirmed_potential_residential,c.confirmed_potential_residential),
-				b.total_units_from_description as potential_residential_total_units,
-				-- coalesce(b.total_units_from_description,c.units) as potential_residential_total_units,
+				-- b.confirmed_potential_residential,
+				coalesce(b.confirmed_potential_residential,c.confirmed_potential_residential) as confirmed_potential_residential,
+				-- b.total_units_from_description as potential_residential_total_units,
+				coalesce(b.total_units_from_description,c.units) as potential_residential_total_units,
 				b.need_manual_research as need_manual_research_flag
 	 	from 
 	 		relevant_dcp_projects a
@@ -644,8 +641,8 @@ from
 	(
 		select
 			row_number() over() as cartodb_id /*Important to generate CartoDB_ID for mapping purposes*/,
-			the_geom,
-			the_geom_webmercator,
+			a.the_geom,
+			a.the_geom_webmercator,
 			project_id,
 			project_name,
 			borough, 
@@ -715,14 +712,13 @@ from
 																																									as total_units_source,
 			remaining_likely_to_be_built,
 			rationale,
-			no_si_seat,
+			si_seat_cert,
 			dwelling_units as dwelling_units_flag,
 			confirmed_potential_residential as potential_residential_flag,
 			need_manual_research_flag,
 			NYCHA_Flag,
 			GQ_Flag,
 			Senior_Housing_Flag,
-			Potential_Senior_Housing_Flag,
 			initiation_flag,
 			pre_pas_flag,
 			Diff_Between_Total_and_New_Units,
@@ -964,8 +960,10 @@ from
 			else a.total_units_1 end 																														as total_units_2
 		,case
 			when b.updated_unit_count is not null 																							then 'Planner'
-			when b.total_units_from_planner is not null and b.total_units_from_planner<>a.total_units_1 and a.project_id <> 'P2005M0053' 	then 'Planner'
-			when a.total_units_1 is not null and a.total_units_1 <> 0 																		then 'ZAP'
+			when b.total_units_from_planner is not null and b.total_units_from_planner<>coalesce(a.total_units_1,0) and 
+			a.project_id <> 'P2005M0053' 																									then 'Planner'
+			when a.total_units_1 is not null and a.total_units_1 <> 0 	and upper(a.project_id) not like '%ESD PROJECT%'					then 'ZAP or Internal Research'
+			when upper(a.project_id) like '%ESD PROJECT%'																					then 'Internal Research'
 			when b.ks_assumed_units is not null and b.ks_assumed_units<>'' 																	then 'PLUTO FAR Estimate'
 			else null end as Total_Unit_Source
 		,b.map_id /*Manually convert this field to numeric in Carto interface*/
@@ -1022,23 +1020,18 @@ from
 			total_unit_source,
 			case when total_unit_source = 'ZAP' then total_units_source end as ZAP_Unit_Source,
 			applicant_type,
-			Rezoning_Flag,
-			NYCHA_flag
-			,GQ_Flag
-			,Senior_Housing_Flag
-			,Potential_Senior_Housing_Flag,
+			NYCHA_flag,
+			GQ_Flag,
+			Senior_Housing_Flag,
 			project_status,
 			previous_project_status,
 			process_stage,
 			previous_process_stage,
 			anticipated_year_built,
-			project_completed,
-			certified_referred,
 			dcp_target_certification_date,
-			system_target_certification_date,
-			target_certified_date,
-			latest_status_date,
-			no_si_seat,
+			certified_referred,
+			project_completed,
+			si_seat_cert,
 			initiation_flag,
 			pre_pas_flag,
 			Diff_Between_Total_and_New_Units,
@@ -1069,7 +1062,7 @@ select cdb_cartodbfytable('capitalplanning', 'relevant_dcp_projects_housing_pipe
 SELECT
 	*
 into
-	table_20190517_unidentified_zap_projects_planner_additions_ms
+	table_20190520_unidentified_zap_projects_planner_additions_ms
 from
 (
 select 
@@ -1080,8 +1073,11 @@ select
 		c.status as status_map, 
 		c.total_units_from_planner,
 		c.ks_assumed_units,
-		c.source, 
-		case when a.project_name <> '' and (position(upper(a.project_name) in upper(c.project_name))>0 or position(upper(c.project_name) in upper(a.project_name))>0) then 1 else 0 end as name_match
+		c.source,
+		c.ZAP_Checked_Project_ID_2019, 
+		case when a.project_name <> '' and (position(upper(a.project_name) in upper(c.project_name))>0 or position(upper(c.project_name) in upper(a.project_name))>0) then 1 
+			 when c.ZAP_Checked_Project_ID_2019 = a.project_id then 1
+			 else 0 end as name_match
 from 
 	DCP_PROJECT_FLAGS_V2 A 
 LEFT JOIN 
@@ -1091,25 +1087,27 @@ ON
 LEFT JOIN
 	mapped_planner_inputs_consolidated_inputs_ms C
 ON 
-	ST_INTERSECTS(A.THE_GEOM,C.THE_GEOM)
+	ST_INTERSECTS(A.THE_GEOM,C.THE_GEOM) or
+	(c.ZAP_Checked_Project_ID_2019 = a.project_id and c.ZAP_Checked_Project_ID_2019 <> '') 
 WHERE 
-	B.PROJECT_ID IS NULL AND 
-	C.THE_GEOM IS NOT NULL AND 
-	A.PROJECT_STATUS NOT LIKE '%Closed%' and 
-	a.project_status not like '%Withdrawn%' and
-	a.historical_project_pre_2012 = 0 and 
+	B.PROJECT_ID IS NULL 								AND 
+	(
+		C.THE_GEOM IS NOT NULL or 
+		c.ZAP_Checked_Project_ID_2019 <> ''
+	)													AND 
+	A.PROJECT_STATUS NOT LIKE '%Closed%' 				and 
+	a.project_status not like '%Withdrawn%' 			and
+	a.historical_project_pre_2012 = 0 					and 
 	outdated_overlapping_project is null 				and 
 	non_residential_project_incl_group_quarters is null and 
 	withdrawn_project is null							and 
 	inactive_project is null							and
 	exclude_nycha_flag is null 							and
-	other_reason_to_omit is null						and 
-	should_be_in_old_zap_pull is null					and 
-	should_be_in_new_zap_pull is null					
+	other_reason_to_omit is null							
 ) x
 
 
-/*Reupload this table back into Carto as table_20190517_unidentified_zap_projects_planner_additions_ms_1 after creating a name_match_manual field which
+/*Reupload this table back into Carto as table_20190520_unidentified_zap_projects_planner_additions_ms_v after creating a name_match_manual field which
   supports the automatic name match field. Include projects in which name_match = 1 or name_match_manual = 1 from dcp_project_flags_v2
   and append them into relevant_dcp_projects_housing_pipeline_ms_v3
 */
@@ -1121,16 +1119,16 @@ into
 from
 (
 	SELECT
-		*
+		*, null as map_id
 	from
 		relevant_dcp_projects_housing_pipeline_ms_v3
 	WHERE
 		TOTAL_UNITS <> 0
 	union
 	SELECT
-		row_number() over() + (select max(cartodb_id) from relevant_dcp_projects_housing_pipeline_ms_v3) as cartodb_id,
-		a.the_geom,
-		a.the_geom_webmercator,
+		row_number() over() + (select max(cartodb_id) from relevant_dcp_projects_housing_pipeline_ms_v3) 	as cartodb_id,
+		coalesce(a.the_geom,c.the_geom) 																	as the_geom,
+		coalesce(a.the_geom_webmercator,c.the_geom_webmercator)												as the_geom_webmercator,
 		a.project_id,
 		a.project_name,
 		a.borough, 
@@ -1147,38 +1145,38 @@ from
 			 when b.ks_assumed_units <> '' then 'PLUTO FAR Estimate' end total_unit_source,
 		null as ZAP_Unit_Source,
 		a.applicant_type,
-		case when substring(a.lead_action,1,2) = 'ZM' then 1 else 0 end as Rezoning_Flag,
-		a.NYCHA_flag
-		,a.GQ_Flag
-		,a.Senior_Housing_Flag
-		,a.Potential_Senior_Housing_Flag
-		,a.project_status,
+		a.NYCHA_flag,
+		a.GQ_Flag,
+		a.Senior_Housing_Flag,
+		a.project_status,
 		a.previous_project_status,
 		a.process_stage_name_stage_id_process_stage as process_stage,
 		a.previous_process_stage,
 		a.anticipated_year_built,
-		a.project_completed,
-		a.certified_referred,
 		a.dcp_target_certification_date,
-		a.system_target_certification_date,
-		coalesce(a.dcp_target_certification_date,a.system_target_certification_date) as target_certified_date,
-		a.project_status_date as latest_status_date,
-		a.no_si_seat,
+		a.certified_referred,
+		a.project_completed,
+		a.si_seat_cert,
 		a.initiation_flag,
 		a.pre_pas_flag,
 		a.Diff_Between_Total_and_New_Units,
 		a.Historical_Project_Pre_2012,
-		a.Historical_Project_Pre_2008
+		a.Historical_Project_Pre_2008,
+		c.map_id
 	from
 		dcp_project_flags_v2 a
 	inner join
-		table_20190517_unidentified_zap_projects_planner_additions_ms_1 b
+		table_20190520_unidentified_zap_projects_planner_additions_ms_v b
 	on
 		a.project_id = b.project_id and
 		(
 			name_match = 1 or
 			name_match_manual = 1
 		)
+	left join
+		mapped_planner_inputs_consolidated_inputs_ms c
+	on
+		b.map_id = c.map_id
 	WHERE 
 		coalesce(
 					b.total_units_from_planner,
@@ -1199,10 +1197,47 @@ into
 from
 (
 	SELECT
-		*,
-		row_number() over(partition by project_id) as project_id_instance
+		a.cartodb_id,
+		a.the_geom,
+		a.the_geom_webmercator,
+		a.project_id,
+		a.project_name,
+		a.borough, 
+		a.project_description,
+		a.project_brief,
+		a.total_units,
+		a.total_unit_source,
+		a.ZAP_Unit_Source,
+		a.applicant_type,
+		a.project_status,
+		a.previous_project_status,
+		a.process_stage,
+		a.previous_process_stage,
+		a.dcp_target_certification_date,
+		a.certified_referred,
+		a.project_completed,
+		b.remaining_units_likely_to_be_built_2018,
+		b.rationale_2018,
+		b.rationale_2019,
+		b.phasing_notes_2019,
+		b.additional_notes_2019,
+		b.portion_built_2025,
+		b.portion_built_2035,
+		b.portion_built_2055,
+		a.si_seat_cert,
+		case
+			when a.pre_pas_flag 	= 1 then 1
+			when a.initiation_flag 	= 1 then 1 else 0 end as early_stage_flag,
+		a.NYCHA_flag,
+		a.GQ_Flag,
+		a.Senior_Housing_Flag,
+		row_number() over(partition by a.project_id) as project_id_instance
 	from
-		relevant_dcp_projects_housing_pipeline_ms_v4
+		relevant_dcp_projects_housing_pipeline_ms_v4 a
+	left join
+		mapped_planner_inputs_consolidated_inputs_ms b
+	on
+		a.project_id = b.project_id or (a.map_id is not null and a.map_id = b.map_id)
 ) x
 	where 
 		project_id_instance = 1 or
