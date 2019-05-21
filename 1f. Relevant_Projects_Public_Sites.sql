@@ -98,3 +98,23 @@ from
 ) x
 
 select cdb_cartodbfytable('capitalplanning', 'public_sites_2018_sca_inputs_ms_1')
+
+
+
+select
+	*
+into
+	public_sites_inputs_ms_share_20190521
+from
+(
+	select
+		the_geom,
+		the_geom_webmercator,
+		unique_project_id,
+		project_name,
+		total_units
+	from
+		public_sites_2018_sca_inputs_ms_1
+)
+	order by
+		unique_project_id asc

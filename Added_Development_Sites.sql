@@ -471,3 +471,24 @@ from
 /**********************RUN IN REGULAR CARTO**************************/
 
 select cdb_cartodbfytable('capitalplanning', 'mapped_planner_inputs_added_projects_ms_1')
+
+
+
+
+select
+	*
+into
+	mapped_planner_added_projects_inputs_ms_share_20190521
+from
+(
+	select
+		the_geom,
+		the_geom_webmercator,
+		map_id,
+		project_name,
+		total_units
+	from
+		mapped_planner_inputs_added_projects_ms_1
+)
+	order by
+		map_id asc

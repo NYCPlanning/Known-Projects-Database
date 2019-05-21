@@ -369,3 +369,23 @@ Performed topline check comparing to RWCDS raw data using following query, compa
 
 select neighborhood, count(*) as observations, sum(units) as units from capitalplanning.dep_ndf_polygon_matching_ms group by neighborhood
 *************************************************************************************************************************************************************************/
+
+select
+	*
+into
+	neighborhood_studies_inputs_ms_share_20190521
+from
+(
+	select
+		the_geom,
+		the_geom_webmercator,
+		project_id,
+		project_name,
+		total_units
+	from
+		dep_ndf_by_site
+)
+	order by
+		project_id asc
+
+

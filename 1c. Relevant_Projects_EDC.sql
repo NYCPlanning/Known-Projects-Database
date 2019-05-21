@@ -157,3 +157,23 @@ Step 4: Create dataset
 ********************************************/
 
 select cdb_cartodbfytable('capitalplanning', 'edc_2018_sca_input_1_limited')
+
+
+
+select
+	*
+into
+	edc_inputs_ms_share_20190521
+from
+(
+	select
+		the_geom,
+		the_geom_webmercator,
+		edc_project_id,
+		project_name,
+		total_units
+	from
+		edc_2018_sca_input_1_limited
+)
+	order by
+		edc_project_id asc

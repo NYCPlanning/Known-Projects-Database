@@ -170,7 +170,47 @@ from
 
 select cdb_cartodbfytable('capitalplanning', 'hpd_2018_sca_inputs_ms')
 
+SELECT
+	*
+into
+	hpd_projected_closings_inputs_ms_share_20190521
+from
+(
+	SELECT
+		the_geom,
+		the_geom_webmercator,
+		project_id,
+		project_name,
+		total_units
+	from
+		hpd_2018_sca_inputs_ms
+	where
+		source = 'HPD Projected Closings'
+)
+	order by
+		project_id
 															     
+SELECT
+	*
+into
+	hpd_rpfs_inputs_ms_share_20190521
+from
+(
+	SELECT
+		the_geom,
+		the_geom_webmercator,
+		project_id,
+		address,
+		total_units
+	from
+		hpd_2018_sca_inputs_ms
+	where
+		source = 'HPD RFPs'
+)
+	order by
+		project_id
+															     
+
 															     
 															     
 /***********************************SUPERSEDED**************************************/

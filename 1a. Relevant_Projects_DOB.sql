@@ -117,12 +117,12 @@ from
 	SELECT
 		a.*,
 		case
-			when a.status like '%Complete%' then 0
-			when a.status like '%Partial Complete' then a.units_net - a.latest_cofo
-			else a.units_net end 														- a.units_net 	as units_net_complete, 
+			when a.status like 'Complete%' 			then a.units_net
+			when a.status like '%Partial Complete' 	then a.latest_cofo
+			else 0 end 																				 	as units_net_complete, 
 		case
-			when a.status like '%Complete%' then 0
-			when a.status like '%Partial Complete' then a.units_net - a.latest_cofo
+			when a.status like 'Complete%' 		then 0
+			when a.status like '%Partial Complete' 	then a.units_net - a.latest_cofo
 			else a.units_net end 																		as units_net_incomplete
 	from
 		capitalplanning.dob_2018_sca_inputs_ms_pre a
@@ -139,10 +139,31 @@ from
 		job_number asc
 
 
-
 /************************************RUN IN REGULAR CARTO*****************************/
 
 select cdb_cartodbfytable('capitalplanning', 'dob_2018_sca_inputs_ms')
+
+
+
+SELECT
+	*
+into
+	dob_inputs_ms_share_20190521
+from
+(
+	SELECT
+		the_geom,
+		the_geom_webmercator,
+		job_number,
+		address,
+		units_net,
+		units_net_complete,
+		units_net_incomplete
+	from
+		dob_2018_sca_inputs_ms
+)
+
+
 
 
 

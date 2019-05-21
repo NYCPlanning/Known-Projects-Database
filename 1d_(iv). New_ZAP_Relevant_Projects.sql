@@ -1018,7 +1018,7 @@ from
 			project_brief,
 			total_units_2 as total_units,
 			total_unit_source,
-			case when total_unit_source = 'ZAP' then total_units_source end as ZAP_Unit_Source,
+			case when total_unit_source = 'ZAP or Internal Research' then total_units_source end as ZAP_Unit_Source,
 			applicant_type,
 			NYCHA_flag,
 			GQ_Flag,
@@ -1240,9 +1240,7 @@ from
 		a.project_id = b.project_id or (a.map_id is not null and a.map_id = b.map_id)
 ) x
 	where 
-		project_id_instance = 1 or
-		(project_id_instance = 1 and total_unit_source = 'ZAP') 
-
+		project_id_instance = 1
 
 
 
@@ -1251,3 +1249,24 @@ from
 /*Pull out added projects from ZAP. If there are, replace the information.*/
 
 select cdb_cartodbfytable('capitalplanning', 'relevant_dcp_projects_housing_pipeline_ms_v5')
+
+
+select
+	*
+into
+	dcp_inputs_ms_share_20190521
+from
+(
+	select
+		the_geom,
+		the_geom_webmercator,
+		project_id,
+		project_name,
+		total_units
+	from
+		relevant_dcp_projects_housing_pipeline_ms_v5
+)
+	order by
+		project_id asc
+
+
