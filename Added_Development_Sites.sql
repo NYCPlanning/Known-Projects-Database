@@ -551,14 +551,14 @@ from
 	select
 		the_geom,
 		the_geom_webmercator,
-		map_id,
+		map_id as project_id,
 		project_name,
 		total_units
 	from
 		mapped_planner_inputs_added_projects_ms_1
 )   planner_added_projects_share_20190522
 	order by
-		map_id asc
+		project_id asc
 
 select cdb_cartodbfytable('capitalplanning', 'planner_added_projects_share_20190522')
 
