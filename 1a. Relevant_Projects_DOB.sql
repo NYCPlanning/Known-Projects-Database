@@ -31,8 +31,6 @@ select
 	boro 												as borough,
 	occ_init,
 	occ_prop,
-	case when UPPER(concat(occ_init,occ_prop)) like '%ASSISTED LIVING%' then 1 else 0 end as Assisted_Living_Flag,
-
 	case 
 		when 	/*Creating a Partial Complete status*/
 			job_type = 'New Building' 		and 
@@ -73,8 +71,40 @@ select
 	longitude,
 	geo_bin												as bin,
 	geo_bbl												as bbl,
-	
 
+	/*Identifying NYCHA Projects*/
+	CASE 
+		WHEN upper(job_description)  like '%NYCHA%' THEN 1   		
+		WHEN upper(job_description)  like '%BTP%' THEN 1  		
+		WHEN upper(job_description)  like '%HOUSING AUTHORITY%' THEN 1  		
+		WHEN upper(job_description)  like '%NEXT GEN%' THEN 1  		
+		WHEN upper(job_description)  like '%NEXT-GEN%' THEN 1  		
+		WHEN upper(job_description)  like '%NEXTGEN%' THEN 1  		
+		WHEN upper(job_description)  like '%BUILD TO PRESERVE%' THEN 1 ELSE 0 END 		AS NYCHA_Flag,
+
+	CASE 
+		WHEN upper(job_description)  like '%CORRECTIONAL%' THEN 1   		
+		WHEN upper(job_description)  like '%NURSING%' THEN 1  		
+		WHEN upper(job_description)  like '% MENTAL%' THEN 1  		
+		WHEN upper(job_description)  like '%DORMITOR%' THEN 1  		
+		WHEN upper(job_description)  like '%MILITARY%' THEN 1  		
+		WHEN upper(job_description)  like '%GROUP HOME%' THEN 1  		
+		WHEN upper(job_description)  like '%BARRACK%' THEN 1 ELSE 0 END 		AS GQ_fLAG,
+
+
+	/*Identifying definite senior housing projects*/
+	CASE 
+		WHEN upper(job_description)  like '%SENIOR%' THEN 1
+		WHEN upper(job_description)  like '%ELDERLY%' THEN 1 	
+		WHEN job_description  like '% AIRS %' THEN 1
+		WHEN upper(job_description)  like '%A.I.R.S%' THEN 1 
+		WHEN upper(job_description)  like '%CONTINUING CARE%' THEN 1
+		WHEN upper(job_description)  like '%NURSING%' THEN 1
+		WHEN job_description  like '% SARA %' THEN 1
+		WHEN upper(job_description)  like '%S.A.R.A%' THEN 1 end as Senior_Housing_Flag,
+	CASE
+		when UPPER(concat(occ_init,occ_prop)) like '%ASSISTED LIVING%' then 1
+		WHEN upper(job_description)  like '%ASSISTED LIVING%' THEN 1 else 0 end as Assisted_Living_Flag
 from 
 	capitalplanning.devdb_housing_pts_20190215
 where
@@ -83,11 +113,11 @@ where
 	units_net <> 0
 order by
 	job_number
-) as dob_2018_sca_inputs_ms
+) as dob_2018_sca_inputs_ms_pre
 
 
 
-/*Limiting to the duplicates to delete (will delete anything with an instance > 1*/
+/*Limiting to the duplicates to delete (will delete anything with an instance > 1)*/
 
 
 select
@@ -119,9 +149,9 @@ from
 		case
 			when a.status like 'Complete%' 			then a.units_net
 			when a.status like '%Partial Complete' 	then a.latest_cofo
-			else 0 end 																				 	as units_net_complete, 
+			else null end 																				 	as units_net_complete, 
 		case
-			when a.status like 'Complete%' 		then 0
+			when a.status like 'Complete%' 			then null
 			when a.status like '%Partial Complete' 	then a.units_net - a.latest_cofo
 			else a.units_net end 																		as units_net_incomplete
 	from
@@ -136,7 +166,7 @@ from
 
 ) x
 	order by
-		job_number asc
+		x.job_number asc
 
 
 /************************************RUN IN REGULAR CARTO*****************************/

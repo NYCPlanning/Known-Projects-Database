@@ -62,12 +62,45 @@ from
 	--	longitude,
 	--	bin,
 		bbl,
-		NYCHA_Flag,
-		Likely_to_be_Built_by_2025_Flag,
-		Excluded_Project_Flag,
-		rationale_for_exclusion,
-		source
-	from(
+		/*Identifying NYCHA*/
+		CASE 
+			WHEN lead_agency 		  like '%NYCHA%' then 1
+			WHEN upper(project_name)  like '%NYCHA%' THEN 1   		
+			WHEN upper(project_name)  like '%BTP%' THEN 1  		
+			WHEN upper(project_name)  like '%HOUSING AUTHORITY%' THEN 1  		
+			WHEN upper(project_name)  like '%NEXT GEN%' THEN 1  		
+			WHEN upper(project_name)  like '%NEXT-GEN%' THEN 1  		
+			WHEN upper(project_name)  like '%NEXTGEN%' THEN 1  		
+			WHEN upper(project_name)  like '%BUILD TO PRESERVE%' THEN 1 ELSE 0 END 	AS NYCHA_Flag,
+
+		/*Identifying group quarters*/
+		CASE 
+			WHEN upper(project_name)  like '%CORRECTIONAL%' THEN 1   		
+			WHEN upper(project_name)  like '%NURSING%' THEN 1  		
+			WHEN upper(project_name)  like '% MENTAL%' THEN 1  		
+			WHEN upper(project_name)  like '%DORMITOR%' THEN 1  		
+			WHEN upper(project_name)  like '%MILITARY%' THEN 1  		
+			WHEN upper(project_name)  like '%GROUP HOME%' THEN 1  		
+			WHEN upper(project_name)  like '%BARRACK%' THEN 1 ELSE 0 END 			AS GQ_fLAG,
+
+		/*Identifying definite senior housing projects*/
+		CASE 
+			WHEN upper(project_name)  like '%SENIOR%' THEN 1
+			WHEN upper(project_name)  like '%ELDERLY%' THEN 1 	
+			WHEN project_name  		  like '% AIRS %' THEN 1
+			WHEN upper(project_name)  like '%A.I.R.S%' THEN 1 
+			WHEN upper(project_name)  like '%CONTINUING CARE%' THEN 1
+			WHEN upper(project_name)  like '%NURSING%' THEN 1
+			WHEN project_name  		  like '% SARA %' THEN 1
+			WHEN upper(project_name)  like '%S.A.R.A%' THEN 1 end 					as Senior_Housing_Flag,
+		/*Identifying assisted living projects*/
+		CASE
+			WHEN upper(project_name)  like '%ASSISTED LIVING%' THEN 1 else 0 end 	as Assisted_Living_Flag,
+			Likely_to_be_Built_by_2025_Flag,
+			Excluded_Project_Flag,
+			rationale_for_exclusion,
+			source
+		from(
 
 
 		SELECT
@@ -86,7 +119,6 @@ from
 			a.max_of_projected_units,
 			(a.min_of_projected_units+a.max_of_projected_units)/2 		as total_units, /*We have been given a range for total units, and have chosen the avg of the high and low*/
 			concat(a.bbl) 												as bbl,
-			0 															as NYCHA_Flag,
 			null as Likely_to_be_Built_by_2025_Flag,
 			null as Excluded_Project_Flag,
 			null as rationale_for_exclusion,
@@ -119,7 +151,6 @@ from
 			null,
 			a.announced_unit_count 											as total_units,
 			array_to_string(array_agg(concat(coalesce(b.bbl,c.bbl))),', ') 	as bbl,
-			case when lead_agency like '%NYCHA%' then 1 else 0 end as NYCHA_Flag,
 			case
 				when rfp_project_name = 'NYCHA Harborview Terrace' then 0 /*Project no longer in NYCHA pipeline*/
 				when estimated_build_year_by_2025 is true then 1 else 0 end as Likely_to_be_Built_by_2025_Flag,
@@ -152,8 +183,8 @@ from
 				),
 			a.borough,
 			a.announced_unit_count,
-			case when lead_agency like '%NYCHA%' then 1 else 0 end,
 			case
+				when rfp_project_name = 'NYCHA Harborview Terrace' then 0 
 				when estimated_build_year_by_2025 is true then 1 else 0 end,
 			case
 				when announced_unit_count = 0 then 1 else 0 end,

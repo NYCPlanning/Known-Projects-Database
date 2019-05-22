@@ -319,21 +319,27 @@ from
 			phasing_notes_2019,
 			additional_notes_2019,
 			ZAP_Checked_Project_ID_2019,
-			case 
-				when
-					trim(rationale_2019) 			<> '' or
-					trim(phasing_notes_2019)		<> '' or
-					trim(additional_notes_2019) 	<> '' then 
-					concat_ws
-						(
-							' | ',
-							nullif(trim(rationale_2019),''),
-							nullif(trim(phasing_notes_2019),''),
-							nullif(trim(additional_notes_2019),'')
-						)	
-				when
-					trim(rationale_2018) <> '' then concat('2018 INPUT: ', trim(rationale_2018))
-				else null end as planner_input,
+			replace
+				(
+				case 
+					when
+						trim(rationale_2019) 			<> '' or
+						trim(phasing_notes_2019)		<> '' or
+						trim(additional_notes_2019) 	<> '' then 
+						concat_ws
+							(
+								' | ',
+								nullif(trim(rationale_2019),''),
+								nullif(trim(phasing_notes_2019),''),
+								nullif(trim(additional_notes_2019),'')
+							)	
+					when
+						trim(rationale_2018) <> '' then concat('2018 INPUT: ', trim(rationale_2018))
+					else null end 
+				 ,'''',
+				 ''
+				 )
+					as planner_input,
 			mql_view,
 			suggestion,
 			must_get_boro_input,
@@ -462,7 +468,7 @@ from
 			rationale_2019,
 			phasing_notes_2019,
 			additional_notes_2019,
-			planner_input,
+			status||planner_input as planner_input,
 			mql_view,
 			suggestion,
 			must_get_boro_input,

@@ -87,7 +87,39 @@ from
 		a.build_year,
 		a.borough,
 		a.total_units,
-		a.senior_units
+		CASE 
+			WHEN upper(concat(project_name,project_description,comments_on_phasing))  like '%NYCHA%' THEN 1   		
+			WHEN upper(concat(project_name,project_description,comments_on_phasing))  like '%BTP%' THEN 1  		
+			WHEN upper(concat(project_name,project_description,comments_on_phasing))  like '%HOUSING AUTHORITY%' THEN 1  		
+			WHEN upper(concat(project_name,project_description,comments_on_phasing))  like '%NEXT GEN%' THEN 1  		
+			WHEN upper(concat(project_name,project_description,comments_on_phasing))  like '%NEXT-GEN%' THEN 1  		
+			WHEN upper(concat(project_name,project_description,comments_on_phasing))  like '%NEXTGEN%' THEN 1  		
+			WHEN upper(concat(project_name,project_description,comments_on_phasing))  like '%BUILD TO PRESERVE%' THEN 1 ELSE 0 END 	AS NYCHA_Flag,
+
+		/*Identifying group quarters*/
+		CASE 
+			WHEN upper(concat(project_name,project_description,comments_on_phasing))  like '%CORRECTIONAL%' THEN 1   		
+			WHEN upper(concat(project_name,project_description,comments_on_phasing))  like '%NURSING%' THEN 1  		
+			WHEN upper(concat(project_name,project_description,comments_on_phasing))  like '% MENTAL%' THEN 1  		
+			WHEN upper(concat(project_name,project_description,comments_on_phasing))  like '%DORMITOR%' THEN 1  		
+			WHEN upper(concat(project_name,project_description,comments_on_phasing))  like '%MILITARY%' THEN 1  		
+			WHEN upper(concat(project_name,project_description,comments_on_phasing))  like '%GROUP HOME%' THEN 1  		
+			WHEN upper(concat(project_name,project_description,comments_on_phasing))  like '%BARRACK%' THEN 1 ELSE 0 END 			AS GQ_fLAG,
+
+		/*Identifying definite senior housing projects*/
+		CASE 
+			WHEN upper(concat(project_name,project_description,comments_on_phasing))  like '%SENIOR%' THEN 1
+			WHEN upper(concat(project_name,project_description,comments_on_phasing))  like '%ELDERLY%' THEN 1 	
+			WHEN concat(project_name,project_description,comments_on_phasing)  		  like '% AIRS %' THEN 1
+			WHEN upper(concat(project_name,project_description,comments_on_phasing))  like '%A.I.R.S%' THEN 1 
+			WHEN upper(concat(project_name,project_description,comments_on_phasing))  like '%CONTINUING CARE%' THEN 1
+			WHEN upper(concat(project_name,project_description,comments_on_phasing))  like '%NURSING%' THEN 1
+			WHEN concat(project_name,project_description,comments_on_phasing)  		  like '% SARA %' THEN 1
+			WHEN upper(concat(project_name,project_description,comments_on_phasing))  like '%S.A.R.A%' THEN 1 end 					as Senior_Housing_Flag,
+		/*Identifying assisted living projects*/
+		CASE
+			WHEN upper(project_name)  like '%ASSISTED LIVING%' THEN 1 else 0 end 	as Assisted_Living_Flag
+
 	from
 		edc_2018_sca_input_1_limited a
 	left join
@@ -111,7 +143,7 @@ from
 	edc_2018_sca_input_3_limited as
 (
 	select
-		st_union(the_geom) 					as the_geom,
+		st_union(the_geom) 							as the_geom,
 		st_union(the_geom_webmercator) 				as the_geom_webmercator,
 		geom_source,
 		edc_project_id,
@@ -121,8 +153,11 @@ from
 		comments_on_phasing,
 		build_year,
 		total_units,
-		senior_units,
-		cartodb_id
+		cartodb_id,
+		NYCHA_Flag,
+		gq_flag,
+		Assisted_Living_Flag,
+		Senior_Housing_Flag
 	from	
 		edc_2018_sca_input_2_limited
 	group by 
@@ -134,8 +169,11 @@ from
 		comments_on_phasing,
 		build_year,
 		total_units,
-		senior_units,
-		cartodb_id
+		cartodb_id,
+		NYCHA_Flag,
+		gq_flag,
+		Assisted_Living_Flag,
+		Senior_Housing_Flag
 	order by
 		edc_project_id
 )

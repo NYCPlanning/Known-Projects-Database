@@ -437,6 +437,7 @@ FROM
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%BUILD TO PRESERVE%' THEN 1 ELSE 0 END 		AS NYCHA_Flag,
 
 		CASE 
+			when project_id = 'P2018M0058'												then 0 /*Nursing facility only small part of this project*/
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%CORRECTIONAL%' THEN 1   		
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%NURSING%' THEN 1  		
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '% MENTAL%' THEN 1  		
@@ -452,14 +453,16 @@ FROM
 
 		/*Identifying definite senior housing projects*/
 		CASE 
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%SENIOR%' THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%ELDERLY%' THEN 1 	
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%AIRS%' THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%A.I.R.S%' THEN 1 
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%CONTINUING CARE%' THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%NURSING%' THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%SARA%' THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%S.A.R.A%' THEN 1 end as Senior_Housing_Flag,
+			when project_id in('P2012R0625','P2018M0058','P2016Q0306')						then 0 /*Three projects which only include
+																									 senior housing as a small portion*/
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  	like '%SENIOR%' THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  	like '%ELDERLY%' THEN 1 	
+			WHEN concat(a.project_description,' ',a.project_brief)  		like '% AIRS%' THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  	like '%A.I.R.S%' THEN 1 
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  	like '%CONTINUING CARE%' THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  	like '%NURSING%' THEN 1
+			WHEN concat(a.project_description,' ',a.project_brief)  		like '% SARA%' THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  	like '%S.A.R.A%' THEN 1 end as Senior_Housing_Flag,
 		CASE
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%ASSISTED LIVING%' THEN 1 else 0 end as Assisted_Living_Flag,
 
@@ -1238,9 +1241,38 @@ from
 		case
 			when a.pre_pas_flag 	= 1 then 1
 			when a.initiation_flag 	= 1 then 1 else 0 end as early_stage_flag,
-		a.NYCHA_flag,
-		a.GQ_Flag,
-		a.Senior_Housing_Flag,
+				/*Identifying NYCHA Projects*/
+		CASE 
+			WHEN upper(b.planner_input)  like '%NYCHA%' THEN 1   		
+			WHEN upper(b.planner_input)  like '%BTP%' THEN 1  		
+			WHEN upper(b.planner_input)  like '%HOUSING AUTHORITY%' THEN 1  		
+			WHEN upper(b.planner_input)  like '%NEXT GEN%' THEN 1  		
+			WHEN upper(b.planner_input)  like '%NEXT-GEN%' THEN 1  		
+			WHEN upper(b.planner_input)  like '%NEXTGEN%' THEN 1  		
+			WHEN upper(b.planner_input)  like '%BUILD TO PRESERVE%' THEN 1 ELSE a.nycha_flag END 		
+																								AS NYCHA_Flag,
+		CASE 
+			WHEN upper(b.planner_input)  like '%CORRECTIONAL%' THEN 1   		
+			WHEN upper(b.planner_input)  like '%NURSING%' THEN 1  		
+			WHEN upper(b.planner_input)  like '% MENTAL%' THEN 1  		
+			WHEN upper(b.planner_input)  like '%DORMITOR%' THEN 1  		
+			WHEN upper(b.planner_input)  like '%MILITARY%' THEN 1  		
+			WHEN upper(b.planner_input)  like '%GROUP HOME%' THEN 1  		
+			WHEN upper(b.planner_input)  like '%BARRACK%' THEN 1 ELSE a.gq_flag 			END	AS GQ_fLAG,
+
+
+		/*Identifying definite senior housing projects*/
+		CASE 
+			WHEN upper(b.planner_input)  	like '%SENIOR%' THEN 1
+			WHEN upper(b.planner_input)  	like '%ELDERLY%' THEN 1 	
+			WHEN b.planner_input  			like '% AIRS%' THEN 1
+			WHEN upper(b.planner_input)  	like '%A.I.R.S%' THEN 1 
+			WHEN upper(b.planner_input)  	like '%CONTINUING CARE%' THEN 1
+			WHEN upper(b.planner_input)  	like '%NURSING%' THEN 1
+			WHEN b.planner_input  			like '% SARA%' THEN 1
+			WHEN upper(b.planner_input)  	like '%S.A.R.A%' THEN 1 else a.senior_housing_flag end as Senior_Housing_Flag,
+		CASE
+			WHEN upper(b.planner_input)  	like '%ASSISTED LIVING%' THEN 1 else a.Assisted_Living_Flag end as Assisted_Living_Flag,
 		row_number() over(partition by a.project_id) as project_id_instance
 	from
 		relevant_dcp_projects_housing_pipeline_ms_v4 a

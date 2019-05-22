@@ -46,12 +46,42 @@ from
 		a.developer,
 		a.program,
 		a.current_agency,
-		b.rationale_2019,
-		b.phasing_notes_2019,
-		b.additional_notes_2019,
+		b.planner_input,
 		b.portion_built_2025,
 		b.portion_built_2035,
-		b.portion_built_2055
+		b.portion_built_2055,
+		/*Identifying NYCHA Projects*/
+		CASE 
+			WHEN upper(concat(a.project,b.planner_input))  like '%NYCHA%' THEN 1   		
+			WHEN upper(concat(a.project,b.planner_input))  like '%BTP%' THEN 1  		
+			WHEN upper(concat(a.project,b.planner_input))  like '%HOUSING AUTHORITY%' THEN 1  		
+			WHEN upper(concat(a.project,b.planner_input))  like '%NEXT GEN%' THEN 1  		
+			WHEN upper(concat(a.project,b.planner_input))  like '%NEXT-GEN%' THEN 1  		
+			WHEN upper(concat(a.project,b.planner_input))  like '%NEXTGEN%' THEN 1  		
+			WHEN upper(concat(a.project,b.planner_input))  like '%BUILD TO PRESERVE%' THEN 1 ELSE 0 END 		AS NYCHA_Flag,
+
+		CASE 
+			WHEN upper(concat(a.project,b.planner_input))  like '%CORRECTIONAL%' THEN 1   		
+			WHEN upper(concat(a.project,b.planner_input))  like '%NURSING%' THEN 1  		
+			WHEN upper(concat(a.project,b.planner_input))  like '% MENTAL%' THEN 1  		
+			WHEN upper(concat(a.project,b.planner_input))  like '%DORMITOR%' THEN 1  		
+			WHEN upper(concat(a.project,b.planner_input))  like '%MILITARY%' THEN 1  		
+			WHEN upper(concat(a.project,b.planner_input))  like '%GROUP HOME%' THEN 1  		
+			WHEN upper(concat(a.project,b.planner_input))  like '%BARRACK%' THEN 1 ELSE 0 END 		AS GQ_fLAG,
+
+		/*Identifying definite senior housing projects*/
+		CASE 
+			WHEN upper(concat(a.project,b.planner_input))  	like '%SENIOR%' THEN 1
+			WHEN upper(concat(a.project,b.planner_input))  	like '%ELDERLY%' THEN 1 	
+			WHEN concat(a.project,b.planner_input)  		like '% AIRS%' THEN 1
+			WHEN upper(concat(a.project,b.planner_input))  	like '%A.I.R.S%' THEN 1 
+			WHEN upper(concat(a.project,b.planner_input))  	like '%CONTINUING CARE%' THEN 1
+			WHEN upper(concat(a.project,b.planner_input))  	like '%NURSING%' THEN 1
+			WHEN concat(a.project,b.planner_input)  		like '% SARA%' THEN 1
+			WHEN upper(concat(a.project,b.planner_input))  	like '%S.A.R.A%' THEN 1 else 0 end as Senior_Housing_Flag,
+		CASE
+			WHEN upper(concat(a.project,b.planner_input))  like '%ASSISTED LIVING%' THEN 1 else 0 end as Assisted_Living_Flag
+
 	from
 		(select * from capitalplanning.table_190510_public_sites_ms_v3_1 where project_found_in = '' and omit_from_public_sites_relevant_projects = 0 /*Selecting public sites not accounted for in other sources*/) a
 	left join
@@ -87,12 +117,14 @@ from
 		a.project,
 		a.city_planning_comments,
 		a.total_units,
-		a.rationale_2019,
-		a.phasing_notes_2019,
-		a.additional_notes_2019,
+		a.planner_input,
 		a.portion_built_2025,
 		a.portion_built_2035,
-		a.portion_built_2055
+		a.portion_built_2055,
+		a.NYCHA_Flag,
+		a.GQ_fLAG,
+		a.Senior_Housing_Flag,
+		a.Assisted_Living_Flag
 	from
 		public_sites_2018_sca_inputs_ms a
 ) x

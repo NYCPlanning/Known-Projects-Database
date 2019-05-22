@@ -275,25 +275,22 @@ from
 		a.neighborhood,
 		a.status,
 		a.the_geom,
-		a.the_geom_webmercator,
+		a.the_geom_webmercator
+		,
 		CASE 
 			when A.PROJECT_ID LIKE '%REZONING COMMITMENT%' then	coalesce
 																	(
 																		case 
-																			when a.project_id = '(Projected RFP) DSNY 123rd Street Parking Lot (Site 3) EAST HARLEM REZONING COMMITMENT' 	then 115 end
+																			when a.project_id = '(Projected RFP) DSNY 123rd Street Parking Lot (Site 3) EAST HARLEM REZONING COMMITMENT' 	then 115 
 																			/*Inserting information from planner Joseph Huennekens. See email at the following link:
 																			"G:\03. Schools Planning\01_Inputs to SCA CP\Housing pipeline\00_Data\Jan 2019 SCA Housing Pipeline\Working Data\DEP NDF\RE East Harlem Rezoning Commitment.msg"
 																			*/
-																		case 
-																			when a.project_id = '54 Central Avenue BAY STREET CORRIDOR REZONING COMMITMENT' 								then 64 end
+																			when a.project_id = '54 Central Avenue BAY STREET CORRIDOR REZONING COMMITMENT' 								then 64 
 																			/*Inserting information from planner Joseph Helferty. See email at the following link:
 																			"G:\03. Schools Planning\01_Inputs to SCA CP\Housing pipeline\00_Data\Jan 2019 SCA Housing Pipeline\Working Data\DEP NDF\RE BSC housing commitment sites.msg"
 																			*/
-																		case
-																			when a.project_id = 'Christopher-Glenmore EAST NEW YORK REZONING COMMITMENT' 									then 230 END/*Inserting information from HPD RFP ID 21*/,
-																		case
-																			when a.project_id = 'Beach 21st Street DOWNTOWN FAR ROCKAWAY REZONING COMMITMENT' 								then 224 END/*Inserting information from HPD RFP ID 11*/,
-																		case
+																			when a.project_id = 'Christopher-Glenmore EAST NEW YORK REZONING COMMITMENT' 									then 230 /*Inserting information from HPD RFP ID 21*/
+																			when a.project_id = 'Beach 21st Street DOWNTOWN FAR ROCKAWAY REZONING COMMITMENT' 								then 224 /*Inserting information from HPD RFP ID 11*/
 																			when a.project_id = 'Inwood Library INWOOD REZONING COMMITMENT' 												then 175 END/*Inserting information from HPD RFP ID 14*/,
 																		c.total_units_ms,
 																		b.total_units_from_planner, 
@@ -303,10 +300,7 @@ from
 																	)
 			else a.units end as units,
 		a.included_bbls,
-		b.remaining_units_likely_to_be_built_2018,
-		coalesce(c.rationale_for_assignments_for_likelihood_to_be_built,b.rationale_2019) as rationale_2019,
-		b.phasing_notes_2019,
-		b.additional_notes_2019,
+		coalesce(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input) as planner_input,
 		coalesce(
 					/*Inserting information from planner Joseph hELFERY. See email at the following link:
 					"G:\03. Schools Planning\01_Inputs to SCA CP\Housing pipeline\00_Data\Jan 2019 SCA Housing Pipeline\Working Data\DEP NDF\RE BSC housing commitment sites.msg"
@@ -327,7 +321,41 @@ from
 					c.portion_built_2035,
 					b.portion_built_2035
 				) as portion_built_2035,
-		coalesce(c.portion_built_2055,b.portion_built_2055) as portion_built_2055
+		coalesce(c.portion_built_2055,b.portion_built_2055) as portion_built_2055,
+
+
+		/*Identifying NYCHA Projects*/
+		CASE 
+			WHEN upper(concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input))  like '%NYCHA%' THEN 1   		
+			WHEN upper(concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input))  like '%BTP%' THEN 1  		
+			WHEN upper(concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input))  like '%HOUSING AUTHORITY%' THEN 1  		
+			WHEN upper(concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input))  like '%NEXT GEN%' THEN 1  		
+			WHEN upper(concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input))  like '%NEXT-GEN%' THEN 1  		
+			WHEN upper(concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input))  like '%NEXTGEN%' THEN 1  		
+			WHEN upper(concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input))  like '%BUILD TO PRESERVE%' THEN 1 ELSE 0 END 		AS NYCHA_Flag,
+
+		CASE 
+			WHEN upper(concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input))  like '%CORRECTIONAL%' THEN 1   		
+			WHEN upper(concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input))  like '%NURSING%' THEN 1  		
+			WHEN upper(concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input))  like '% MENTAL%' THEN 1  		
+			WHEN upper(concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input))  like '%DORMITOR%' THEN 1  		
+			WHEN upper(concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input))  like '%MILITARY%' THEN 1  		
+			WHEN upper(concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input))  like '%GROUP HOME%' THEN 1  		
+			WHEN upper(concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input))  like '%BARRACK%' THEN 1 ELSE 0 END 		AS GQ_fLAG,
+
+		/*Identifying definite senior housing projects*/
+		CASE 
+			WHEN upper(concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input))  	like '%SENIOR%' THEN 1
+			WHEN upper(concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input))  	like '%ELDERLY%' THEN 1 	
+			WHEN concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input)  		like '% AIRS%' THEN 1
+			WHEN upper(concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input))  	like '%A.I.R.S%' THEN 1 
+			WHEN upper(concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input))  	like '%CONTINUING CARE%' THEN 1
+			WHEN upper(concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input))  	like '%NURSING%' THEN 1
+			WHEN concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input)  		like '% SARA%' THEN 1
+			WHEN upper(concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input))  	like '%S.A.R.A%' THEN 1 else 0 end as Senior_Housing_Flag,
+		CASE
+			WHEN upper(concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input))  like '%ASSISTED LIVING%' THEN 1 else 0 end as Assisted_Living_Flag
+
 	from
 		dep_ndf_by_site_pre a
 	left join
@@ -346,8 +374,6 @@ from
 ) x 
 
 
-/*Add an improved Project ID */
-
 select
 	*
 INTO
@@ -364,11 +390,14 @@ from
 		a.the_geom_webmercator,
 		a.units,
 		a.included_bbls,
-		rationale_2019,
-		phasing_notes_2019,
+		planner_input,
 		portion_built_2025,
 		portion_built_2035,
-		portion_built_2055
+		portion_built_2055,
+		nycha_flag,
+		gq_flag,
+		Assisted_Living_Flag,
+		Senior_Housing_Flag
 	from
 		dep_ndf_by_site_pre_1 a
 ) x
