@@ -40,28 +40,23 @@ into
 from
 
 (
-	select 
+	select
+		row_number() over() as cartodb_id, 
 		the_geom,
 		the_geom_webmercator,
 		project_id,
 		hpd_project_id,
 		building_id,
 		project_name,
-	--	primary_program_at_start,
 		construction_type,
 		lead_agency,
 		status,
-	--	project_start_date,
-	--	projected_completion_date,
 		projected_fiscal_year_range,
 		address,
 		borough,
 		min_of_projected_units,
 		max_of_projected_units,
 		total_units,
-	--	latitude,
-	--	longitude,
-	--	bin,
 		bbl,
 		/*Identifying NYCHA*/
 		CASE 
@@ -100,13 +95,14 @@ from
 			Likely_to_be_Built_by_2025_Flag,
 			Excluded_Project_Flag,
 			rationale_for_exclusion,
-			source
+			source,
+			building_instance
 		from(
 
 
 		SELECT
-			b.the_geom,
-			b.the_geom_webmercator,
+			coalesce(c.the_geom,b.the_geom)								as the_geom,
+			coalesce(c.the_geom_webmercator,b.the_geom_webmercator) 	as the_geom_webmercator,
 			concat(a.project_id,'/',a.building_id) 						as project_id,
 			a.project_id 												as hpd_project_id,
 			a.building_id,
@@ -124,9 +120,17 @@ from
 			null as Likely_to_be_Built_by_2025_Flag,
 			null as Excluded_Project_Flag,
 			null as rationale_for_exclusion,
-			'HPD Projected Closings'									as Source
+			'HPD Projected Closings'									as Source,
+		/*There are two projects, building IDs 985433 & 985432, which have duplicates of the same building ID but different project ID. The unit counts and lots
+		  represent the same building, so the below field will be used to arbitrarily select one project for building 985433 and one project for building 985432*/
+			row_number() over(partition by a.building_id) 				as building_instance
 		from
 			capitalplanning.hpd_projected_closings_190409_ms a
+		left join
+			capitalplanning.hpd_2018_sca_inputs_geo_pts c
+		on
+			a.project_id 	= c.project_id and
+			a.building_id 	= c.building_id
 		left join
 			capitalplanning.mappluto_v_18v2 b
 		on
@@ -160,7 +164,8 @@ from
 			case
 				when announced_unit_count = 0 then 1 else 0 end 			as Excluded_Project_Flag,
 			rationale_for_exclusion,
-			'HPD RFPs' 														as Source
+			'HPD RFPs' 														as Source,
+			null															as building_instance
 		from
 			capitalplanning.hpd_rfps_2019_05_16 a
 		left join
@@ -181,7 +186,7 @@ from
 			a.rfp_project_name,
 			a.lead_agency,
 			concat	(
-					case when a.designated 	is true	then 'RFP designated' 		else 'RFP issued' 		end,
+					case when a.designated 	is true	then 'RFP designated' 	else 'RFP issued' 		end,
 					case when a.closed 	is true	then '; financing closed' 	else '; financing not closed' 	end
 				),
 			a.borough,
@@ -196,7 +201,15 @@ from
 	order by 
 		source, 
 		project_id
-) as hpd_2018_sca_inputs_ms
+) hpd_2018_sca_inputs_ms
+/*There are two HPD Projected Closings, building IDs 985433 & 985432, which have duplicates of the same building ID but different project ID. The unit counts and lots
+  represent the same building, so the below where statement will be used to arbitrarily select one project for building 985433 and one project for building 985432*/
+where
+	building_instance is null or
+	building_instance > 1
+order by
+	source,
+	project_id asc
 
 
 /***********************************RUN IN REGULAR CARTO*****************************/

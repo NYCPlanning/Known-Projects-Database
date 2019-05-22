@@ -21,11 +21,28 @@ into
 from
 (
 	select
-		a.*,
-		case when b.address is not null 								then 1 end								as Address_Match,
-		case when c.bbl is not null 									then 1 end								as bbl_match,
-		case when 	st_intersects(a.the_geom,d.the_geom)				then 1 end								as spatial_match,
-		case when 	st_dwithin(cast(a.the_geom as geography),cast(d.the_geom as geography),20) 	then 1 end		as proximity_match,
+		a.cartodb_id,
+		a.the_geom,
+		a.the_geom_webmercator,
+		a.project_id,
+		a.construction_type,
+		a.status,
+		a.projected_fiscal_year_range,
+		a.min_of_projected_units,
+		a.max_of_projected_units,
+		a.total_units,
+		a.address,
+		a.borough,
+		a.bbl,
+		a.nycha_flag,
+		a.gq_flag,
+		a.senior_housing_flag,
+		a.assisted_living_flag,
+		case 
+			when b.address 		is not null 													then 'Address'
+			when c.bbl 			is not null														then 'BBL'
+			when st_intersects(a.the_geom,d.the_geom)											then 'Spatial'
+			when st_dwithin(cast(a.the_geom as geography),cast(d.the_geom as geography),20)		then 'Proximity' end as DOB_Match_Type,
 		coalesce(b.the_geom,c.the_geom,d.the_geom) 																as dob_geom,
 		coalesce
 			(	
@@ -42,6 +59,7 @@ from
 		coalesce(b.units_net,c.units_net,d.units_net) 															as units_net,
 		coalesce(b.units_incomplete,c.units_incomplete,d.units_incomplete) 										as units_incomplete,
 		coalesce(b.latest_cofo,c.latest_cofo,d.latest_cofo) 													as latest_cofo,
+		coalesce(b.pre_filing_date,c.pre_filing_date,d.pre_filing_date) 										as pre_filing_date,	
 		coalesce(b.most_recent_status_date,c.most_recent_status_date,d.most_recent_status_date) 				as most_recent_status_date,
 		coalesce(b.completed_application_date,c.completed_application_date,d.completed_application_date) 		as completed_application_date,
 		coalesce(b.full_permit_issued_date,c.full_permit_issued_date,d.full_permit_issued_date) 				as full_permit_issued_date,
@@ -61,24 +79,125 @@ from
 		upper(concat(coalesce(e.dob_address,a.address),' ',a.borough)) =
 		upper(concat(b.address,' ',b.borough)) 					and
 		a.address is not null 									and
-		b.job_type<>'Demolition'
+		b.job_type = 'New Building'								and
+		extract(year from b.pre_filing_date::date) >= 2017
 	left join
 		capitalplanning.dob_2018_sca_inputs_ms c
 	on 
 		a.bbl::bigint = c.bbl									and
 		a.bbl is not null 										and 
 		b.address is null 										and
-		c.job_type<>'Demolition'
+		c.job_type = 'New Building'								and
+		extract(year from c.pre_filing_date::date) >= 2017
 	left join
 		capitalplanning.dob_2018_sca_inputs_ms d
 	on
 		st_dwithin(cast(a.the_geom as geography),cast(d.the_geom as geography),20) /*Meters*/ 	and
 		b.address 	is null 																	and
 		c.bbl 		is null 																	and
-		d.job_type = 'New Building' 
+		d.job_type = 'New Building' 															and
+		extract(year from d.pre_filing_date::date) >= 2017
 	order by
 		a.project_id
 ) as HPD_DOB_Merge
+
+
+/*Identifying DOB jobs which matched to more than 1 HPD job and preferencing matches by address, then, bbl, then spatial, then proximity*/
+
+SELECT
+	*
+into
+	multi_hpd_dob_matches
+from
+(
+	SELECT 
+		dob_job_number, 
+		count(*) as count, 
+		count(case when dob_match_type = 'Address' then 1 end) as address, 
+		count(case when dob_match_type = 'BBL' then 1 end) as BBL, 
+		count(case when dob_match_type = 'Spatial' then 1 end) as spatial, 
+		count(case when dob_match_type = 'Proximity' then 1 end) as proximity 
+	FROM 
+		capitalplanning.hpd_dob_match 
+	group by
+		dob_job_number
+	having count(*) > 1
+) multi_hpd_dob_matches
+
+/*Limiting matches of the DOB jobs identified in multi_hpd_dob_matches*/
+
+SELECT
+	*
+into
+	hpd_dob_match_1
+from
+(
+	SELECT
+		*
+	from
+		hpd_dob_match
+	where
+		dob_job_number is null or
+		(
+			not(dob_job_number in(select dob_job_number from capitalplanning.multi_hpd_dob_matches where address>=1) 	and dob_match_type in('BBL','Spatial','Proximity')) 	and
+			not(dob_job_number in(select dob_job_number from capitalplanning.multi_hpd_dob_matches where bbl>=1) 		and dob_match_type in('Spatial','Proximity')) 			and
+			not(dob_job_number in(select dob_job_number from capitalplanning.multi_hpd_dob_matches where spatial>=1) 	and dob_match_type ='Proximity') 			
+		)
+) hpd_dob_match_1
+
+/*Some DOB jobs are still matched to multiple HPD projects (primarily because HPD projects are geocoded to the lot-level, while DOB jobs are points). Preferencing the
+  matches which are closest in unit count to the HPD projected closings*/
+
+SELECT
+	*
+into
+	multi_hpd_dob_matches_1
+from
+(
+	SELECT 
+		dob_job_number, 
+		count(*) as count,
+		min(abs(units_net-total_units)) as min_unit_difference
+	FROM 
+		capitalplanning.hpd_dob_match 
+	where
+		dob_job_number is not null
+	group by
+		dob_job_number		
+	having count(*) > 1
+) multi_hpd_dob_matches_1
+
+/*Limiting matches of the DOB jobs identified in multi_hpd_dob_matches_1 to their closest match by unit count*/
+
+SELECT
+	*
+into
+	hpd_dob_match_2
+from
+(
+	SELECT
+		a.*
+	from
+		hpd_dob_match_1 a
+	left join
+		multi_hpd_dob_matches_1 b
+	on
+		a.dob_job_number = b.dob_job_number and
+		abs(a.units_net-a.total_units) <> b.min_unit_difference
+	where
+		b.dob_job_number is null
+) hpd_dob_match_2
+
+
+/*
+	After these steps, there are still 8 jobs remaining which match to more than 1 HPD Project. 
+  	Manually examine these matches (should all be google mappable because we have HPD address and the DOB point)
+*/
+
+
+
+SELECT dob_job_number, count(*), count(case when dob_match_type = 'Address' then 1 end) as address, count(case when dob_match_type = 'BBL' then 1 end) as BBL, count(case when dob_match_type = 'Spatial' then 1 end) as spatial, count(case when dob_match_type = 'Proximity' then 1 end) as proximity FROM capitalplanning.hpd_dob_match_2 group by dob_job_number having count(*) > 1
+
 
 /**********************RUN THE FOLLOWING QUERY IN REGULAR CARTO******************************/
 
@@ -91,7 +210,7 @@ from
 	from
 		hpd_dob_match
 	where
-		proximity_match = 1 and
+		dob_match_type = 'Proximity' and
 		units_net<>total_units
 	order by
 		geom_distance asc
@@ -113,15 +232,12 @@ from
 	select
 		the_geom,
 		the_geom_webmercator,
-		project_id 							as unique_project_id,
-		hpd_project_id,
-		project_name,
-		building_id,
-		primary_program_at_start,
+		project_id,
 		construction_type,
 		status,
-		project_start_date,
-		projected_completion_date,
+		projected_fiscal_year_range,
+		min_of_projected_units,
+		max_of_projected_units,
 		total_units,
 		case 
 			when concat(project_id,', ',dob_job_number) in
@@ -134,10 +250,7 @@ from
 											match = 0
 									)	then null
 
-			when Address_Match 		= 1	then 'Address'
-			when BBL_Match 			= 1	then 'BBL'
-			when spatial_match 		= 1	then 'Spatial' 
-			when proximity_match 	= 1	then 'Proximity' end	
+		else dob_match_type end
 										as DOB_Match_Type,
 		case 
 			when concat(project_id,', ',dob_job_number) in
@@ -167,7 +280,11 @@ from
 		borough,
 		latitude,
 		longitude,
-		bbl
+		bbl,
+		nycha_flag,
+		gq_flag,
+		senior_housing_flag,
+		assisted_living_flag
 	from
 		hpd_dob_match
 	order by
@@ -186,50 +303,49 @@ from
 	select
 		the_geom,
 		the_geom_webmercator,
-		unique_project_id,
-		hpd_project_id,
-		project_name,
-		building_id,
-		primary_program_at_start,
+		project_id,
 		construction_type,
 		status,
-		project_start_date,
-		projected_completion_date,
-		total_units,
+		projected_fiscal_year_range,
+		min_of_projected_units,
+		max_of_projected_units,
 		case 
 			when array_to_string(array_agg(dob_job_number),', ') like '%, ,%' 	then null
 			when array_to_string(array_agg(dob_job_number),', ') = ', ' 		then null
 			else array_to_string(array_agg(dob_job_number),', ') 			end 	as dob_job_numbers	
 		sum(units_net)										as DOB_Units_Net,
+		greatest(total_units - sum(units_net),0) as hpd_incremental_units
 		address,
 		borough,
 		latitude,
 		longitude,
 		bbl,
-		greatest(total_units - sum(units_net),0) as hpd_incremental_units
+		nycha_flag,
+		gq_flag,
+		senior_housing_flag,
+		assisted_living_flag
 	from
 		hpd_dob_match_2
 	group by
 		the_geom,
 		the_geom_webmercator,
-		unique_project_id,
-		hpd_project_id,
-		project_name,
-		building_id,
-		primary_program_at_start,
+		project_id,
 		construction_type,
 		status,
-		project_start_date,
-		projected_completion_date,
-		total_units,
+		projected_fiscal_year_range,
+		min_of_projected_units,
+		max_of_projected_units,
 		address,
 		borough,
 		latitude,
 		longitude,
-		bbl
-		
+		bbl,
+		nycha_flag,
+		gq_flag,
+		senior_housing_flag,
+		assisted_living_flag		
 	order by
-		unique_project_id
+		project_id
 ) as hpd_deduped
 
 

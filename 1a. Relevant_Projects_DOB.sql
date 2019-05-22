@@ -54,7 +54,7 @@ select
 
 		else status end									as status,
 	status_date 										as most_recent_status_date,
-	right(status_a,4) 									as pre_filing_year,
+	status_a 		 									as pre_filing_date,
 	status_d 											as completed_application_date,
 	status_r 											as full_permit_issued_date,
 	status_q 											as partial_permit_issued_date,
