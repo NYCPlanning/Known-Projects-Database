@@ -42,6 +42,7 @@ from
 (
 	select 
 		the_geom,
+		the_geom_webmercator,
 		project_id,
 		hpd_project_id,
 		building_id,
@@ -105,6 +106,7 @@ from
 
 		SELECT
 			b.the_geom,
+			b.the_geom_webmercator,
 			concat(a.project_id,'/',a.building_id) 						as project_id,
 			a.project_id 												as hpd_project_id,
 			a.building_id,
@@ -133,6 +135,7 @@ from
 		union
 		select
 			st_union(coalesce(b.the_geom,c.the_geom)) 						as the_geom,
+			st_union(coalesce(b.the_geom_webmercator,c.the_geom_webmercator)) as the_geom_webmercator,
 			concat(a.cartodb_id) 											as project_id,
 			null 															as hpd_project_id,
 			null															as building_id,
@@ -204,27 +207,7 @@ select cdb_cartodbfytable('capitalplanning', 'hpd_2018_sca_inputs_ms')
 SELECT
 	*
 into
-	hpd_projected_closings_inputs_ms_share_20190521
-from
-(
-	SELECT
-		the_geom,
-		the_geom_webmercator,
-		project_id,
-		project_name,
-		total_units
-	from
-		hpd_2018_sca_inputs_ms
-	where
-		source = 'HPD Projected Closings'
-)
-	order by
-		project_id
-															     
-SELECT
-	*
-into
-	hpd_rpfs_inputs_ms_share_20190521
+	hpd_closings_inputs_share_20190522
 from
 (
 	SELECT
@@ -236,11 +219,35 @@ from
 	from
 		hpd_2018_sca_inputs_ms
 	where
+		source = 'HPD Projected Closings'
+) hpd_closings_inputs_share_20190522
+	order by
+		project_id
+
+select cdb_cartodbfytable('capitalplanning', 'hpd_closings_inputs_share_20190522')
+															     
+
+SELECT
+	*
+into
+	hpd_rpfs_inputs_share_20190522
+from
+(
+	SELECT
+		the_geom,
+		the_geom_webmercator,
+		project_id,
+		project_name,
+		total_units
+	from
+		hpd_2018_sca_inputs_ms
+	where
 		source = 'HPD RFPs'
-)
+) hpd_rpfs_inputs_share_20190522
 	order by
 		project_id
 															     
+select cdb_cartodbfytable('capitalplanning', 'hpd_rpfs_inputs_share_20190522')
 
 															     
 															     

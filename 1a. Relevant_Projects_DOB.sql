@@ -24,6 +24,7 @@ from
 (
 select
 	the_geom,
+	the_geom_webmercator,
 	job_number,
 	job_type,
 	job_description,
@@ -178,20 +179,22 @@ select cdb_cartodbfytable('capitalplanning', 'dob_2018_sca_inputs_ms')
 SELECT
 	*
 into
-	dob_inputs_ms_share_20190521
+	dob_inputs_share_20190522
 from
 (
 	SELECT
 		the_geom,
 		the_geom_webmercator,
-		job_number,
+		job_number as project_id,
 		address,
 		units_net,
 		units_net_complete,
 		units_net_incomplete
 	from
 		dob_2018_sca_inputs_ms
-)
+) dob_inputs_ms_share_20190522
+
+select cdb_cartodbfytable('capitalplanning', 'dob_inputs_share_20190522')
 
 
 

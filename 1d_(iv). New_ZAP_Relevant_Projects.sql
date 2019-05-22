@@ -1289,7 +1289,6 @@ from
 
 
 
-
 /*Ensure that there are no added projects in ZAP already. If there are, replace the information.*/
 /*Pull out added projects from ZAP. If there are, replace the information.*/
 
@@ -1299,7 +1298,7 @@ select cdb_cartodbfytable('capitalplanning', 'relevant_dcp_projects_housing_pipe
 select
 	*
 into
-	dcp_inputs_ms_share_20190521
+	dcp_inputs_share_20190522
 from
 (
 	select
@@ -1310,8 +1309,31 @@ from
 		total_units
 	from
 		relevant_dcp_projects_housing_pipeline_ms_v5
-)
+	where
+		project_id not like '%[ESD%'
+) 	dcp_inputs_share_20190522
+	order by
+		project_id asc
+
+select
+	*
+into
+	state_inputs_share_20190522
+from
+(
+	select
+		the_geom,
+		the_geom_webmercator,
+		project_id,
+		project_name,
+		total_units
+	from
+		relevant_dcp_projects_housing_pipeline_ms_v5
+	where
+		project_id like '%[ESD%'
+) 	state_inputs_share_20190522
 	order by
 		project_id asc
 
 
+select cdb_cartodbfytable('capitalplanning', 'state_inputs_share_20190522')

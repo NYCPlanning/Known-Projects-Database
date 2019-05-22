@@ -136,17 +136,19 @@ select cdb_cartodbfytable('capitalplanning', 'public_sites_2018_sca_inputs_ms_1'
 select
 	*
 into
-	public_sites_inputs_ms_share_20190521
+	public_sites_inputs_share_20190522
 from
 (
 	select
 		the_geom,
 		the_geom_webmercator,
-		unique_project_id,
-		project_name,
+		unique_project_id as project_id,
+		project as project_name,
 		total_units
 	from
 		public_sites_2018_sca_inputs_ms_1
-)
+)	public_sites_inputs_share_20190522
 	order by
-		unique_project_id asc
+		project_id asc
+
+select cdb_cartodbfytable('capitalplanning', 'public_sites_inputs_share_20190522')

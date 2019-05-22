@@ -201,17 +201,19 @@ select cdb_cartodbfytable('capitalplanning', 'edc_2018_sca_input_1_limited')
 select
 	*
 into
-	edc_inputs_ms_share_20190521
+	edc_inputs_share_20190522
 from
 (
 	select
 		the_geom,
 		the_geom_webmercator,
-		edc_project_id,
+		edc_project_id as project_id,
 		project_name,
 		total_units
 	from
 		edc_2018_sca_input_1_limited
-)
+) edc_inputs_share_20190522
 	order by
-		edc_project_id asc
+		project_id asc
+
+select cdb_cartodbfytable('capitalplanning', 'edc_inputs_share_20190522')

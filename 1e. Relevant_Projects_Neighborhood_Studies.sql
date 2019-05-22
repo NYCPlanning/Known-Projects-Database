@@ -28,7 +28,7 @@ DROP COLUMN NAME,
 DROP COLUMN DESCRIPTION;
 
 delete from capitalplanning.dep_ndf_polygon_matching_ms
-where neighborhood is not null
+where neighborhood is not null;
 
 INSERT INTO capitalplanning.dep_ndf_polygon_matching_ms
 (
@@ -281,6 +281,8 @@ from
 			when A.PROJECT_ID LIKE '%REZONING COMMITMENT%' then	coalesce
 																	(
 																		case 
+																			when a.project_id = 'Phipps House EAST NEW YORK REZONING COMMITMENT'											then 900
+																			/*Inserting information from https://council.nyc.gov/land-use/wp-content/uploads/sites/53/2016/05/East-New-York-plan-summary.pdf*/
 																			when a.project_id = '(Projected RFP) DSNY 123rd Street Parking Lot (Site 3) EAST HARLEM REZONING COMMITMENT' 	then 115 
 																			/*Inserting information from planner Joseph Huennekens. See email at the following link:
 																			"G:\03. Schools Planning\01_Inputs to SCA CP\Housing pipeline\00_Data\Jan 2019 SCA Housing Pipeline\Working Data\DEP NDF\RE East Harlem Rezoning Commitment.msg"
@@ -434,7 +436,7 @@ select neighborhood, count(*) as observations, sum(units) as units from capitalp
 select
 	*
 into
-	neighborhood_studies_inputs_ms_share_20190521
+	neighborhood_studies_inputs_share_20190522
 from
 (
 	select
@@ -442,11 +444,14 @@ from
 		the_geom_webmercator,
 		project_id,
 		project_name,
-		total_units
+		units as total_units
 	from
 		dep_ndf_by_site
-)
+)	neighborhood_studies_inputs_share_20190522
 	order by
 		project_id asc
+
+
+select cdb_cartodbfytable('capitalplanning', 'neighborhood_studies_inputs_share_20190522')
 
 

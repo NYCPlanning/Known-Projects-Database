@@ -542,12 +542,10 @@ from
 select cdb_cartodbfytable('capitalplanning', 'mapped_planner_inputs_added_projects_ms_1')
 
 
-
-
 select
 	*
 into
-	mapped_planner_added_projects_inputs_ms_share_20190521
+	planner_added_projects_share_20190522
 from
 (
 	select
@@ -558,6 +556,9 @@ from
 		total_units
 	from
 		mapped_planner_inputs_added_projects_ms_1
-)
+)   planner_added_projects_share_20190522
 	order by
 		map_id asc
+
+select cdb_cartodbfytable('capitalplanning', 'planner_added_projects_share_20190522')
+
