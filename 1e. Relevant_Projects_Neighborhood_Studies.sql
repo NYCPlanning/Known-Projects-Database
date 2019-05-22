@@ -347,11 +347,11 @@ from
 		CASE 
 			WHEN upper(concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input))  	like '%SENIOR%' THEN 1
 			WHEN upper(concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input))  	like '%ELDERLY%' THEN 1 	
-			WHEN concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input)  		like '% AIRS%' THEN 1
+			WHEN concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input)  			like '% AIRS%' THEN 1
 			WHEN upper(concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input))  	like '%A.I.R.S%' THEN 1 
 			WHEN upper(concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input))  	like '%CONTINUING CARE%' THEN 1
 			WHEN upper(concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input))  	like '%NURSING%' THEN 1
-			WHEN concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input)  		like '% SARA%' THEN 1
+			WHEN concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input)  			like '% SARA%' THEN 1
 			WHEN upper(concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input))  	like '%S.A.R.A%' THEN 1 else 0 end as Senior_Housing_Flag,
 		CASE
 			WHEN upper(concat(c.rationale_for_assignments_for_likelihood_to_be_built,b.planner_input))  like '%ASSISTED LIVING%' THEN 1 else 0 end as Assisted_Living_Flag

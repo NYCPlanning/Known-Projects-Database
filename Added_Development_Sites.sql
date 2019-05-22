@@ -285,10 +285,6 @@ from
 select cdb_cartodbfytable('capitalplanning', 'planner_inputs_consolidated_ms')
 
 
-update mapped_planner_added_projects_ms
-set updated_unit_count =  798, corrected_existing_unit_count = 1
-where project_id = 'P2012M0309'
-
 /*Join the planner inputs to the mapped developments. Then do the intersect and delete those projects which are based on the flag*/
 
 select
@@ -320,26 +316,36 @@ from
 			additional_notes_2019,
 			ZAP_Checked_Project_ID_2019,
 			replace
+			(	
+				replace
 				(
-				case 
-					when
-						trim(rationale_2019) 			<> '' or
-						trim(phasing_notes_2019)		<> '' or
-						trim(additional_notes_2019) 	<> '' then 
-						concat_ws
-							(
-								' | ',
-								nullif(trim(rationale_2019),''),
-								nullif(trim(phasing_notes_2019),''),
-								nullif(trim(additional_notes_2019),'')
-							)	
-					when
-						trim(rationale_2018) <> '' then concat('2018 INPUT: ', trim(rationale_2018))
-					else null end 
-				 ,'''',
-				 ''
-				 )
-					as planner_input,
+					replace
+						(
+						case 
+							when
+								trim(rationale_2019) 			<> '' or
+								trim(phasing_notes_2019)		<> '' or
+								trim(additional_notes_2019) 	<> '' then 
+								concat_ws
+									(
+										' | ',
+										nullif(trim(rationale_2019),''),
+										nullif(trim(phasing_notes_2019),''),
+										nullif(trim(additional_notes_2019),'')
+									)	
+							when
+								trim(rationale_2018) <> '' then concat('2018 INPUT: ', trim(rationale_2018))
+							else null end 
+						 ,'''',
+						 ''
+						 ),
+					'"',
+					''
+				),
+				'–',
+				''	
+			)
+			as planner_input,
 			mql_view,
 			suggestion,
 			must_get_boro_input,
@@ -468,7 +474,38 @@ from
 			rationale_2019,
 			phasing_notes_2019,
 			additional_notes_2019,
-			status||planner_input as planner_input,
+			concat_ws(' | ',nullif(rtrim(ltrim(status)),''),nullif(rtrim(ltrim(planner_input)),'')) as planner_input,
+		CASE 
+			WHEN upper(concat(project_name,planner_input))  like '%NYCHA%' THEN 1   		
+			WHEN upper(concat(project_name,planner_input))  like '%BTP%' THEN 1  		
+			WHEN upper(concat(project_name,planner_input))  like '%HOUSING AUTHORITY%' THEN 1  		
+			WHEN upper(concat(project_name,planner_input))  like '%NEXT GEN%' THEN 1  		
+			WHEN upper(concat(project_name,planner_input))  like '%NEXT-GEN%' THEN 1  		
+			WHEN upper(concat(project_name,planner_input))  like '%NEXTGEN%' THEN 1  		
+			WHEN upper(concat(project_name,planner_input))  like '%BUILD TO PRESERVE%' THEN 1 ELSE 0 END 		AS NYCHA_Flag,
+
+		CASE 
+			WHEN upper(concat(project_name,planner_input))  like '%CORRECTIONAL%' THEN 1   		
+			WHEN upper(concat(project_name,planner_input))  like '%NURSING%' THEN 1  		
+			WHEN upper(concat(project_name,planner_input))  like '% MENTAL%' THEN 1  		
+			WHEN upper(concat(project_name,planner_input))  like '%DORMITOR%' THEN 1  		
+			WHEN upper(concat(project_name,planner_input))  like '%MILITARY%' THEN 1  		
+			WHEN upper(concat(project_name,planner_input))  like '%GROUP HOME%' THEN 1  		
+			WHEN upper(concat(project_name,planner_input))  like '%BARRACK%' THEN 1 ELSE 0 END 		AS GQ_fLAG,
+
+		/*Identifying definite senior housing projects*/
+		CASE 
+			WHEN upper(concat(project_name,planner_input))  	like '%SENIOR%' THEN 1
+			WHEN upper(concat(project_name,planner_input))  	like '%ELDERLY%' THEN 1 	
+			WHEN concat(project_name,planner_input)  			like '% AIRS%' THEN 1
+			WHEN upper(concat(project_name,planner_input))  	like '%A.I.R.S%' THEN 1 
+			WHEN upper(concat(project_name,planner_input))  	like '%CONTINUING CARE%' THEN 1
+			WHEN upper(concat(project_name,planner_input))  	like '%NURSING%' THEN 1
+			WHEN concat(project_name,planner_input)  			like '% SARA%' THEN 1
+			WHEN upper(concat(project_name,planner_input))  	like '%S.A.R.A%' THEN 1 else 0 end as Senior_Housing_Flag,
+		CASE
+			WHEN upper(concat(project_name,planner_input))  like '%ASSISTED LIVING%' THEN 1 else 0 end as Assisted_Living_Flag,
+
 			mql_view,
 			suggestion,
 			must_get_boro_input,

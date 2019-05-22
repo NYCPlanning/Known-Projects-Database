@@ -437,7 +437,7 @@ FROM
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%BUILD TO PRESERVE%' THEN 1 ELSE 0 END 		AS NYCHA_Flag,
 
 		CASE 
-			when project_id = 'P2018M0058'												then 0 /*Nursing facility only small part of this project*/
+			when a.project_id = 'P2018M0058'												then 0 /*Nursing facility only small part of this project*/
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%CORRECTIONAL%' THEN 1   		
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%NURSING%' THEN 1  		
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '% MENTAL%' THEN 1  		
@@ -453,7 +453,7 @@ FROM
 
 		/*Identifying definite senior housing projects*/
 		CASE 
-			when project_id in('P2012R0625','P2018M0058','P2016Q0306')						then 0 /*Three projects which only include
+			when a.project_id in('P2012R0625','P2018M0058','P2016Q0306')						then 0 /*Three projects which only include
 																									 senior housing as a small portion*/
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  	like '%SENIOR%' THEN 1
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  	like '%ELDERLY%' THEN 1 	
@@ -1199,6 +1199,8 @@ from
 				) <> 0
 ) x
 
+
+
 /*Removing duplicates which exist both in the planners inputs and ZAP*/
 
 
@@ -1263,6 +1265,7 @@ from
 
 		/*Identifying definite senior housing projects*/
 		CASE 
+			when a.project_id = 'P2012M0285' then 0 /*Existing site, not future site is senior home*/
 			WHEN upper(b.planner_input)  	like '%SENIOR%' THEN 1
 			WHEN upper(b.planner_input)  	like '%ELDERLY%' THEN 1 	
 			WHEN b.planner_input  			like '% AIRS%' THEN 1
