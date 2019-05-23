@@ -187,16 +187,80 @@ from
 	where
 		b.dob_job_number is null
 ) hpd_dob_match_2
+	order by
 
 
 /*
-	After these steps, there are still 8 jobs remaining which match to more than 1 HPD Project. 
-  	Manually examine these matches (should all be google mappable because we have HPD address and the DOB point)
+	After these steps, there are still 10 jobs remaining which match to more than 1 HPD Project. The list of these jobs is below.
+	AFter manually examining these matches, they are all developments in vacant lots geocoded to the same point and matching to HPD
+	projects of the same characteristics. Therefore, there is no inaccurate unit impact to attributing these developments arbitrarily.
+	Export multi_hpd_dob_matches_2, arbitrarily create one-to-one-matches, and reimport as hpd_dob_one_to_one_matching_20190523_ms.
+	Use hpd_dob_one_to_one_matching_20190523_ms as a lookup with which to delete the last multi-dob-matches.
 */
 
+select
+	*
+into
+	multi_hpd_dob_matches_2
+from
+(
+	select
+		*
+	from
+		hpd_dob_match_2
+	where
+		dob_job_number in
+		(
+			select
+				dob_job_number
+			from
+				hpd_dob_match_2
+			group by
+				dob_job_number
+			having
+				count(*)>1
+		)
+	order by
+		dob_job_number asc,
+		project_id asc
+) x
 
 
-SELECT dob_job_number, count(*), count(case when dob_match_type = 'Address' then 1 end) as address, count(case when dob_match_type = 'BBL' then 1 end) as BBL, count(case when dob_match_type = 'Spatial' then 1 end) as spatial, count(case when dob_match_type = 'Proximity' then 1 end) as proximity FROM capitalplanning.hpd_dob_match_2 group by dob_job_number having count(*) > 1
+select
+	*
+into
+	hpd_dob_match_3
+from
+(
+	select
+		cartodb_id,
+		the_geom,
+		the_geom_webmercator,
+		project_id,
+		construction_type,
+		status,
+		projected_fiscal_year_range,
+		min_of_projected_units,
+		max_of_projected_units,
+		total_units,
+		address,
+		borough,
+		bbl,
+		nycha_flag,
+		gq_flag,
+		senior_housing_flag,
+		assisted_living_flag,
+		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_one_to_one_matching_20190523_ms where accurate_match =0) then null else dob_match_type 	end 	as dob_match_type,
+		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_one_to_one_matching_20190523_ms where accurate_match =0) then null else dob_job_number 	end 	as dob_job_number,
+		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_one_to_one_matching_20190523_ms where accurate_match =0) then null else dob_job_type   	end 	as dob_job_type,
+		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_one_to_one_matching_20190523_ms where accurate_match =0) then null else dob_status		   	end 	as dob_status,
+		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_one_to_one_matching_20190523_ms where accurate_match =0) then null else dob_address	   	end 	as dob_address,
+		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_one_to_one_matching_20190523_ms where accurate_match =0) then null else units_net 			end		as units_net,
+		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_one_to_one_matching_20190523_ms where accurate_match =0) then null else geom_distance 		end 	as geom_distance
+	from
+		hpd_dob_match_2
+) hpd_dob_match_3 
+
 
 
 /**********************RUN THE FOLLOWING QUERY IN REGULAR CARTO******************************/
@@ -208,11 +272,12 @@ SELECT dob_job_number, count(*), count(case when dob_match_type = 'Address' then
 	select
 		*
 	from
-		hpd_dob_match
+		hpd_dob_match_3
 	where
 		dob_match_type = 'Proximity' and
 		units_net<>total_units
 	order by
+		project_id asc,
 		geom_distance asc
 )
 

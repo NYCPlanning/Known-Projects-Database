@@ -95,8 +95,8 @@ from
 			Likely_to_be_Built_by_2025_Flag,
 			Excluded_Project_Flag,
 			rationale_for_exclusion,
-			source,
-			building_instance
+			source
+			-- ,building_instance
 		from(
 
 
@@ -204,9 +204,9 @@ from
 ) hpd_2018_sca_inputs_ms
 /*There are two HPD Projected Closings, building IDs 985433 & 985432, which have duplicates of the same building ID but different project ID. The unit counts and lots
   represent the same building, so the below where statement will be used to arbitrarily select one project for building 985433 and one project for building 985432*/
-where
-	building_instance is null or
-	building_instance > 1
+-- where
+-- 	building_instance is null or
+-- 	building_instance > 1
 order by
 	source,
 	project_id asc
