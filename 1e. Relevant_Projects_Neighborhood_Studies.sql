@@ -447,6 +447,8 @@ from
 		units as total_units
 	from
 		dep_ndf_by_site
+	where
+		status = 'Rezoning Commitment'
 )	neighborhood_studies_inputs_share_20190522
 	order by
 		project_id asc

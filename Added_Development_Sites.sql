@@ -279,6 +279,7 @@ from
 ) as planner_inputs
 
 
+
 /**********************RUN IN REGULAR CARTO**************************/
 
 
@@ -377,7 +378,7 @@ from
 	left join
 		added_development_sites_20190510_ms a
 	on
-		a.mapid = b.map_id	
+		a.mapid = b.map_id
 	/*Two projects (in addition to SI incorrect, quarantined projects) do not exist in planner inputs. 94519 and 94500. These are incorrect geocodes according to KS, and are accurately not included.*/
 
 ) as mapped_planner_inputs_consolidated_inputs_ms

@@ -195,7 +195,7 @@ from
 	select
 		a.project_id,
 		b.the_geom				as the_geom,	
-		a.THE_GEOM_WEBMERCATOR 	as the_geom_webmercator
+		b.THE_GEOM_WEBMERCATOR 	as the_geom_webmercator
 	from
 		capitalplanning.zap_project_missing_geom_lookup a
 	left join
@@ -1026,9 +1026,13 @@ from
 			borough, 
 			project_description,
 			project_brief,
-			total_units_2 as total_units,
-			total_unit_source,
-			case when total_unit_source = 'ZAP or Internal Research' then total_units_source end as ZAP_Unit_Source,
+			case 
+				when project_id in('P2017Q0067','P2018Q0046') then null else total_units_2 end as total_units,
+			case 
+				when project_id in('P2017Q0067','P2018Q0046') then null else total_unit_source end as total_unit_source,
+			case
+				when project_id in('P2017Q0067','P2018Q0046') then null 
+				when total_unit_source = 'ZAP or Internal Research' then total_units_source end as ZAP_Unit_Source,
 			applicant_type,
 			NYCHA_flag,
 			GQ_Flag,
@@ -1051,7 +1055,8 @@ from
 		from
 			capitalplanning.relevant_dcp_projects_housing_pipeline_ms_v2_2
 		where
-			Planner_Noted_Omission is null /*Removing planner omitted and flagged projects*/
+			Planner_Noted_Omission is null /*Removing planner omitted and flagged projects except for Anable Basin and LICIC, which we are keeping with null unit count*/ or
+			project_id in('P2017Q0067','P2018Q0046')
 	) x
 	order by
 		project_id asc
@@ -1134,7 +1139,8 @@ from
 	from
 		relevant_dcp_projects_housing_pipeline_ms_v3
 	WHERE
-		TOTAL_UNITS <> 0
+		TOTAL_UNITS <> 0 or
+		project_id in('P2017Q0067','P2018Q0046')
 	union
 	SELECT
 		row_number() over() + (select max(cartodb_id) from relevant_dcp_projects_housing_pipeline_ms_v3) 	as cartodb_id,
@@ -1196,7 +1202,7 @@ from
 						when a.PROJECT_ID = 'P2017M0394' THEN 588
 						when length(b.ks_assumed_units)<2 or position('units' in b.ks_assumed_units)<1 then null
 						else substring(b.ks_assumed_units,1,position('units' in b.ks_assumed_units)-1)::numeric end
-				) <> 0
+				) <> 0 
 ) x
 
 
@@ -1230,12 +1236,12 @@ from
 		a.dcp_target_certification_date,
 		a.certified_referred,
 		a.project_completed,
+		a.Anticipated_year_built,
 		b.remaining_units_likely_to_be_built_2018,
 		b.rationale_2018,
 		b.rationale_2019,
 		b.phasing_notes_2019,
 		b.additional_notes_2019,
-		b.planner_input,
 		b.portion_built_2025,
 		b.portion_built_2035,
 		b.portion_built_2055,
@@ -1243,7 +1249,7 @@ from
 		case
 			when a.pre_pas_flag 	= 1 then 1
 			when a.initiation_flag 	= 1 then 1 else 0 end as early_stage_flag,
-				/*Identifying NYCHA Projects*/
+		/*Identifying NYCHA Projects*/
 		CASE 
 			WHEN upper(b.planner_input)  like '%NYCHA%' THEN 1   		
 			WHEN upper(b.planner_input)  like '%BTP%' THEN 1  		
@@ -1266,6 +1272,7 @@ from
 		/*Identifying definite senior housing projects*/
 		CASE 
 			when a.project_id = 'P2012M0285' then 0 /*Existing site, not future site is senior home*/
+			when a.project_id = 'P2014M0257' then 1 /*Senior home in future site*/
 			WHEN upper(b.planner_input)  	like '%SENIOR%' THEN 1
 			WHEN upper(b.planner_input)  	like '%ELDERLY%' THEN 1 	
 			WHEN b.planner_input  			like '% AIRS%' THEN 1
@@ -1276,6 +1283,7 @@ from
 			WHEN upper(b.planner_input)  	like '%S.A.R.A%' THEN 1 else a.senior_housing_flag end as Senior_Housing_Flag,
 		CASE
 			WHEN upper(b.planner_input)  	like '%ASSISTED LIVING%' THEN 1 else a.Assisted_Living_Flag end as Assisted_Living_Flag,
+		coalesce(nullif(b.planner_input,''),c.rationale) as planner_input,
 		row_number() over(partition by a.project_id) as project_id_instance
 	from
 		relevant_dcp_projects_housing_pipeline_ms_v4 a
@@ -1283,6 +1291,12 @@ from
 		mapped_planner_inputs_consolidated_inputs_ms b
 	on
 		a.project_id = b.project_id or (a.map_id is not null and a.map_id = b.map_id)
+	/*Joining on DCP Inputs from 2018 SCA Housing Pipeline to provide additional planner rationale where it is not available in 2019*/
+	left join
+		dcp_2018_sca_inputs_share c
+	on
+		a.project_id = c.project_id and
+		upper(c.rationale) not like '%TOO EARLY STAGE%' /*Omitting outdated rationales which may have changed*/
 ) x
 	where 
 		project_id_instance = 1
@@ -1314,6 +1328,9 @@ from
 ) 	dcp_inputs_share_20190522
 	order by
 		project_id asc
+
+select cdb_cartodbfytable('capitalplanning', 'dcp_inputs_share_20190522')
+
 
 select
 	*

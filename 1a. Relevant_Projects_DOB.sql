@@ -96,7 +96,7 @@ select
 	/*Identifying definite senior housing projects*/
 	CASE 
 		WHEN upper(job_description)  like '%SENIOR%' THEN 1
-		WHEN upper(job_description)  like '%ELDERLY%' THEN 1 	
+		WHEN upper(job_description)  like '%ELDERL%' THEN 1 	
 		WHEN job_description  like '% AIRS %' THEN 1
 		WHEN upper(job_description)  like '%A.I.R.S%' THEN 1 
 		WHEN upper(job_description)  like '%CONTINUING CARE%' THEN 1
@@ -109,9 +109,11 @@ select
 from 
 	capitalplanning.devdb_housing_pts_20190215
 where
-	status 		<>'Withdrawn' 				and 
-	x_inactive 	= 'false' 					and /*Non-permitted job w/o update since two years ago*/
-	units_net <> 0
+	status 		<>'Withdrawn' 							and 
+	x_inactive 	= 'false' 								and /*Non-permitted job w/o update since two years ago*/
+	units_net 	<> 0									and /*Removing administrative and no work jobs which do not create units*/
+	upper(job_description) not like '%NO WORK%' 		and
+	upper(job_description) not like '%ADMINISTRATIVE%'
 order by
 	job_number
 ) as dob_2018_sca_inputs_ms_pre
@@ -179,7 +181,7 @@ select cdb_cartodbfytable('capitalplanning', 'dob_2018_sca_inputs_ms')
 SELECT
 	*
 into
-	dob_inputs_share_20190522
+	dob_complete_inputs_share_20190522
 from
 (
 	SELECT
@@ -192,11 +194,33 @@ from
 		units_net_incomplete
 	from
 		dob_2018_sca_inputs_ms
+	where
+		status like '%Complete%'
 ) dob_inputs_ms_share_20190522
 
-select cdb_cartodbfytable('capitalplanning', 'dob_inputs_share_20190522')
+select cdb_cartodbfytable('capitalplanning', 'dob_complete_inputs_share_20190522')
 
+SELECT
+	*
+into
+	dob_incomplete_inputs_share_20190522
+from
+(
+	SELECT
+		the_geom,
+		the_geom_webmercator,
+		job_number as project_id,
+		address,
+		units_net,
+		units_net_complete,
+		units_net_incomplete
+	from
+		dob_2018_sca_inputs_ms
+	where
+		status not like '%Complete%'
+) dob_inputs_ms_share_20190522
 
+select cdb_cartodbfytable('capitalplanning', 'dob_incomplete_inputs_share_20190522')
 
 
 
