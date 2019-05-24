@@ -232,8 +232,3 @@ from
 where
 	hpd_projected_closings_ids <> '' and
 	abs(total_units - hpd_projected_closings_total_units) > 50
-
-
-									 
-/*Run in regular Carto to display table*/		      
-select cdb_cartodbfytable('capitalplanning','hpd_rfp_deduped')
