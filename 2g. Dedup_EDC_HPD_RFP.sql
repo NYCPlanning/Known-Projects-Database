@@ -19,29 +19,34 @@ from
 (
 	select
 		a.the_geom,
+		a.the_geom_webmercator,
+		a.geom_source,
 		a.edc_project_id,
 		a.dcp_project_id,
 		a.project_name,
 		a.project_description,
-		a.total_units,
-		a.build_year,
 		a.comments_on_phasing,
-		b.rfp_id as hpd_rfp,
-		b.project_name as hpd_rfp_project_name,
-		b.total_units as hpd_rfp_total_units,
+		a.build_year,
+		a.total_units,
+		a.cartodb_id,
+		a.NYCHA_Flag,
+		a.gq_flag,
+		a.Assisted_Living_Flag,
+		a.Senior_Housing_Flag,
+		b.project_id 																		as hpd_rfp_id,
+		b.project_name 																		as hpd_rfp_project_name,
+		b.total_units 																		as hpd_rfp_total_units,
 		b.hpd_rfp_incremental_units,
 	 	st_distance(a.the_geom::geography,b.the_geom::geography) as distance,
 		case 
-			when a.bbl = b.bbl						then 'BBL'
 			when st_intersects(a.the_geom::geography,b.the_geom::geography) then 'Spatial'
 			when st_dwithin(a.the_geom::geography,b.the_geom::geography,20) then 'Proximity'
-											end as Match_Type
+																							end as Match_Type
 	from
 		capitalplanning.edc_2018_sca_input_1_limited a
 	left join
 		capitalplanning.hpd_rfp_deduped b
 	on
-		(a.bbl = b.bbl and a.bbl is not null and a.bbl <> '') or
 		st_dwithin(a.the_geom::geography,b.the_geom::geography,20)
 ) as edc_hpd_rfp
 order by
@@ -49,7 +54,7 @@ order by
 	
 	
 /**********************************RUN IN REGULAR CARTO************************/
-/*CREATE LOOKUP CALLED EDC_DOB_PROXIMATE_MATCHES
+/*If there are any proximity-based matches, EXPORT THE FOLLOWING QUERY AS edc_hpd_rfp_proximate_matches_190524_v2
   IDENTIFY WHETHER THE MATCHES IN THIS DATASET ARE ACCURATE BY FLAGGING.
   REIMPORT AS A LOOKUP AND OMIT INACCURATE MATCHES. */
   
@@ -69,35 +74,46 @@ order by
 select
 	*
 into
-	edc_hpd_rfp_1
+	edc_hpd_rfp_final
 from
 (
 	select
-		a.the_geom,
-		a.edc_project_id,
-		a.dcp_project_id,
-		a.project_name,
-		a.project_description,
-		a.total_units,
-		a.build_year,
-		a.comments_on_phasing,
-		array_to_string(array_agg(case when b.match = 0 then null else a.hpd_rfp_id end),', '	) as HPD_RFP_IDs,
-		sum(case when b.match = 0 then null else a.hpd_rfp_incremental_units end 		) as HPD_RFP_Units
+		the_geom,
+		the_geom_webmercator,
+		geom_source,
+		edc_project_id,
+		dcp_project_id,
+		project_name,
+		project_description,
+		comments_on_phasing,
+		build_year,
+		total_units,
+		cartodb_id,
+		NYCHA_Flag,
+		gq_flag,
+		Assisted_Living_Flag,
+		Senior_Housing_Flag,
+		array_to_string(array_agg(nullif(concat_ws(', ',nullif(hpd_rfp_id,''),nullif(project_name,'')),'')),' | ') 		as hpd_rfp_ids,
+		sum(hpd_rfp_total_units)																						as HPD_rfp_Total_Units,
+		sum(hpd_rfp_incremental_units) 																					as HPD_rfp_Incremental_Units
 	from
-		capitalplanning.edc_hpd a
-	left join
-		capitalplanning.lookup_proximity_edc_hpdrfp_matches b
-	on
-		concat(a.edc_project_id,', ',a.hpd_rfp_id) = b.match_id
+		capitalplanning.edc_hpd_rfp a
 	group by 
-		a.the_geom,
-		a.edc_project_id,
-		a.dcp_project_id,
-		a.project_name,
-		a.project_description,
-		a.total_units,
-		a.build_year,
-		a.comments_on_phasing
-) as edc_hpd_rfp_1
+		the_geom,
+		the_geom_webmercator,
+		geom_source,
+		edc_project_id,
+		dcp_project_id,
+		project_name,
+		project_description,
+		comments_on_phasing,
+		build_year,
+		total_units,
+		cartodb_id,
+		NYCHA_Flag,
+		gq_flag,
+		Assisted_Living_Flag,
+		Senior_Housing_Flag
+) as edc_hpd_rfp_final
 order by
-	edC_project_id
+	edc_project_id asc

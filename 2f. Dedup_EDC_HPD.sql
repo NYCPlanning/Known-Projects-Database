@@ -20,28 +20,30 @@ from
 (
 	select
 		a.the_geom,
+		a.the_geom_webmercator,
+		a.geom_source,
 		a.edc_project_id,
 		a.dcp_project_id,
 		a.project_name,
 		a.project_description,
-		a.total_units,
-		a.build_year,
 		a.comments_on_phasing,
-		b.unique_project_id 								as HPD_Project_ID,
-		b.project_name 									as HPD_Project_Name,
-		b.status									as HPD_Status,
-		b.project_start_date								as HPD_Project_Start_Date,
-		b.projected_completion_date							as HPD_Projected_Completion_Date
-		,b.total_units									as HPD_Total_Units
-		,b.hpd_incremental_units
-		,b.address									as HPD_Address
-		,b.borough									as HPD_Borough
-		,b.bbl										as HPD_BBL
+		a.build_year,
+		a.total_units,
+		a.cartodb_id,
+		a.NYCHA_Flag,
+		a.gq_flag,
+		a.Assisted_Living_Flag,
+		a.Senior_Housing_Flag,
 		case
-			when st_intersects(a.the_geom,b.the_geom)			then 'Spatial'
-			when st_dwithin(a.the_geom::geography,b.the_geom::geography)	then 'Proximity'
-											end 	as Match_Type
-		,st_distance(a.the_geom::geography,b.the_geom::geography)			as distance
+			when st_intersects(a.the_geom,b.the_geom)						then 'Spatial'
+			when st_dwithin(a.the_geom::geography,b.the_geom::geography,20)	then 'Proximity'
+																			end 			as Match_Type,
+		b.project_id 					as HPD_Project_ID,
+		b.address						as HPD_Address,
+		b.bbl 							as HPD_BBL,
+		b.total_units 					as HPD_Project_Total_Units,
+		b.hpd_incremental_units 		as HPD_Project_Incremental_Units,
+		st_distance(a.the_geom::geography,b.the_geom::geography)			as distance
 	from
 		capitalplanning.edc_2018_sca_input_1_limited a
 	left join
@@ -52,18 +54,20 @@ from
 		edc_project_id asc
 ) as edc_hpd
 
+
+
 /**********************RUN THE FOLLOWING QUERY IN REGULAR CARTO******************************/
-/*EXPORT THE FOLLOWING QUERY AS HPD_EDC_PROXIMATE_MATCHES.
+/*If there are any proximity-based matches, EXPORT THE FOLLOWING QUERY AS edc_hpd_proximate_matches_190524_v2. 
   IDENTIFY WHETHER THE MATCHES IN THIS DATASET ARE ACCURATE BY FLAGGING.
   REIMPORT AS A LOOKUP AND OMIT INACCURATE MATCHES. */
 
 select
 	*
-WHERE
-	match_type = 'Proximity' and
-	total_units <> hpd_total_units
 from 
 	edc_hpd
+WHERE
+	match_type = 'Proximity' and
+	total_units <> HPD_Project_Total_Units
 order by
 	distance
 	
@@ -72,26 +76,47 @@ order by
 select
 	*
 into
-	edc_hpd_1
+	edc_hpd_final
 from
 (
 	select
-		a.the_geom,
-		a.edc_project_id,
-		a.dcp_project_id,
-		a.project_name,
-		a.project_description,
-		a.total_units,
-		a.build_year,
-		a.comments_on_phasing,
-		array_to_string(array_agg(case when b.match = 0 then null else a.hpd_project_id end),', ') as hpd_project_ids,
-		sum(case when b.match = 0 then null else a.hpd_incremental_units) as HPD_Incremental_Units
+		the_geom,
+		the_geom_webmercator,
+		geom_source,
+		edc_project_id,
+		dcp_project_id,
+		project_name,
+		project_description,
+		comments_on_phasing,
+		build_year,
+		total_units,
+		cartodb_id,
+		NYCHA_Flag,
+		gq_flag,
+		Assisted_Living_Flag,
+		Senior_Housing_Flag,
+		array_to_string(array_agg(nullif(concat_ws(', ',nullif(hpd_project_id,''),nullif(hpd_address,'')),'')),' | ') 	as hpd_project_ids,
+		sum(HPD_Project_Total_Units)																					as HPD_Project_Total_Units,
+		sum(HPD_Project_Incremental_Units) 																				as HPD_Project_Incremental_Units
 	from
-		edc_hpd a
-	left join
-		lookup_proximity_hpd_edc_matches b
-	on 
-		concat(a.hpd_project_id,', ',a.edc_project_id) = b.match_id
-) as edc_hpd_1
-order by
-	edc_project_id asc
+		edc_hpd
+	group by
+		the_geom,
+		the_geom_webmercator,
+		geom_source,
+		edc_project_id,
+		dcp_project_id,
+		project_name,
+		project_description,
+		comments_on_phasing,
+		build_year,
+		total_units,
+		cartodb_id,
+		NYCHA_Flag,
+		gq_flag,
+		Assisted_Living_Flag,
+		Senior_Housing_Flag
+	order by
+		edc_project_id asc
+) x
+
