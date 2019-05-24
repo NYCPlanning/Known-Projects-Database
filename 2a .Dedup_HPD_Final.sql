@@ -39,32 +39,31 @@ from
 		a.senior_housing_flag,
 		a.assisted_living_flag,
 		case 
-			when b.address 		is not null 													then 'Address'
-			when c.bbl 			is not null														then 'BBL'
-			when st_intersects(a.the_geom,d.the_geom)											then 'Spatial'
-			when st_dwithin(cast(a.the_geom as geography),cast(d.the_geom as geography),20)		then 'Proximity' end as DOB_Match_Type,
-		coalesce(b.the_geom,c.the_geom,d.the_geom) 																as dob_geom,
-		coalesce
-			(	
-				st_distance(cast(a.the_geom as geography),cast(b.the_geom as geography)),
-				st_distance(cast(a.the_geom as geography),cast(c.the_geom as geography)),
-				st_distance(cast(a.the_geom as geography),cast(d.the_geom as geography))
-			) 																									as Geom_Distance,
-		coalesce(b.job_number,c.job_number,d.job_number) 														as dob_job_number,
-		coalesce(b.job_type,c.job_type,d.job_type) 																as dob_job_type,
-		coalesce(b.address,c.address,d.address) 																as dob_address,
-		coalesce(b.status,c.status,d.status) 																	as dob_status,
-		coalesce(b.units_init,c.units_init,d.units_init) 														as units_init,
-		coalesce(b.units_prop,c.units_prop,d.units_prop) 														as units_prop,
-		coalesce(b.units_net,c.units_net,d.units_net) 															as units_net,
-		coalesce(b.units_incomplete,c.units_incomplete,d.units_incomplete) 										as units_incomplete,
-		coalesce(b.latest_cofo,c.latest_cofo,d.latest_cofo) 													as latest_cofo,
-		coalesce(b.pre_filing_date,c.pre_filing_date,d.pre_filing_date) 										as pre_filing_date,	
-		coalesce(b.most_recent_status_date,c.most_recent_status_date,d.most_recent_status_date) 				as most_recent_status_date,
-		coalesce(b.completed_application_date,c.completed_application_date,d.completed_application_date) 		as completed_application_date,
-		coalesce(b.full_permit_issued_date,c.full_permit_issued_date,d.full_permit_issued_date) 				as full_permit_issued_date,
-		coalesce(b.partial_permit_issued_date,c.partial_permit_issued_date,d.partial_permit_issued_date) 		as partial_permit_issued_date,
-		coalesce(b.job_completion_date,c.job_completion_date,d.job_completion_date) 							as job_completion_date
+			when 	upper(concat(coalesce(e.dob_address,a.address),' ',a.borough)) =
+					upper(concat(b.address,' ',b.borough)) 	and
+					a.address is not null 														then 'Address'
+			when	a.bbl::bigint = b.bbl and b.bbl is not null									then 'BBL'
+			when st_intersects(a.the_geom,b.the_geom)											then 'Spatial'
+			when st_dwithin(a.the_geom::geography,b.the_geom::geography,20)						then 'Proximity' end as DOB_Match_Type,
+
+		b.the_geom 																								as dob_geom,
+		st_distance(cast(a.the_geom as geography),cast(b.the_geom as geography))								as Geom_Distance,
+		b.job_number 																							as dob_job_number,
+		b.job_type 																								as dob_job_type,
+		b.job_description 																						as dob_job_description,
+		b.address 								 																as dob_address,
+		b.status 							 																	as dob_status,
+		b.units_init									 														as units_init,
+		b.units_prop									 														as units_prop,
+		b.units_net 								 															as units_net,
+		b.units_net_incomplete 																					as units_net_incomplete,
+		b.latest_cofo										 													as latest_cofo,
+		b.pre_filing_date 																						as pre_filing_date,	
+		b.most_recent_status_date 																				as most_recent_status_date,
+		b.completed_application_date		 															 		as completed_application_date,
+		b.full_permit_issued_date 																 				as full_permit_issued_date,
+		b.partial_permit_issued_date 																	 		as partial_permit_issued_date,
+		b.job_completion_date 														 							as job_completion_date
 	from 
 		(SELECT * FROM capitalplanning.hpd_2018_sca_inputs_ms WHERE SOURCE = 'HPD Projected Closings') a
 	left join 
@@ -76,30 +75,27 @@ from
 	left join
 		capitalplanning.dob_2018_sca_inputs_ms b 
 	on 
-		upper(concat(coalesce(e.dob_address,a.address),' ',a.borough)) =
-		upper(concat(b.address,' ',b.borough)) 					and
-		a.address is not null 									and
-		b.job_type = 'New Building'								and
-		extract(year from b.pre_filing_date::date) >= 2017
-	left join
-		capitalplanning.dob_2018_sca_inputs_ms c
-	on 
-		a.bbl::bigint = c.bbl									and
-		a.bbl is not null 										and 
-		b.address is null 										and
-		c.job_type = 'New Building'								and
-		extract(year from c.pre_filing_date::date) >= 2017
-	left join
-		capitalplanning.dob_2018_sca_inputs_ms d
-	on
-		st_dwithin(cast(a.the_geom as geography),cast(d.the_geom as geography),20) /*Meters*/ 	and
-		b.address 	is null 																	and
-		c.bbl 		is null 																	and
-		d.job_type = 'New Building' 															and
-		extract(year from d.pre_filing_date::date) >= 2017
+		b.job_type = 'New Building'									and
+		extract(year from b.pre_filing_date::date) >= 2017			and
+		(
+
+			(
+				upper(concat(coalesce(e.dob_address,a.address),' ',a.borough)) =
+				upper(concat(b.address,' ',b.borough)) 					and
+				a.address is not null
+			)																		or 
+			(
+				a.bbl::bigint = b.bbl and
+				b.bbl is not null
+			) 																		or
+			(
+				st_dwithin(a.the_geom::geography,b.the_geom::geography,20)
+			)
+		)
 	order by
 		a.project_id
 ) as HPD_DOB_Merge
+
 
 
 /*Identifying DOB jobs which matched to more than 1 HPD job and preferencing matches by address, then, bbl, then spatial, then proximity*/
@@ -159,7 +155,7 @@ from
 		count(*) as count,
 		min(abs(units_net-total_units)) as min_unit_difference
 	FROM 
-		capitalplanning.hpd_dob_match 
+		capitalplanning.hpd_dob_match_1
 	where
 		dob_job_number is not null
 	group by
@@ -187,7 +183,6 @@ from
 	where
 		b.dob_job_number is null
 ) hpd_dob_match_2
-	order by
 
 
 /*
@@ -253,6 +248,7 @@ from
 		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_one_to_one_matching_20190523_ms where accurate_match =0) then null else dob_match_type 	end 	as dob_match_type,
 		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_one_to_one_matching_20190523_ms where accurate_match =0) then null else dob_job_number 	end 	as dob_job_number,
 		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_one_to_one_matching_20190523_ms where accurate_match =0) then null else dob_job_type   	end 	as dob_job_type,
+		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_one_to_one_matching_20190523_ms where accurate_match =0) then null else dob_job_description end 	as dob_job_description,
 		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_one_to_one_matching_20190523_ms where accurate_match =0) then null else dob_status		   	end 	as dob_status,
 		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_one_to_one_matching_20190523_ms where accurate_match =0) then null else dob_address	   	end 	as dob_address,
 		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_one_to_one_matching_20190523_ms where accurate_match =0) then null else units_net 			end		as units_net,
@@ -267,7 +263,7 @@ from
 
 /*EXPORT THE FOLLOWING QUERY AS HPD_DOB_PROXIMATE_MATCHES.
   IDENTIFY WHETHER THE MATCHES IN THIS DATASET ARE ACCURATE BY FLAGGING.
-  REIMPORT AS A LOOKUP AND OMIT INACCURATE MATCHES. */
+  REIMPORT AS A LOOKUP (hpd_dob_proximate_matches_190523_v2) AND OMIT INACCURATE MATCHES. */
 (
 	select
 		*
@@ -291,10 +287,11 @@ from
 select
 		      *
 into
-			  hpd_dob_match_2
+			  hpd_dob_match_4
 from
 (	      
 	select
+		cartodb_id,
 		the_geom,
 		the_geom_webmercator,
 		project_id,
@@ -304,57 +301,28 @@ from
 		min_of_projected_units,
 		max_of_projected_units,
 		total_units,
-		case 
-			when concat(project_id,', ',dob_job_number) in
-									(
-										select
-											match_id
-										from
-											capitalplanning.lookup_proximity_hpd_dob_matches
-										where
-											match = 0
-									)	then null
-
-		else dob_match_type end
-										as DOB_Match_Type,
-		case 
-			when concat(project_id,', ',dob_job_number) in
-									(
-										select
-											match_id
-										from
-											capitalplanning.lookup_proximity_hpd_dob_matches
-										where
-											match = 0
-									)	then null
-										else dob_job_number end 
-										as dob_job_number,
-		case 
-			when concat(project_id,', ',dob_job_number) in
-									(
-										select
-											match_id
-										from
-											capitalplanning.lookup_proximity_hpd_dob_matches
-										where
-											match = 0
-									)	then null
-										else units_net end 
-										as DOB_Units_Net,
 		address,
 		borough,
-		latitude,
-		longitude,
 		bbl,
 		nycha_flag,
 		gq_flag,
 		senior_housing_flag,
-		assisted_living_flag
+		assisted_living_flag,
+		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_proximate_matches_190523_v2 where match =0) then null else dob_match_type 		end 	as dob_match_type,
+		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_proximate_matches_190523_v2 where match =0) then null else dob_job_number 		end 	as dob_job_number,
+		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_proximate_matches_190523_v2 where match =0) then null else dob_job_type   		end 	as dob_job_type,
+		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_proximate_matches_190523_v2 where match =0) then null else dob_job_description end 	as dob_job_description,
+		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_proximate_matches_190523_v2 where match =0) then null else dob_status		   	end 	as dob_status,
+		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_proximate_matches_190523_v2 where match =0) then null else dob_address	   		end 	as dob_address,
+		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_proximate_matches_190523_v2 where match =0) then null else units_net 			end		as units_net,
+		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_proximate_matches_190523_v2 where match =0) then null else geom_distance 		end 	as geom_distance
 	from
-		hpd_dob_match
+		hpd_dob_match_3
 	order by
 		project_id
-) as HPD_DOB_Match_2
+) as HPD_DOB_Match_4
+
+
 
 
 /*Group matches to the HPD Project-level*/
@@ -362,10 +330,11 @@ from
 select
 		      *
 into
-			  HPD_Deduped
+			  HPD_Deduped_pre
 from
 (	      
 	select
+		cartodb_id,
 		the_geom,
 		the_geom_webmercator,
 		project_id,
@@ -374,47 +343,188 @@ from
 		projected_fiscal_year_range,
 		min_of_projected_units,
 		max_of_projected_units,
-		case 
-			when array_to_string(array_agg(dob_job_number),', ') like '%, ,%' 	then null
-			when array_to_string(array_agg(dob_job_number),', ') = ', ' 		then null
-			else array_to_string(array_agg(dob_job_number),', ') 			end 	as dob_job_numbers	
-		sum(units_net)										as DOB_Units_Net,
-		greatest(total_units - sum(units_net),0) as hpd_incremental_units
+		total_units,
 		address,
 		borough,
-		latitude,
-		longitude,
+		bbl,
+		nycha_flag,
+		gq_flag,
+		senior_housing_flag,
+		assisted_living_flag,
+		array_to_string(array_agg(nullif(concat_ws(', ',dob_job_number,nullif(dob_address,'')),'')),' | ') 	as dob_job_numbers,	
+		sum(units_net)																						as DOB_Units_Net,
+		greatest(total_units - coalesce(sum(units_net),0),0) 												as hpd_incremental_units
+	from
+		HPD_DOB_Match_4
+	group by
+		cartodb_id,
+		the_geom,
+		the_geom_webmercator,
+		project_id,
+		construction_type,
+		status,
+		projected_fiscal_year_range,
+		min_of_projected_units,
+		max_of_projected_units,
+		total_units,
+		address,
+		borough,
 		bbl,
 		nycha_flag,
 		gq_flag,
 		senior_housing_flag,
 		assisted_living_flag
-	from
-		hpd_dob_match_2
-	group by
-		the_geom,
-		the_geom_webmercator,
-		project_id,
-		construction_type,
-		status,
-		projected_fiscal_year_range,
-		min_of_projected_units,
-		max_of_projected_units,
-		address,
-		borough,
-		latitude,
-		longitude,
-		bbl,
-		nycha_flag,
-		gq_flag,
-		senior_housing_flag,
-		assisted_living_flag		
 	order by
 		project_id
-) as hpd_deduped
+) as hpd_deduped_pre
 
+
+/*
+  For HPD Project ID 53680, many DOB projects are geocoded to the same building, despite actually being duplicates of unmatched buildings in HPD project 53680. Creating a lookup
+  to correct these matches.
+*/
+
+SELECT
+	*
+into
+	hpd_project_53680_lookup
+from
+(
+	SELECT
+		*
+	from
+		hpd_deduped_pre
+	where
+		project_id like '53680%'
+) x
+
+
+/*Correcting matched for project_id 53680*/
+
+SELECT
+	*
+into
+	hpd_deduped
+from
+(
+	SELECT
+		a.cartodb_id,
+		a.the_geom,
+		a.the_geom_webmercator,
+		a.project_id,
+		a.construction_type,
+		a.status,
+		a.projected_fiscal_year_range,
+		a.min_of_projected_units,
+		a.max_of_projected_units,
+		a.total_units,
+		a.address,
+		a.borough,
+		a.bbl,
+		a.nycha_flag,
+		a.gq_flag,
+		a.senior_housing_flag,
+		a.assisted_living_flag,
+		coalesce(
+					nullif
+					(	
+						concat_ws(
+									', ',
+									b.corrected_dob_job_number_match,
+									nullif(c.address,'')
+								),
+					''
+					),
+					a.dob_job_numbers
+				) 																as dob_job_numbers,
+		coalesce(c.units_net,a.DOB_Units_Net) 									as dob_units_net,
+		greatest(a.total_units - coalesce(c.units_net,a.DOB_Units_Net,0),0) 	as hpd_incremental_units
+	from
+		hpd_deduped_pre a
+	left join
+		hpd_projected_closings_53680_lookup_190523_ms b
+	on
+		a.project_id = b.hpd_project_id and
+		b.accurate_match = 0
+	left join
+		dob_2018_sca_inputs_ms c
+	on
+		c.job_number = b.corrected_dob_job_number_match
+	order by
+		a.project_id asc
+) hpd_deduped
 
 		      
 /*Run in regular Carto to display table*/		      
 select cdb_cartodbfytable('capitalplanning','hpd_deduped')
 
+/************************************************************************DIAGNOSTICS****************************************************************************************************/
+
+/*
+73/180 projects have materialized in DOB data.
+*/
+SELECT
+	COUNT(CASE WHEN dob_job_numbers <> '' then 1 end) as matched_projects,
+	count(*) as all_projects
+from
+	hpd_deduped
+
+/*
+51/65 projects expected to close by FY 2020 have materialized. 19/103 projects expected to close by FY2021 have materialized. 3 projects past FY 2021 have materialized. 
+*/
+SELECT
+	projected_fiscal_year_range,
+	COUNT(CASE WHEN dob_job_numbers <> '' then 1 end) as matched_projects,
+	count(*) as all_projects
+from
+	hpd_deduped
+group by
+	projected_fiscal_year_range
+
+
+/*Of the 73 materialized jobs, 56 match exactly with their DOB unit count. 7 match between 1-5 units, 3 b/w 5-10, 2 b/w 10-15, 3 b/w 35-40, and 2 > 50.*/
+
+	select
+		case
+			when abs(total_units-dob_units_net) < 1 then '<1'
+			when abs(total_units-dob_units_net) between 1 and 5 then 'Between 1 and 5'
+			when abs(total_units-dob_units_net) between 5 and 10 then 'Between 5 and 10'
+			when abs(total_units-dob_units_net) between 10 and 15 then 'Between 10 and 15'
+			when abs(total_units-dob_units_net) between 15 and 20 then 'Between 15 and 20'
+			when abs(total_units-dob_units_net) between 20 and 25 then 'Between 20 and 25'
+			when abs(total_units-dob_units_net) between 25 and 30 then 'Between 25 and 30'
+			when abs(total_units-dob_units_net) between 35 and 40 then 'Between 35 and 40'
+			when abs(total_units-dob_units_net) between 40 and 45 then 'Between 40 and 45'
+			when abs(total_units-dob_units_net) Between 45 and 50 then 'Between 45 and 50'
+			when abs(total_units-dob_units_net) > 50 then '>50' end
+															 	as HPD_Units_minus_DOB_Units,
+		count(*) as Count
+	from 
+		hpd_deduped
+	where
+		dob_job_numbers <> ''
+	group by 
+		case
+			when abs(total_units-dob_units_net) < 1 then '<1'
+			when abs(total_units-dob_units_net) between 1 and 5 then 'Between 1 and 5'
+			when abs(total_units-dob_units_net) between 5 and 10 then 'Between 5 and 10'
+			when abs(total_units-dob_units_net) between 10 and 15 then 'Between 10 and 15'
+			when abs(total_units-dob_units_net) between 15 and 20 then 'Between 15 and 20'
+			when abs(total_units-dob_units_net) between 20 and 25 then 'Between 20 and 25'
+			when abs(total_units-dob_units_net) between 25 and 30 then 'Between 25 and 30'
+			when abs(total_units-dob_units_net) between 35 and 40 then 'Between 35 and 40'
+			when abs(total_units-dob_units_net) between 40 and 45 then 'Between 40 and 45'
+			when abs(total_units-dob_units_net) Between 45 and 50 then 'Between 45 and 50'
+			when abs(total_units-dob_units_net) > 50 then '>50' end
+
+/*
+	The >50 unit difference matches below are correct. For 20-52 Mott Avenue, see https://therealdeal.com/2018/07/23/phipps-houses-lands-233m-from-city-for-far-rockaway-complex/
+	For the match at 3875 9 Avenue, see https://therealdeal.com/2018/08/31/maddd-equities-planning-614-unit-project-for-inwood/
+*/
+SELECT
+	*
+from
+	hpd_deduped
+where
+	dob_job_numbers <> '' and
+	abs(total_units - dob_units_net) > 50

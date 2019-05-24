@@ -17,21 +17,21 @@ from
 (
 	select
 		a.*
-		,b.hpd_project_ids
-		,b.hpd_incremental_units
+		,b.hpd_projected_closings_ids
+		,b.hpd_projected_closings_incremental_units
 		, greatest
 			(
-				a.total_units - coalesce(a.dob_total_units,0) - coalesce(b.hpd_incremental_units,0)
+				a.total_units - coalesce(a.dob_units_net,0) - coalesce(b.hpd_projected_closings_incremental_units,0)
 				,0
 			) as HPD_RFP_Incremental_Units
 	from
-		capitalplanning.hpd_rfp_dob_1 a
+		capitalplanning.hpd_rfp_dob_final a
 	left join
-		capitalplanning.hpd_rfp_hpd_1 b
+		capitalplanning.hpd_rfp_hpd_final b
 	on
-		a.rfp_id = b.rfp_id
+		a.project_id = b.project_id
 ) as x
-order by rfp_id
+order by project_id::numeric asc
 
 /*Run in regular Carto to display table*/		      
 select cdb_cartodbfytable('capitalplanning','hpd_rfp_deduped')
