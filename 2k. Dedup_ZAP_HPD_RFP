@@ -1,23 +1,22 @@
 /************************************************************************************************************************************************************************************
 AUTHOR: Mark Shapiro
-SCRIPT: Deduplicate ZAP projects from HPD Projected Closings
+SCRIPT: Deduplicate ZAP projects from HPD RFPs
 *************************************************************************************************************************************************************************************/
 
 /************************************************************************************************************************************************************************************
 METHODOLOGY: 
-1. Merge ZAP projects to HPD projects using Address, spatial, and proximity-based matching.
-2. If an HPD job maps to multiple ZAP projects, create a preference methodology to make 1-1 matches
-3. Eliminate inaccurate proximity-based matches
+1. Merge ZAP projects to HPD RFPs using spatial and proximity matching.
+2. If an HPD RFP maps to multiple ZAP projects, create a preference methodology to make 1-1 matches
+3. Eliminate inaccurate proximity-based matches.
 ************************************************************************************************************************************************************************************/
 /*************************RUN IN CARTO BATCH********************/
 
 select
 	*
 into
-	zap_hpd_projected_closings
+	zap_hpd_rfp
 from
 (
-	select
 		a.cartodb_id,
 		a.the_geom,
 		a.the_geom_webmercator,
@@ -47,69 +46,57 @@ from
 		a.portion_built_2035,
 		a.portion_built_2055,
 		a.si_seat_cert,
-		case 
-			when
-				position(upper(b.address) in upper(a.project_name)) > 0 and
-				case when position('-' in a.project_name) = 0 then left(upper(a.project_name),5) = left(upper(b.address),5) END 	then 'Address' 
+		case
 			when
 				st_intersects(a.the_geom,b.the_geom)																				then 'Spatial'
 			when
 				st_dwithin(a.the_geom::geography,b.the_geom::geography,20)															then 'Proximity'
-																																	end as Match_Type,
-		b.project_id 					as HPD_Project_ID,
-		b.address						as HPD_Address,
-		b.bbl 							as HPD_BBL,
-		b.total_units 					as HPD_Project_Total_Units,
-		b.hpd_incremental_units 		as HPD_Project_Incremental_Units,
-		st_distance(a.the_geom::geography,b.the_geom::geography)			as distance
+		b.project_id 																		as hpd_rfp_id,
+		b.project_name 																		as hpd_rfp_project_name,
+		b.total_units 																		as hpd_rfp_total_units,
+		b.hpd_rfp_incremental_units,
+	 	st_distance(a.the_geom::geography,b.the_geom::geography) as distance
 	from
 		capitalplanning.relevant_dcp_projects_housing_pipeline_ms_v5 a
 	left join
-		capitalplanning.hpd_deduped b
+		capitalplanning.hpd_rfp_deduped b
 	on
-		st_dwithin(a.the_geom::geography,b.the_geom::geography,20) or 
-		(
-			position(upper(b.address) in upper(a.project_name)) > 0 and
-			case when position('-' in a.project_name) = 0 then left(upper(a.project_name),5) = left(upper(b.address),5) end
-		)
-) zap_hpd_projected_closings
+		st_dwithin(a.the_geom::geography,b.the_geom::geography,20)
+) zap_hpd_rfp
 
+/*Checking if there are any HPD RFPs which match to multiple ZAP projects. If so, preferencing spatial matches
+  over proximity-based matches. If an RFP has more than one spatial match, manually assess these matches*/
 
-
-/*Assessing whether any HPD projected closings match with multiple ZAP projects. Preferencing matches by address,
-then spatially, then by proximity. */
-
-select
+ select
 	*
 into
-	multi_dcp_hpd_projected_closings_matches
+	multi_dcp_hpd_rfp_matches
 from
 (
 		select
-			hpd_project_id,
-			sum(case when match_type = 'Address' 		then 1 else 0 end) 	as Address_Matches,
+			hpd_rfp_id,
 			sum(case when match_type = 'Spatial' 		then 1 else 0 end) 	as Spatial_Matches,
 			sum(case when match_type = 'Proximity' 		then 1 else 0 end) 	as Proximity_Matches,
 			count(*)														as total_matches,
 			min(case when match_type = 'Proximity' then distance end)		as minimum_proximity_distance,
-			min(abs(HPD_Project_Total_Units - coalesce(total_units,0))) 	as min_unit_difference
+			min(abs(hpd_rfp_total_units - coalesce(total_units,0))) 		as min_unit_difference
 		from
-			zap_hpd_projected_closings
+			zap_hpd_rfp
 		group by
-			hpd_project_id
+			hpd_rfp_id
 		having
 			count(*) > 1
-) multi_dcp_hpd_projected_closings_matches
+) multi_dcp_hpd_rfp_matches
 
 /*CHECK HERE IF THERE ARE MORE THAN 1 MATCHES OF ADDRESS OR PROXIMITY -- YOU WILL HAVE TO FIND ANOTHER WAY TO MANUALLY PREFERENCE THESE*/
 
-/*X number of HPD Projected Closings match with multiple ZAP projects.*/
+/*X number of HPD RFPs match with multiple ZAP projects.*/
 /*REMOVE THE MATCHES BY THE PREFERENCING SYSTEM ABOVE*/
 
 select
 	*
 into
-	zap_hpd_projected_closings_1
+	zap_hpd_rfps_1
 from
 (
 	select
@@ -143,85 +130,82 @@ from
 		a.portion_built_2055,
 		a.si_seat_cert,
 		b.match_type
-		b.HPD_Project_ID,
-		b.HPD_Address,
-		b.HPD_BBL,
-		b.HPD_Project_Total_Units,
-		b.HPD_Project_Incremental_Units,
+		b.HPD_rfp_ID,
+		b.hpd_rfp_project_name,
+		b.hpd_rfp_total_units,
+		b.hpd_rfp_incremental_units,
 		b.distance
 	from
 		relevant_dcp_projects_housing_pipeline_ms_v5 a
 	left join
-	/*Selecting the subset of zap_hpd_projected_closings which preferences specific matches if there are duplicates*/
+	/*Selecting the subset of zap_hpd_rfp which preferences specific matches if there are duplicates*/
 		(
 			select
 				b.*
 			from
-				zap_hpd_projected_closings b
+				zap_hpd_rfp b
 			left join
-				multi_dcp_hpd_projected_closings_matches c
+				multi_dcp_hpd_rfp_matches c
 			on
-				b.hpd_project_id = c.hpd_project_id and
+				b.hpd_rfp_id = c.hpd_rfp_id and
 				case 
-					when c.address_matches 		>= 1 then b.match_type <> 'Address'
 					when c.spatial_matches 		>= 1 then b.match_type <> 'Spatial'
 					when c.Proximity_Matches	>= 1 then b.match_type is null /*Not omitting proximity-based matches if they are the only type of match,
 																				because they will be manually researched in a later step*/
-					end
+				end
 			where
 				c.hpd_project_id is null
 		) b
 	on
 		a.project_id = b.project_id
-) zap_hpd_projected_closings_1
+) zap_hpd_rfps_1
 
 /*Checking proximity matches. There are X matches by proximity. Create 
-  lookup zap_hpd_closings_proximate_matches_190529_v2 with manual
+  lookup zap_hpd_rfps_proximate_matches_190529_v2 with manual
   checks on the accuracy of each proximity match. */
 
-  select
-  	*
-  from
-   	zap_hpd_projected_closings_1
-  where
-   	Match_Type = 'Proximity' and total_units <> HPD_Project_Total_Units
-  order by
-  	distance asc
+select
+	*
+from
+	zap_hpd_rfps_1
+where
+	match_type = 'Proximity' and
+	total_units <> hpd_rfp_total_units
+order by
+	distance asc
 
 
-/*Removing the inaccurate proximate matches by selecting the subet of all ZAP projects which are not inaccurately proximity-matched,
+/*Removing the inaccurate proximate matches by selecting the subset of all ZAP projects which are not inaccurately proximity-matched,
  and then placing all matches back onto the original relevnat projects list.*/
 
 select
 	*
 into
-	zap_hpd_projected_closings_2_pre
+	zap_hpd_rfps_2_pre
 from
 (
 	select
 		a.project_id as zap_project_id_temp
 		a.match_type
-		a.HPD_Project_ID,
-		a.HPD_Address,
-		a.HPD_BBL,
-		a.HPD_Project_Total_Units,
-		a.HPD_Project_Incremental_Units,
+		a.HPD_rfp_ID,
+		a.HPD_rfp_Total_Units,
+		a.HPD_rfp_Incremental_Units,
 		a.distance
 	from
-		zap_hpd_projected_closings_1 a
+		zap_hpd_rfps_1 a
 	left join
-		zap_hpd_closings_proximate_matches_190529_v2 b
+		zap_hpd_rfps_proximate_matches_190529_v2 b
 	on
-		concat(a.project_id,a.hpd_project_id) = concat(b.project_id,b.hpd_project_id) and
+		concat(a.project_id,a.hpd_rfp_id) = concat(b.project_id,b.hpd_rfp_id) and
 		b.accurate_match = 0
 	where
 		b.project_id is null
-) zap_hpd_projected_closings_2_pre
+) zap_hpd_rfps_2_pre
 
 select
 	*
 into
-	zap_hpd_projected_closings_2
+	zap_hpd_rfps_2
 from
 (
 	select
@@ -230,15 +214,18 @@ from
 	from
 		relevant_dcp_projects_housing_pipeline_ms_v5 a
 	left join
-		zap_hpd_projected_closings_2_pre b
+		zap_hpd_rfps_2_pre b
 	on
 		a.project_id = b.zap_project_id_temp
-) zap_hpd_projected_closings_2
+) zap_hpd_rfps_2
+
+
+/*Aggregating matches by ZAP project*/
 
 select
 	*
 into
-	zap_hpd_projected_closings_final 
+	zap_hpd_rfps_final 
 from
 (
 	select
@@ -271,11 +258,11 @@ from
 		portion_built_2035,
 		portion_built_2055,
 		si_seat_cert,
-		array_to_string(array_agg(nullif(concat_ws(', ',nullif(hpd_project_id,''),nullif(hpd_address,'')),'')),' | ') 	as HPD_Project_IDs,
-		sum(HPD_Project_Total_Units) 																					as HPD_Project_Total_Units,		
-		sum(HPD_Project_Incremental_Units) 																				as HPD_Project_Incremental_Units
+		array_to_string(array_agg(nullif(concat_ws(', ',hpd_rfp_id,nullif(hpd_rfp_project_name,'')),'')),' | ') 	as HPD_RFP_IDs,
+		sum(HPD_RFP_Total_Units) 																					as HPD_RFP_Total_Units,		
+		sum(HPD_RFP_Incremental_Units)		 																		as HPD_RFP_Incremental_Units
 	from
-		zap_hpd_projected_closings_2
+		zap_hpd_rfps_2
 	group by
 		cartodb_id,
 		the_geom,
@@ -306,7 +293,7 @@ from
 		portion_built_2035,
 		portion_built_2055,
 		si_seat_cert
-) zap_hpd_projected_closings_final
+) zap_hpd_rfps_final
 
 
 /**********************************************************DIAGNOSTICS**************************************************************/
@@ -318,38 +305,38 @@ from
 
 	select
 		case
-			when abs(total_units-HPD_PROJECT_TOTAL_units) < 0 then '<0'
-			when abs(total_units-HPD_PROJECT_TOTAL_units) <= 1 then '<=1'
-			when abs(total_units-HPD_PROJECT_TOTAL_units) between 1 and 5 then 'Between 1 and 5'
-			when abs(total_units-HPD_PROJECT_TOTAL_units) between 5 and 10 then 'Between 5 and 10'
-			when abs(total_units-HPD_PROJECT_TOTAL_units) between 10 and 15 then 'Between 10 and 15'
-			when abs(total_units-HPD_PROJECT_TOTAL_units) between 15 and 20 then 'Between 15 and 20'
-			when abs(total_units-HPD_PROJECT_TOTAL_units) between 20 and 25 then 'Between 20 and 25'
-			when abs(total_units-HPD_PROJECT_TOTAL_units) between 25 and 30 then 'Between 25 and 30'
-			when abs(total_units-HPD_PROJECT_TOTAL_units) between 35 and 40 then 'Between 35 and 40'
-			when abs(total_units-HPD_PROJECT_TOTAL_units) between 40 and 45 then 'Between 40 and 45'
-			when abs(total_units-HPD_PROJECT_TOTAL_units) Between 45 and 50 then 'Between 45 and 50'
-			when abs(total_units-HPD_PROJECT_TOTAL_units) > 50 then '>50' end
+			when abs(total_units-HPD_rfp_TOTAL_UNITS) < 0 then '<0'
+			when abs(total_units-HPD_rfp_TOTAL_UNITS) <= 1 then '<=1'
+			when abs(total_units-HPD_rfp_TOTAL_UNITS) between 1 and 5 then 'Between 1 and 5'
+			when abs(total_units-HPD_rfp_TOTAL_UNITS) between 5 and 10 then 'Between 5 and 10'
+			when abs(total_units-HPD_rfp_TOTAL_UNITS) between 10 and 15 then 'Between 10 and 15'
+			when abs(total_units-HPD_rfp_TOTAL_UNITS) between 15 and 20 then 'Between 15 and 20'
+			when abs(total_units-HPD_rfp_TOTAL_UNITS) between 20 and 25 then 'Between 20 and 25'
+			when abs(total_units-HPD_rfp_TOTAL_UNITS) between 25 and 30 then 'Between 25 and 30'
+			when abs(total_units-HPD_rfp_TOTAL_UNITS) between 35 and 40 then 'Between 35 and 40'
+			when abs(total_units-HPD_rfp_TOTAL_UNITS) between 40 and 45 then 'Between 40 and 45'
+			when abs(total_units-HPD_rfp_TOTAL_UNITS) Between 45 and 50 then 'Between 45 and 50'
+			when abs(total_units-HPD_rfp_TOTAL_UNITS) > 50 then '>50' end
 															 	as ZAP_Units_minus_DOB_Units,
 		count(*) as Count
 	from 
-		zap_hpd_projected_closings_final
+		zap_hpd_rfps_final
 	where
-		hpd_project_id <>'' and total_units is not null and HPD_PROJECT_TOTAL_units is not null 
+		hpd_rfp_ids <>'' and total_units is not null and HPD_rfp_TOTAL_UNITS is not null 
 	group by 
 		case
-			when abs(total_units-HPD_PROJECT_TOTAL_units) < 0 then '<0'
-			when abs(total_units-HPD_PROJECT_TOTAL_units) <= 1 then '<=1'
-			when abs(total_units-HPD_PROJECT_TOTAL_units) between 1 and 5 then 'Between 1 and 5'
-			when abs(total_units-HPD_PROJECT_TOTAL_units) between 5 and 10 then 'Between 5 and 10'
-			when abs(total_units-HPD_PROJECT_TOTAL_units) between 10 and 15 then 'Between 10 and 15'
-			when abs(total_units-HPD_PROJECT_TOTAL_units) between 15 and 20 then 'Between 15 and 20'
-			when abs(total_units-HPD_PROJECT_TOTAL_units) between 20 and 25 then 'Between 20 and 25'
-			when abs(total_units-HPD_PROJECT_TOTAL_units) between 25 and 30 then 'Between 25 and 30'
-			when abs(total_units-HPD_PROJECT_TOTAL_units) between 35 and 40 then 'Between 35 and 40'
-			when abs(total_units-HPD_PROJECT_TOTAL_units) between 40 and 45 then 'Between 40 and 45'
-			when abs(total_units-HPD_PROJECT_TOTAL_units) Between 45 and 50 then 'Between 45 and 50'
-			when abs(total_units-HPD_PROJECT_TOTAL_units) > 50 then '>50' 
+			when abs(total_units-HPD_rfp_TOTAL_UNITS) < 0 then '<0'
+			when abs(total_units-HPD_rfp_TOTAL_UNITS) <= 1 then '<=1'
+			when abs(total_units-HPD_rfp_TOTAL_UNITS) between 1 and 5 then 'Between 1 and 5'
+			when abs(total_units-HPD_rfp_TOTAL_UNITS) between 5 and 10 then 'Between 5 and 10'
+			when abs(total_units-HPD_rfp_TOTAL_UNITS) between 10 and 15 then 'Between 10 and 15'
+			when abs(total_units-HPD_rfp_TOTAL_UNITS) between 15 and 20 then 'Between 15 and 20'
+			when abs(total_units-HPD_rfp_TOTAL_UNITS) between 20 and 25 then 'Between 20 and 25'
+			when abs(total_units-HPD_rfp_TOTAL_UNITS) between 25 and 30 then 'Between 25 and 30'
+			when abs(total_units-HPD_rfp_TOTAL_UNITS) between 35 and 40 then 'Between 35 and 40'
+			when abs(total_units-HPD_rfp_TOTAL_UNITS) between 40 and 45 then 'Between 40 and 45'
+			when abs(total_units-HPD_rfp_TOTAL_UNITS) Between 45 and 50 then 'Between 45 and 50'
+			when abs(total_units-HPD_rfp_TOTAL_UNITS) > 50 then '>50' 
 															end
 
 
@@ -358,7 +345,17 @@ from
 select
 	*
 from
-	zap_hpd_projected_closings_final
+	zap_hpd_rfps_final
 where
-	abs(total_units - HPD_Project_Total_Units) > 50
+	abs(total_units - HPD_rfp_Total_Units) > 50
 
+
+/*Checking matches to projects where the applicant type is not 'Other Public Agency' or 'HPD'. Assessing the accuracy of these matches*/
+
+select
+	*
+from
+	zap_hpd_rfps_final
+where
+	hpd_rfp_ids <> '' and
+	applicant_type = 'Private'
