@@ -299,7 +299,7 @@ from
 /**********************************************************DIAGNOSTICS**************************************************************/
 
 /*
-	Of the XX projects with matches, 132 have an exact unit count match. Another XX are b/w 1-5 units apart, and XX are b/w 5-10 units apart.
+	Of the XX projects with matches, XX have an exact unit count match. Another XX are b/w 1-5 units apart, and XX are b/w 5-10 units apart.
 	XX are > 50 units apart. 
 */
 
