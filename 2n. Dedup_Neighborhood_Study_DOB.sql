@@ -179,4 +179,59 @@ from
 		portion_built_2035,
 		portion_built_2055,
 		planner_input
+	order by
+		project_id asc
 ) nstudy_dob_final
+
+/******************************************************************DIAGNOSTICS***********************************************************/
+
+
+/*
+	Of the 5 projects with matches, 3 have an exact unit count match. 2 are > 50 units apart. 
+*/
+
+	select
+		case
+			when abs(units-dob_units_net) < 0 then '<0'
+			when abs(units-dob_units_net) <= 1 then '<=1'
+			when abs(units-dob_units_net) between 1 and 5 then 'Between 1 and 5'
+			when abs(units-dob_units_net) between 5 and 10 then 'Between 5 and 10'
+			when abs(units-dob_units_net) between 10 and 15 then 'Between 10 and 15'
+			when abs(units-dob_units_net) between 15 and 20 then 'Between 15 and 20'
+			when abs(units-dob_units_net) between 20 and 25 then 'Between 20 and 25'
+			when abs(units-dob_units_net) between 25 and 30 then 'Between 25 and 30'
+			when abs(units-dob_units_net) between 35 and 40 then 'Between 35 and 40'
+			when abs(units-dob_units_net) between 40 and 45 then 'Between 40 and 45'
+			when abs(units-dob_units_net) Between 45 and 50 then 'Between 45 and 50'
+			when abs(units-dob_units_net) > 50 then '>50' end
+															 	as nstudy_Units_minus_DOB_Units,
+		count(*) as Count
+	from 
+		nstudy_dob_final
+	where
+		dob_job_numbers <>'' and units is not null and units is not null 
+	group by 
+		case
+			when abs(units-dob_units_net) < 0 then '<0'
+			when abs(units-dob_units_net) <= 1 then '<=1'
+			when abs(units-dob_units_net) between 1 and 5 then 'Between 1 and 5'
+			when abs(units-dob_units_net) between 5 and 10 then 'Between 5 and 10'
+			when abs(units-dob_units_net) between 10 and 15 then 'Between 10 and 15'
+			when abs(units-dob_units_net) between 15 and 20 then 'Between 15 and 20'
+			when abs(units-dob_units_net) between 20 and 25 then 'Between 20 and 25'
+			when abs(units-dob_units_net) between 25 and 30 then 'Between 25 and 30'
+			when abs(units-dob_units_net) between 35 and 40 then 'Between 35 and 40'
+			when abs(units-dob_units_net) between 40 and 45 then 'Between 40 and 45'
+			when abs(units-dob_units_net) Between 45 and 50 then 'Between 45 and 50'
+			when abs(units-dob_units_net) > 50 then '>50' 
+															end
+
+
+/*Checking the matches with large unit count differences. The matches are for Phipps House and Sendero Verde, which are both expected to have future additional development.*/
+
+select
+	*
+from
+	nstudy_dob_final
+where
+	abs(units - dob_units_net) > 50
