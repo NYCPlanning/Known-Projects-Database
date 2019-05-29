@@ -235,3 +235,19 @@ from
 	nstudy_dob_final
 where
 	abs(units - dob_units_net) > 50
+
+
+
+/*Approx. 1/3rd of ENY and East Harlem have materialized. No other neighborhood study commitments have materialized. This makes sense -- ENY and East Harlem are the two
+  oldest rezonings included*/
+
+select
+	neighborhood,
+	count(*) as project_count,
+	sum(units) as unit_count,
+	count(case when dob_job_numbers <> '' then 1 end) as match_count,
+	sum(dob_units_net) as matched_units
+from
+	nstudy_dob_final
+group by
+	neighborhood
