@@ -64,3 +64,5 @@ from
 order by
 	edc_project_id asc
 	
+/*RUN IN REGULAR CARTO*/	
+select cdb_cartodbfytable('capitalplanning','edc_deduped')
