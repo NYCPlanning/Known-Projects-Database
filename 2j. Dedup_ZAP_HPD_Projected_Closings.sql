@@ -77,7 +77,7 @@ from
 
 
 /*Assessing whether any HPD projected closings match with multiple ZAP projects. Preferencing matches by address,
-then spatially, then by proximity. */
+then spatially, then by proximity. THERE ARE NO HPD PROJECTED CLOSINGS MATCHING WITH MULTIPLE ZAP PROJECTS.*/
 
 select
 	*
@@ -95,15 +95,16 @@ from
 			min(abs(HPD_Project_Total_Units - coalesce(total_units,0))) 	as min_unit_difference
 		from
 			zap_hpd_projected_closings
+		where
+			hpd_project_id is not null
 		group by
 			hpd_project_id
 		having
 			count(*) > 1
 ) multi_dcp_hpd_projected_closings_matches
 
-/*CHECK HERE IF THERE ARE MORE THAN 1 MATCHES OF ADDRESS OR PROXIMITY -- YOU WILL HAVE TO FIND ANOTHER WAY TO MANUALLY PREFERENCE THESE*/
 
-/*X number of HPD Projected Closings match with multiple ZAP projects.*/
+/*0 HPD Projected Closings match with multiple ZAP projects.*/
 /*REMOVE THE MATCHES BY THE PREFERENCING SYSTEM ABOVE*/
 
 select
@@ -142,7 +143,7 @@ from
 		a.portion_built_2035,
 		a.portion_built_2055,
 		a.si_seat_cert,
-		b.match_type
+		b.match_type,
 		b.HPD_Project_ID,
 		b.HPD_Address,
 		b.HPD_BBL,
@@ -175,7 +176,8 @@ from
 		a.project_id = b.project_id
 ) zap_hpd_projected_closings_1
 
-/*Checking proximity matches. There are X matches by proximity. Create 
+/*Checking proximity matches. There are 0 matches by proximity. 
+  If there are >0 proximity-based matches, create 
   lookup zap_hpd_closings_proximate_matches_190529_v2 with manual
   checks on the accuracy of each proximity match. */
 
@@ -190,7 +192,8 @@ from
 
 
 /*Removing the inaccurate proximate matches by selecting the subet of all ZAP projects which are not inaccurately proximity-matched,
- and then placing all matches back onto the original relevnat projects list.*/
+ and then placing all matches back onto the original relevnat projects list. This would be done by creating the zap_hpd_projected_closings_2_pre
+ and zap_hpd_projected_closings_2 datasets below.*/
 
 select
 	*
@@ -275,7 +278,7 @@ from
 		sum(HPD_Project_Total_Units) 																					as HPD_Project_Total_Units,		
 		sum(HPD_Project_Incremental_Units) 																				as HPD_Project_Incremental_Units
 	from
-		zap_hpd_projected_closings_2
+		zap_hpd_projected_closings_1
 	group by
 		cartodb_id,
 		the_geom,
@@ -312,8 +315,8 @@ from
 /**********************************************************DIAGNOSTICS**************************************************************/
 
 /*
-	Of the XX projects with matches, 132 have an exact unit count match. Another XX are b/w 1-5 units apart, and XX are b/w 5-10 units apart.
-	XX are > 50 units apart. 
+	Of the 38 projects with matches, 16 have an exact unit count match. Another 2 are b/w 1-5 units apart, and 2 are b/w 5-10 units apart.
+	10 are > 50 units apart. 
 */
 
 	select
@@ -335,7 +338,7 @@ from
 	from 
 		zap_hpd_projected_closings_final
 	where
-		hpd_project_id <>'' and total_units is not null and HPD_PROJECT_TOTAL_units is not null 
+		hpd_project_ids <>'' and total_units is not null and HPD_PROJECT_TOTAL_units is not null 
 	group by 
 		case
 			when abs(total_units-HPD_PROJECT_TOTAL_units) < 0 then '<0'
@@ -353,7 +356,19 @@ from
 															end
 
 
-/*Checking the matches with large unit count differences.*/
+/*Checking the matches with large unit count differences. The matches are all for larger rezonings which indicate multi-building projects
+  and for which it would make sense that HPD projected closings would not encompass the entire project. The matches are the following ZAP projects:
+P2012K0041	RHEINGOLD REZONING
+P2012Q0062	HALLETTS POINT
+P2012X0215	SOUNDVIEW PARTNERS APARTMENTS
+P2015K0526	Ebenezer Plaza Rezoning
+P2015M0454	207th Street Rezoning North Cove at Sherman Creek
+P2016K0159	Linden Boulevard rezoning
+P2016M0199	Ennis Francis Houses LSRD
+P2016X0409	Lower Concourse North Rezoning
+P2017M0259	Sendero Verde East 111th Street
+P2017X0037	Spofford Campus Redevelopment LSGD
+*/
 
 select
 	*

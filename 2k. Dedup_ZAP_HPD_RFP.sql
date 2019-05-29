@@ -17,6 +17,7 @@ into
 	zap_hpd_rfp
 from
 (
+	select
 		a.cartodb_id,
 		a.the_geom,
 		a.the_geom_webmercator,
@@ -51,6 +52,7 @@ from
 				st_intersects(a.the_geom,b.the_geom)																				then 'Spatial'
 			when
 				st_dwithin(a.the_geom::geography,b.the_geom::geography,20)															then 'Proximity'
+			end																				as match_type,
 		b.project_id 																		as hpd_rfp_id,
 		b.project_name 																		as hpd_rfp_project_name,
 		b.total_units 																		as hpd_rfp_total_units,
@@ -61,13 +63,14 @@ from
 	left join
 		capitalplanning.hpd_rfp_deduped b
 	on
-		st_dwithin(a.the_geom::geography,b.the_geom::geography,20)
+		st_dwithin(a.the_geom::geography,b.the_geom::geography,20) and
+		a.applicant_type <> 'Private' /*See diagnostics for logic of this restriction*/
 ) zap_hpd_rfp
 
 /*Checking if there are any HPD RFPs which match to multiple ZAP projects. If so, preferencing spatial matches
   over proximity-based matches. If an RFP has more than one spatial match, manually assess these matches*/
 
- select
+select
 	*
 into
 	multi_dcp_hpd_rfp_matches
@@ -79,9 +82,12 @@ from
 			sum(case when match_type = 'Proximity' 		then 1 else 0 end) 	as Proximity_Matches,
 			count(*)														as total_matches,
 			min(case when match_type = 'Proximity' then distance end)		as minimum_proximity_distance,
-			min(abs(hpd_rfp_total_units - coalesce(total_units,0))) 		as min_unit_difference
+			min(case when match_type = 'Spatial' then abs(hpd_rfp_total_units - coalesce(total_units,0)) end) 		as min_unit_difference_spatial,
+			min(case when match_type = 'Proximity' then abs(hpd_rfp_total_units - coalesce(total_units,0)) end)		as min_unit_difference_proximity			
 		from
 			zap_hpd_rfp
+		where
+			hpd_rfp_id is not null
 		group by
 			hpd_rfp_id
 		having
@@ -90,8 +96,15 @@ from
 
 /*CHECK HERE IF THERE ARE MORE THAN 1 MATCHES OF ADDRESS OR PROXIMITY -- YOU WILL HAVE TO FIND ANOTHER WAY TO MANUALLY PREFERENCE THESE*/
 
-/*X number of HPD RFPs match with multiple ZAP projects.*/
-/*REMOVE THE MATCHES BY THE PREFERENCING SYSTEM ABOVE*/
+/*4 HPD RFPs match with multiple ZAP projects. The HPD RFPs are:
+22	Brownsville Site C - Livonia Sites
+35	Slaughterhouse - EDC
+36	SustaiNYC (E. 111th Street)
+9	LIC Waterfront Mixed-Use Development
+
+If there is a spatial match, all proximity-based matches are removed (confirmed to be inaccurate). If there are multiple spatial matches 
+(Brownsville Site C overlaps with an unrelated Resilient Housing project spanning SI and BK, Slaughterhouse - EDC overlaps with both 
+ZAP's specific Slaughterhouse project and Hudson Yards), the match with the closest unit count is taken. */
 
 select
 	*
@@ -129,7 +142,7 @@ from
 		a.portion_built_2035,
 		a.portion_built_2055,
 		a.si_seat_cert,
-		b.match_type
+		b.match_type,
 		b.HPD_rfp_ID,
 		b.hpd_rfp_project_name,
 		b.hpd_rfp_total_units,
@@ -149,18 +162,19 @@ from
 			on
 				b.hpd_rfp_id = c.hpd_rfp_id and
 				case 
-					when c.spatial_matches 		>= 1 then b.match_type <> 'Spatial'
-					when c.Proximity_Matches	>= 1 then b.match_type is null /*Not omitting proximity-based matches if they are the only type of match,
+					when c.Spatial_Matches 		>  1 then b.match_type <> 'Spatial' or abs(b.hpd_rfp_total_units - b.total_units) <> c.min_unit_difference_spatial /*Preferencing the closest spatial match by unit count*/ 
+					when c.spatial_matches 		=  1 then b.match_type <> 'Spatial' /*If there is only one spatial match, eliminating proximity-based matches*/
+					when c.Proximity_Matches	>= 1 then b.match_type is null /*Not omitting proximity-based matches if they are the only type of match for a particular HPD RFP,
 																				because they will be manually researched in a later step*/
 				end
 			where
-				c.hpd_project_id is null
+				c.hpd_rfp_id is null
 		) b
 	on
 		a.project_id = b.project_id
 ) zap_hpd_rfps_1
 
-/*Checking proximity matches. There are X matches by proximity. Create 
+/*Checking proximity matches. There are 0 matches by proximity. IF THERE ARE ANY PROXIMITY-BASED MATCHES REMAINING, create 
   lookup zap_hpd_rfps_proximate_matches_190529_v2 with manual
   checks on the accuracy of each proximity match. */
 
@@ -175,8 +189,9 @@ order by
 	distance asc
 
 
-/*Removing the inaccurate proximate matches by selecting the subset of all ZAP projects which are not inaccurately proximity-matched,
- and then placing all matches back onto the original relevnat projects list.*/
+/*IF THERE ARE ANY PROXIMITY-BASED MATCHES, CREATE DATASETS ZAP_HPD_RFPS_2_PRE AND ZAP_HPD_RFPS_2 TO: 
+ Remove the inaccurate proximate matches by selecting the subset of all ZAP projects which are not inaccurately proximity-matched,
+ and then place all matches back onto the original relevant projects list.*/
 
 select
 	*
@@ -262,7 +277,7 @@ from
 		sum(HPD_RFP_Total_Units) 																					as HPD_RFP_Total_Units,		
 		sum(HPD_RFP_Incremental_Units)		 																		as HPD_RFP_Incremental_Units
 	from
-		zap_hpd_rfps_2
+		zap_hpd_rfps_1
 	group by
 		cartodb_id,
 		the_geom,
@@ -299,8 +314,8 @@ from
 /**********************************************************DIAGNOSTICS**************************************************************/
 
 /*
-	Of the XX projects with matches, XX have an exact unit count match. Another XX are b/w 1-5 units apart, and XX are b/w 5-10 units apart.
-	XX are > 50 units apart. 
+	Of the 16 projects with matches, 1 (LIC Watefront) has no unit count. 7 have an exact unit count match. Another 1 is b/w 1-5 units apart.
+	4 are > 50 units apart. 
 */
 
 	select
@@ -340,7 +355,7 @@ from
 															end
 
 
-/*Checking the matches with large unit count differences.*/
+/*Checking the matches with large unit count differences. There are 5 HPD RFP/ZAP matches with unit count difference > 50. All are accurate matches.*/
 
 select
 	*
@@ -350,7 +365,8 @@ where
 	abs(total_units - HPD_rfp_Total_Units) > 50
 
 
-/*Checking matches to projects where the applicant type is not 'Other Public Agency' or 'HPD'. Assessing the accuracy of these matches*/
+/*Checking matches to projects where the applicant type is not 'Other Public Agency' or 'HPD'. The only match to a private applicant type is the P2013Q0443, 11-55 49th Avenue Rezoning
+  matching with HPD RFP 10, 11-24 Jackson Ave (EDC). This is an inaccurate match, so we are omitting matches where the Applicant_Type is private. */
 
 select
 	*

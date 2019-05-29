@@ -17,6 +17,7 @@ into
 	zap_edc
 from
 (
+	select
 		a.cartodb_id,
 		a.the_geom,
 		a.the_geom_webmercator,
@@ -51,20 +52,22 @@ from
 				st_intersects(a.the_geom,b.the_geom)																				then 'Spatial'
 			when
 				st_dwithin(a.the_geom::geography,b.the_geom::geography,20)															then 'Proximity'
+			end 												as match_type,
 		b.edc_project_id,
 		b.project_name 											as edc_project_name,
 		b.project_description 									as edc_project_description,
 		b.comments_on_phasing									as edc_comments_on_phasing,
 		b.build_year											as edc_build_year,
 		b.total_units 											as edc_total_units,
-		b.edc_incremental_units
+		b.edc_incremental_units,
 	 	st_distance(a.the_geom::geography,b.the_geom::geography) as distance
 	from
 		capitalplanning.relevant_dcp_projects_housing_pipeline_ms_v5 a
 	left join
 		capitalplanning.edc_deduped b
 	on
-		st_dwithin(a.the_geom::geography,b.the_geom::geography,20)
+		st_dwithin(a.the_geom::geography,b.the_geom::geography,20) and
+		a.applicant_type <> 'Private' /*Only Private applicant type match is proximity-based b/w projects ZAP P2014K0494 and EDC 8. This match is confirmed inaccurate*/
 ) zap_edc
 
 /*Checking if there are any EDC projects which match to multiple ZAP projects. If so, preferencing spatial matches
@@ -81,19 +84,19 @@ from
 			sum(case when match_type = 'Spatial' 		then 1 else 0 end) 	as Spatial_Matches,
 			sum(case when match_type = 'Proximity' 		then 1 else 0 end) 	as Proximity_Matches,
 			count(*)														as total_matches,
-			min(case when match_type = 'Proximity' then distance end)		as minimum_proximity_distance,
-			min(abs(edc_total_units - coalesce(total_units,0)))		 		as min_unit_difference
+			min(case when match_type = 'Spatial' then abs(edc_total_units - coalesce(total_units,0)) end) 		as min_unit_difference_spatial,
+			min(case when match_type = 'Proximity' then abs(edc_total_units - coalesce(total_units,0)) end)		as min_unit_difference_proximity			
 		from
 			zap_edc
+		where
+			edc_project_id is not null
 		group by
 			edc_project_id
 		having
 			count(*) > 1
 ) multi_dcp_edc_matches
 
-/*CHECK HERE IF THERE ARE MORE THAN 1 MATCHES OF spatial -- YOU WILL HAVE TO FIND ANOTHER WAY TO MANUALLY PREFERENCE THESE*/
-
-/*X number of EDC projects match with multiple ZAP projects.*/
+/*0 EDC projects match with multiple ZAP projects.*/
 /*REMOVE THE MATCHES BY THE PREFERENCING SYSTEM ABOVE*/
 
 select
@@ -132,7 +135,7 @@ from
 		a.portion_built_2035,
 		a.portion_built_2055,
 		a.si_seat_cert,
-		b.match_type
+		b.match_type,
 		b.edc_project_id,
 		b.edc_project_name,
 		b.edc_project_description,
@@ -154,18 +157,19 @@ from
 			on
 				b.edc_project_id = c.edc_project_id and
 				case 
-					when c.spatial_matches 		>= 1 then b.match_type <> 'Spatial'
-					when c.Proximity_Matches	>= 1 then b.match_type is null /*Not omitting proximity-based matches if they are the only type of match,
+					when c.Spatial_Matches 		>  1 then b.match_type <> 'Spatial' or abs(b.edc_total_units - b.total_units) <> c.min_unit_difference_spatial /*Preferencing the closest spatial match by unit count*/ 
+					when c.spatial_matches 		=  1 then b.match_type <> 'Spatial' /*If there is only one spatial match, eliminating proximity-based matches*/
+					when c.Proximity_Matches	>= 1 then b.match_type is null /*Not omitting proximity-based matches if they are the only type of match for a particular HPD RFP,
 																				because they will be manually researched in a later step*/
 				end
 			where
 				c.edc_project_id is null
 		) b
 	on
-		a.project_id = b.edc_projet_id
+		a.project_id = b.project_id
 ) zap_edc_1
 
-/*Checking proximity matches. There are X matches by proximity. Create 
+/*Checking proximity matches. There are 0 matches by proximity. IF THERE ARE ANY PROXIMITY-BASED MATCHES, create 
   lookup zap_edc_proximate_matches_190529_v2 with manual
   checks on the accuracy of each proximity match. */
 
@@ -180,7 +184,8 @@ order by
 	distance asc
 
 
-/*Removing the inaccurate proximate matches by selecting the subset of all ZAP projects which are not inaccurately proximity-matched,
+/*IF THERE ARE PROXIMITY-BASED MATCHES, do the following to create zap_edc_2_pre and zap_edc_2. Otherwise, move on to zap_edc_final.
+ Removing the inaccurate proximate matches by selecting the subset of all ZAP projects which are not inaccurately proximity-matched,
  and then placing all matches back onto the original relevnat projects list.*/
 
 select
@@ -266,11 +271,11 @@ from
 		portion_built_2035,
 		portion_built_2055,
 		si_seat_cert,
-		array_to_string(array_agg(nullif(concat_ws(', ',nullif(edc_project_id,''),nullif(edc_project_name,'')),'')),' | ') 	as EDC_Project_IDs,
-		sum(EDC_Total_Units) 																								as HPD_RFP_Total_Units,		
-		sum(EDC_Incremental_Units)		 																					as HPD_RFP_Incremental_Units
+		array_to_string(array_agg(nullif(concat_ws(', ',edc_project_id,nullif(edc_project_name,'')),'')),' | ') 			as EDC_Project_IDs,
+		sum(EDC_Total_Units) 																								as EDC_Total_Units,		
+		sum(EDC_Incremental_Units)		 																					as EDC_Incremental_Units
 	from
-		zap_edc_2
+		zap_edc_1
 	group by
 		cartodb_id,
 		the_geom,
@@ -307,8 +312,7 @@ from
 /**********************************************************DIAGNOSTICS**************************************************************/
 
 /*
-	Of the XX projects with matches, XX have an exact unit count match. Another XX are b/w 1-5 units apart, and XX are b/w 5-10 units apart.
-	XX are > 50 units apart. 
+	Of the 4 projects with matches, 3 have an exact unit count match. Another 1 is b/w 35-40 units apart.  
 */
 
 	select
@@ -330,7 +334,7 @@ from
 	from 
 		zap_edc_final
 	where
-		edc_ids <>'' and total_units is not null and edc_TOTAL_UNITS is not null 
+		edc_project_ids <>'' and total_units is not null and edc_TOTAL_UNITS is not null 
 	group by 
 		case
 			when abs(total_units-edc_TOTAL_UNITS) < 0 then '<0'
@@ -348,35 +352,25 @@ from
 															end
 
 
-/*Checking the matches with large unit count differences.*/
+/*Checking the matches with large unit count differences. Only match is for Spofford and is accurate. ZAP ID P2017X0037 and EDC ID 3*/
 
 select
 	*
 from
 	zap_edc_final
 where
-	abs(total_units - edc_Total_Units) > 50
-
-
-/*Checking matches to projects where the applicant type is not 'Other Public Agency' or 'HPD'. Assessing the accuracy of these matches*/
-
-select
-	*
-from
-	zap_edc_final
-where
-	edc_ids <> '' and
-	applicant_type = 'Private'
+	abs(total_units - edc_Total_Units) > 35
 
 /*Checking the portion of EDC projects which have materialized in ZAP -- are there any with early build years which have not yet materialized?
-  Assess why these are not in ZAP*/
+  STAPLETON PHASE I AND II HAVE NOT MATERIALIZED IN ZAP. THIS MAKES SENSE: PHASE II IS NOT YET IN PROGRESS, AND THE UNIT COUNT/GEOGRAPHY WE HAVE
+  FOR PHASE I IS INCREMENTAL -- THE PORTION WHICH HAS NOT YET BEEN COMPLETED.*/
 
   select
   	*
   from
   	edc_deduped
   where
-  	edc_project_id not in(select edc_project_id from zap_edc_2) and build_year < 2025
+  	edc_project_id not in(select DISTINCT edc_project_id from zap_edc_1 WHERE EDC_PROJECT_ID IS NOT NULL) and build_year < 2025
 
  
 
