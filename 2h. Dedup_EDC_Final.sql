@@ -18,17 +18,22 @@ into
 from
 (
 	select
+		a.cartodb_id,
 		a.the_geom,
 		a.the_geom_webmercator,
-		a.geom_source,
-		a.edc_project_id,
-		a.dcp_project_id,
+		a.edc_project_id as project_id,
 		a.project_name,
 		a.project_description,
 		a.comments_on_phasing,
 		a.build_year,
 		a.total_units,
-		a.cartodb_id,
+		greatest
+			(
+				0,
+				a.total_units - coalesce(b.dob_units_net,0) 		- 
+				coalesce(c.hpd_project_incremental_units,0) 		-
+				coalesce(d.hpd_rfp_incremental_units,0)
+			) as EDC_Incremental_Units,
 		a.NYCHA_Flag,
 		a.gq_flag,
 		a.Assisted_Living_Flag,
@@ -38,14 +43,7 @@ from
 		c.hpd_project_ids,
 		c.hpd_project_incremental_units,
 		d.hpd_rfp_ids,
-		d.hpd_rfp_incremental_units,
-		greatest
-			(
-				0,
-				a.total_units - coalesce(b.dob_units_net,0) 		- 
-				coalesce(c.hpd_project_incremental_units,0) 		-
-				coalesce(d.hpd_rfp_incremental_units,0)
-			) as EDC_Incremental_Units
+		d.hpd_rfp_incremental_units
 	from
 		capitalplanning.edc_2018_sca_input_1_limited a
 	left join
@@ -62,7 +60,7 @@ from
 		a.edc_project_id = d.edc_project_id
 ) as edc_deduped
 order by
-	edc_project_id asc
+	project_id asc
 	
 /*RUN IN REGULAR CARTO*/	
 select cdb_cartodbfytable('capitalplanning','edc_deduped')

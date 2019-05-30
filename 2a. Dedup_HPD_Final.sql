@@ -411,19 +411,16 @@ from
 		a.cartodb_id,
 		a.the_geom,
 		a.the_geom_webmercator,
+		'HPD Projected Closings' as Source,
 		a.project_id,
-		a.construction_type,
-		a.status,
-		a.projected_fiscal_year_range,
-		a.min_of_projected_units,
-		a.max_of_projected_units,
-		a.total_units,
 		a.address,
+		'Projected' as Status,
 		a.borough,
-		a.bbl,
+		a.total_units,
+		greatest(a.total_units - coalesce(c.units_net,a.DOB_Units_Net,0),0) 	as hpd_incremental_units,
 		a.nycha_flag,
 		a.gq_flag,
-		a.senior_housing_flag,
+		'Unknown' as senior_housing_flag,
 		a.assisted_living_flag,
 		coalesce(
 					nullif
@@ -437,8 +434,7 @@ from
 					),
 					a.dob_job_numbers
 				) 																as dob_job_numbers,
-		coalesce(c.units_net,a.DOB_Units_Net) 									as dob_units_net,
-		greatest(a.total_units - coalesce(c.units_net,a.DOB_Units_Net,0),0) 	as hpd_incremental_units
+		coalesce(c.units_net,a.DOB_Units_Net) 									as dob_units_net
 	from
 		hpd_deduped_pre a
 	left join
