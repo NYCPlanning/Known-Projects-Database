@@ -53,7 +53,7 @@ from
 select
 	*
 into
-	public_sites_zap_final
+	public_sites_zap_1
 from
 (
 	select
@@ -80,4 +80,51 @@ from
 --		st_dwithin(a.the_geom::geography,b.the_geom::geography,20) 
 	order by
 		public_sites_id asc
-)  public_sites_zap_final
+)  public_sites_zap_1
+
+
+/*Aggregating projects*/
+
+
+select
+	*
+into
+	public_sites_zap_final
+from
+(
+	select
+		cartodb_id,
+		the_geom,
+		the_geom_webmercator,
+		public_sites_id,
+		project,
+		boro,
+		lead,
+		total_units,
+		nycha_flag,
+		gq_flag,
+		assisted_living_flag,
+		senior_housing_flag,
+		planner_input,
+		array_to_string(array_agg(nullif(concat_ws(', ',nullif(zap_project_id,''),nullif(zap_project_name,'')),'')),' | ') 	as zap_project_ids,
+		sum(zap_total_units)																								as zap_total_units,
+		sum(zap_incremental_units)																							as zap_incremental_units
+	from
+		public_sites_zap_1
+	group by
+		cartodb_id,
+		the_geom,
+		the_geom_webmercator,
+		public_sites_id,
+		project,
+		boro,
+		lead,
+		total_units,
+		nycha_flag,
+		gq_flag,
+		assisted_living_flag,
+		senior_housing_flag,
+		planner_input
+	order by
+		public_sites_id asc
+) public_sites_zap_final

@@ -44,6 +44,9 @@ from
 
 /*No matches. For expedience, not creating a lookup for proximity-based matching, a lookup for 1-1 filtering, or aggregating.*/
 
+
+/*Aggregating projects*/
+
 select
 	*
 into
@@ -51,7 +54,38 @@ into
 from
 (
 	select
-		*
+		cartodb_id,
+		the_geom,
+		the_geom_webmercator,
+		public_sites_id,
+		project,
+		boro,
+		lead,
+		total_units,
+		nycha_flag,
+		gq_flag,
+		assisted_living_flag,
+		senior_housing_flag,
+		planner_input,
+		array_to_string(array_agg(nullif(concat_ws(', ',nullif(nstudy_project_id,''),nullif(nstudy_project_name,'')),'')),' | ') 	as nstudy_project_ids,
+		sum(nstudy_units)																											as nstudy_total_units,
+		sum(nstudy_incremental_units)																								as nstudy_incremental_units
 	from
 		public_sites_nstudy
+	group by
+		cartodb_id,
+		the_geom,
+		the_geom_webmercator,
+		public_sites_id,
+		project,
+		boro,
+		lead,
+		total_units,
+		nycha_flag,
+		gq_flag,
+		assisted_living_flag,
+		senior_housing_flag,
+		planner_input
+	order by
+		public_sites_id asc
 ) public_sites_nstudy_final

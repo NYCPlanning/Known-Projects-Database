@@ -50,7 +50,7 @@ from
 select
 	*
 into
-	public_sites_edc_final
+	public_sites_edc_1
 from
 (
 	select
@@ -77,4 +77,50 @@ from
 		st_dwithin(a.the_geom::geography,b.the_geom::geography,20) 
 	order by
 		public_sites_id asc
-)  public_sites_edc_final
+)  public_sites_edc_1
+
+
+/*Aggregating projects*/
+
+select
+	*
+into
+	public_sites_edc_final
+from
+(
+	select
+		cartodb_id,
+		the_geom,
+		the_geom_webmercator,
+		public_sites_id,
+		project,
+		boro,
+		lead,
+		total_units,
+		nycha_flag,
+		gq_flag,
+		assisted_living_flag,
+		senior_housing_flag,
+		planner_input,
+		array_to_string(array_agg(nullif(concat_ws(', ',edc_project_id,nullif(edc_project_name,'')),'')),' | ') 				as edc_project_ids,
+		sum(edc_total_units) 																									as edc_total_units,
+		sum(edc_incremental_units) 																								as edc_incremental_units
+	from
+		public_sites_edc_1
+	group by
+		cartodb_id,
+		the_geom,
+		the_geom_webmercator,
+		public_sites_id,
+		project,
+		boro,
+		lead,
+		total_units,
+		nycha_flag,
+		gq_flag,
+		assisted_living_flag,
+		senior_housing_flag,
+		planner_input
+	order by
+		public_sites_id asc
+) public_sites_edc_final

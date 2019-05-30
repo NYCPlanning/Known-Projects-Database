@@ -1,21 +1,20 @@
 /************************************************************************************************************************************************************************************
 AUTHOR: Mark Shapiro
-SCRIPT: Deduping City Hall Public Sites data with HPD RFPs
+SCRIPT: Deduping Planner-Added Projects with HPD RFPs
 *************************************************************************************************************************************************************************************/
 
 /************************************************************************************************************************************************************************************
 METHODOLOGY: 
-1. Spatially match City Hall Public Sites with HPD RFPs.
-2. If an HPD RFPs maps to multiple sites, create a preference methodology to make 1-1 matches
+1. Spatially match Planner-Added Projects with HPD RFP jobs.
+2. If an RFP  maps to multiple Planner-Added Projects, create a preference methodology to make 1-1 matches.
 3. Omit inaccurate proximity-based matches within 20 meters.
-4. Calculate incremental units.
 ************************************************************************************************************************************************************************************/
 /*************************RUN IN CARTO BATCH********************/
 
 select
 	*
 into
-	public_sites_hpd_rfps
+	planner_projects_hpd_rfps
 from
 (
 	select
@@ -32,22 +31,44 @@ from
 		b.hpd_rfp_incremental_units,
 	 	st_distance(a.the_geom::geography,b.the_geom::geography) as distance
 	from
-		capitalplanning.public_sites_2018_sca_inputs_ms_1 a
+		mapped_planner_inputs_added_projects_ms_1 a
 	left join
 		capitalplanning.hpd_rfp_deduped b
-	on
-		st_dwithin(a.the_geom::geography,b.the_geom::geography,20) 
+	on 
+		st_dwithin(cast(a.the_geom as geography),cast(b.the_geom as geography),20) 	
 	order by
-		public_sites_id asc
-)  public_sites_hpd_rfps
+		a.map_id asc 													 
+) planner_projects_hpd_rfps
 
-/*There is only 1 match, and it is proximity-based. It is between Public Site Pipeline 29 (Hunters Point D+E) and HPD RFP ID 13 (Hunters Point F+G), ~15 meters apart.
-  These are clearly separate projects. For expedience, not creating a lookup for this 1 project. Instead just joining by spatial overlap, not proximity. See query below.*/
+/*****************************************************************DIAGNOSTICS******************************************************/
+
+/*
+Two accurate spatial matches:
+MAP ID 55321, Chestnut Commons to HPD RFP 12, Dinsmore-Chestnut
+MAP ID 85420, LIC Waterfront to HPD RFP 9, LIC Waterfront
+*/
+
+/*
+There is one proximity-based match, and it is inaccurate. See: https://newyorkyimby.com/2015/03/boerum-hill-shell-gas-station-wants-to-become-apartments-98-third-avenue.html
+MAP ID 85335, 98 3 Avenue to HPD RFP 32: NYCHA Wyckoff
+*/
+
+select
+	*
+from
+	planner_projects_hpd_rfps
+where
+	match_type is not null
+
+
+/**************************************************************END OF DIAGNOSTICS*******************************************/
+
+/*Limiting to spatial matches*/
 
 select
 	*
 into
-	public_sites_hpd_rfps_1
+	planner_projects_hpd_rfps_1
 from
 (
 	select
@@ -55,6 +76,8 @@ from
 		case
 			when
 				st_intersects(a.the_geom,b.the_geom)										then 'Spatial'
+			when
+				st_dwithin(a.the_geom::geography,b.the_geom::geography,20)					then 'Proximity'
 			end																				as match_type,
 		b.project_id 																		as hpd_rfp_id,
 		b.project_name 																		as hpd_rfp_name,
@@ -62,31 +85,28 @@ from
 		b.hpd_rfp_incremental_units,
 	 	st_distance(a.the_geom::geography,b.the_geom::geography) as distance
 	from
-		capitalplanning.public_sites_2018_sca_inputs_ms_1 a
+		mapped_planner_inputs_added_projects_ms_1 a
 	left join
 		capitalplanning.hpd_rfp_deduped b
-	on
-		st_intersects(a.the_geom,b.the_geom)		
---		st_dwithin(a.the_geom::geography,b.the_geom::geography,20) 
+	on 
+		st_intersects(a.the_geom,b.the_geom)
 	order by
-		public_sites_id asc
-)  public_sites_hpd_rfps_1
+		a.map_id asc 													 
+) planner_projects_hpd_rfps_1
 
+
+/*Creating aggregate matches*/
 
 select
 	*
 into
-	public_sites_hpd_rfps_final
+	planner_projects_hpd_rfps_final
 from
 (
 	select
-		cartodb_id,
-		the_geom,
-		the_geom_webmercator,
-		public_sites_id,
-		project,
-		boro,
-		lead,
+		map_id,
+		project_name,
+		boro as borough,
 		total_units,
 		nycha_flag,
 		gq_flag,
@@ -97,21 +117,17 @@ from
 		sum(HPD_RFP_Total_Units) 																					as HPD_RFP_Total_Units,
 		sum(HPD_RFP_Incremental_Units) 																				as HPD_RFP_Incremental_Units
 	from
-		public_sites_hpd_rfps_1
+		planner_projects_hpd_rfps_1
 	group by
-		cartodb_id,
-		the_geom,
-		the_geom_webmercator,
-		public_sites_id,
-		project,
+		map_id,
+		project_name,
 		boro,
-		lead,
 		total_units,
 		nycha_flag,
 		gq_flag,
 		assisted_living_flag,
 		senior_housing_flag,
 		planner_input
-	order by
-		public_sites_id asc
-) public_sites_hpd_rfps_final
+	order by 
+		map_id asc
+)	planner_projects_hpd_rfps_final	

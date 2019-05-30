@@ -1,27 +1,25 @@
 /************************************************************************************************************************************************************************************
 AUTHOR: Mark Shapiro
-SCRIPT: Deduplicate Neighborhood Study Rezoning Commitments from EDC
+SCRIPT: Deduping Planner-Added Projects with HPD RFPs
 *************************************************************************************************************************************************************************************/
 
 /************************************************************************************************************************************************************************************
 METHODOLOGY: 
-1. Spatially match neighborhood study rezoning commitments to EDC projected projects.
-2. If an EDC project maps to multiple neighborhood study rfps, create a preference methodology to make 1-1 matches
+1. Spatially match Planner-Added Projects with HPD RFP jobs.
+2. If an RFP  maps to multiple Planner-Added Projects, create a preference methodology to make 1-1 matches.
 3. Omit inaccurate proximity-based matches within 20 meters.
-4. Calculate incremental units.
 ************************************************************************************************************************************************************************************/
 /*************************RUN IN CARTO BATCH********************/
 
 select
 	*
 into
-	nstudy_edc
+	planner_projects_edc
 from
 (
 	select
 		a.*,
 		case
-			/*Not performing BBL match because geometries for both these sources are taken from PLUTO. Therefore, a spatial match is an implicit BBL match*/
 			when
 				st_intersects(a.the_geom,b.the_geom)										then 'Spatial'
 			when
@@ -36,68 +34,94 @@ from
 		b.edc_incremental_units,
 	 	st_distance(a.the_geom::geography,b.the_geom::geography) as distance
 	from
-		(select * from capitalplanning.dep_ndf_by_site where status = 'Rezoning Commitment') a
+		mapped_planner_inputs_added_projects_ms_1 a
 	left join
 		capitalplanning.edc_deduped b
 	on 
-		st_dwithin(a.the_geom::geography,b.the_geom::geography,20)
-	order by 
-		project_id asc
-) nstudy_edc
+		st_dwithin(cast(a.the_geom as geography),cast(b.the_geom as geography),20) 	
+	order by
+		a.map_id asc 													 
+) planner_projects_edc
 
 
-/*There is only one match between EDC and neighborhood study rezoning commitments -- the 126th Bus Street Depot in East Harlem. No need to consider
-  proximity-based matches or filtering to create 1-1 matches.*/
+/*	There is only one match, and it is proximity-based between MAP ID 85306, 456 Eastern Parkway & EDC 1, Bedford-Union Armory. 
+	This match is inaccurate -- 456 Eastern Parkway is not an EDC project.
+*/
+
+select
+	*
+from
+	planner_projects_edc
+where
+	match_type is not null
+
+
+/*Omitting proximity-based matches*/
 
 select
 	*
 into
-	nstudy_edc_final
+	planner_projects_edc_1
 from
 (
 	select
-		the_geom,
-		the_geom_webmercator,
-		cartodb_id,
-		project_id,
+		a.*,
+		case
+			when
+				st_intersects(a.the_geom,b.the_geom)										then 'Spatial'
+			end																				as match_type,
+		b.edc_project_id,
+		b.project_name 											as edc_project_name,
+		b.project_description 									as edc_project_description,
+		b.comments_on_phasing									as edc_comments_on_phasing,
+		b.build_year											as edc_build_year,
+		b.total_units 											as edc_total_units,
+		b.edc_incremental_units,
+	 	st_distance(a.the_geom::geography,b.the_geom::geography) as distance
+	from
+		mapped_planner_inputs_added_projects_ms_1 a
+	left join
+		capitalplanning.edc_deduped b
+	on 
+		st_intersects(a.the_geom,b.the_geom) 	
+	order by
+		a.map_id asc 													 
+) planner_projects_edc
+
+
+/*Aggregating*/
+
+select
+	*
+into
+	planner_projects_edc_final
+from
+(
+	select
+		map_id,
 		project_name,
-		neighborhood,
-		status,
-		units,
-		included_bbls,
+		boro as borough,
+		total_units,
 		nycha_flag,
 		gq_flag,
-		Assisted_Living_Flag,
-		Senior_Housing_Flag,
-		portion_built_2025,
-		portion_built_2035,
-		portion_built_2055,
+		assisted_living_flag,
+		senior_housing_flag,
 		planner_input,
 		array_to_string(array_agg(nullif(concat_ws(', ',edc_project_id,nullif(edc_project_name,'')),'')),' | ') 				as edc_project_ids,
 		sum(edc_total_units) 																									as edc_total_units,
 		sum(edc_incremental_units) 																								as edc_incremental_units
 	from
-		nstudy_edc
-	group by 
-		the_geom,
-		the_geom_webmercator,
-		cartodb_id,
-		project_id,
+		planner_projects_edc_1
+	group by
+		map_id,
 		project_name,
-		neighborhood,
-		status,
-		units,
-		included_bbls,
+		boro,
+		total_units,
 		nycha_flag,
 		gq_flag,
-		Assisted_Living_Flag,
-		Senior_Housing_Flag,
-		portion_built_2025,
-		portion_built_2035,
-		portion_built_2055,
+		assisted_living_flag,
+		senior_housing_flag,
 		planner_input
-	order by
-		project_id asc
-) nstudy_edc_final
-
-
+	order by 
+		map_id asc
+)	planner_projects_edc_final	

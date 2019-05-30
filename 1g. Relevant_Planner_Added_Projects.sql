@@ -460,7 +460,12 @@ from
 			cd,
 			project_name,
 			coalesce(
-						total_units_from_planner,
+						/*In one instance, for Flushing Commons MAP ID 85410, the planner has not included future units
+						  in the total_units_from_planner field, instead including them in the units_remaining_not_accounted_for_in_other_sources field.
+						  The geography similarly only encompasses the future developments, not the complete development.
+						  For situations like these, I am preferencing the units_remaining_not_accounted_for_in_other_sources. This is the only MAP ID affected.*/
+					case when total_units_from_planner <> units_remaining_not_accounted_for_in_other_sources then units_remaining_not_accounted_for_in_other_sources end,
+					total_units_from_planner,
 					case
 						when ks_assumed_units <> '' and ks_assumed_units not like '%(%' then ks_assumed_units::numeric
 						when length(ks_assumed_units)<2 or position('units' in ks_assumed_units)<1 then null

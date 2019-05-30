@@ -44,6 +44,8 @@ from
   Surprising, given that Public Sites does not list a timeline for this project. As expected, other projects do not match with DOB data.
   All the included Pipeline Public Sites are at most in RFP issuance stage, if there is a listed timeline at all. */ 
 
+/*Aggregating projects*/
+
 select
 	*
 into
@@ -51,9 +53,37 @@ into
 from
 (
 	select
-		*
+		cartodb_id,
+		the_geom,
+		the_geom_webmercator,
+		public_sites_id,
+		project,
+		boro,
+		lead,
+		total_units,
+		nycha_flag,
+		gq_flag,
+		assisted_living_flag,
+		senior_housing_flag,
+		planner_input,
+		array_to_string(array_agg(nullif(concat_ws(', ',dob_job_number,nullif(dob_address,'')),'')),' | ') 	as dob_job_numbers,
+		sum(dob_units_net) 																					as dob_units_net
 	from
 		public_sites_dob
+	group by
+		cartodb_id,
+		the_geom,
+		the_geom_webmercator,
+		public_sites_id,
+		project,
+		boro,
+		lead,
+		total_units,
+		nycha_flag,
+		gq_flag,
+		assisted_living_flag,
+		senior_housing_flag,
+		planner_input
 	order by
 		public_sites_id asc
 ) public_sites_dob_final

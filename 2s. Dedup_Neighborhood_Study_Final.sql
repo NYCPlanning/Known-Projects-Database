@@ -45,7 +45,7 @@ from
 		c.hpd_project_incremental_units,
 		d.hpd_rfp_ids,
 		d.hpd_rfp_incremental_units,
-		e.edc_project_id,
+		e.edc_project_ids,
 		e.edc_incremental_units,
 		f.zap_project_ids,
 		f.zap_incremental_units
