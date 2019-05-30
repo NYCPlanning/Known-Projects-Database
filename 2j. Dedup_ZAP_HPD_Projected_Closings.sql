@@ -202,8 +202,8 @@ into
 from
 (
 	select
-		a.project_id as zap_project_id_temp
-		a.match_type
+		a.project_id as zap_project_id_temp,
+		a.match_type,
 		a.HPD_Project_ID,
 		a.HPD_Address,
 		a.HPD_BBL,
@@ -213,12 +213,12 @@ from
 	from
 		zap_hpd_projected_closings_1 a
 	left join
-		zap_hpd_closings_proximate_matches_190529_v2 b
+		zap_hpd_projected_closings_proximate_matches_190529_v2 b
 	on
-		concat(a.project_id,a.hpd_project_id) = concat(b.project_id,b.hpd_project_id) and
+		concat(a.project_id,a.hpd_project_id) = concat(b.zap_project_id,b.hpd_projected_closing_id) and
 		b.accurate_match = 0
 	where
-		b.project_id is null
+		b.zap_project_id is null
 ) zap_hpd_projected_closings_2_pre
 
 select
@@ -278,7 +278,7 @@ from
 		sum(HPD_Project_Total_Units) 																					as HPD_Project_Total_Units,		
 		sum(HPD_Project_Incremental_Units) 																				as HPD_Project_Incremental_Units
 	from
-		zap_hpd_projected_closings_1
+		zap_hpd_projected_closings_2
 	group by
 		cartodb_id,
 		the_geom,

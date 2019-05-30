@@ -94,7 +94,6 @@ from
 			count(*) > 1
 ) multi_dcp_hpd_rfp_matches
 
-/*CHECK HERE IF THERE ARE MORE THAN 1 MATCHES OF ADDRESS OR PROXIMITY -- YOU WILL HAVE TO FIND ANOTHER WAY TO MANUALLY PREFERENCE THESE*/
 
 /*4 HPD RFPs match with multiple ZAP projects. The HPD RFPs are:
 22	Brownsville Site C - Livonia Sites
