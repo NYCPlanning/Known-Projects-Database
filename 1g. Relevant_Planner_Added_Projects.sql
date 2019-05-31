@@ -302,50 +302,51 @@ from
 			cd,
 			map_id, /*Manually convert this field to numeric*/
 			b.source,
-			project_id,
-			project_name,
-			status,
-			total_units_from_planner,
-			notes_on_total_ks_assumed_units,
-			ks_assumed_units,
-			units_remaining_not_accounted_for_in_other_sources,
-			lead_planner,
-			remaining_units_likely_to_be_built_2018,
-			rationale_2018,
-			rationale_2019,
-			phasing_notes_2019,
-			additional_notes_2019,
-			ZAP_Checked_Project_ID_2019,
-			replace
-			(	
+			b.project_id,
+			b.project_name,
+			b.status,
+			b.total_units_from_planner,
+			b.notes_on_total_ks_assumed_units,
+			b.ks_assumed_units,
+			b.units_remaining_not_accounted_for_in_other_sources,
+			b.lead_planner,
+			b.remaining_units_likely_to_be_built_2018,
+			b.rationale_2018,
+			b.rationale_2019,
+			b.phasing_notes_2019,
+			b.additional_notes_2019,
+			b.ZAP_Checked_Project_ID_2019,
 				replace
-				(
-					replace
+					(	
+						replace
 						(
-						case 
-							when
-								trim(rationale_2019) 			<> '' or
-								trim(phasing_notes_2019)		<> '' or
-								trim(additional_notes_2019) 	<> '' then 
-								concat_ws
-									(
-										' | ',
-										nullif(trim(rationale_2019),''),
-										nullif(trim(phasing_notes_2019),''),
-										nullif(trim(additional_notes_2019),'')
-									)	
-							when
-								trim(rationale_2018) <> '' then concat('2018 INPUT: ', trim(rationale_2018))
-							else null end 
-						 ,'''',
-						 ''
-						 ),
-					'"',
-					''
-				),
-				'–',
-				''	
-			)
+							replace
+								(
+								case 
+									when
+										trim(rationale_2019) 			<> '' or
+										trim(phasing_notes_2019)		<> '' or
+										trim(additional_notes_2019) 	<> '' then 
+										concat_ws
+											(
+												' | ',
+												nullif(trim(rationale_2019),''),
+												nullif(trim(phasing_notes_2019),''),
+												nullif(trim(additional_notes_2019),'')
+											)	
+									when
+										trim(rationale_2018) <> '' then concat('2018 INPUT: ', trim(rationale_2018))
+									when c.rationale <> '' and c.rationale is not null then concat('2018 INPUT: ',c.rationale)
+									else null end 
+								 ,'''',
+								 ''
+								 ),
+							'"',
+							''
+						),
+						'–',
+						''	
+					)
 			as planner_input,
 			mql_view,
 			suggestion,
@@ -379,6 +380,12 @@ from
 		added_development_sites_20190510_ms a
 	on
 		a.mapid = b.map_id
+	left join
+		dcp_2018_sca_inputs_share c
+	on
+		b.project_id = c.project_id and
+		upper(c.rationale) not like '%TOO EARLY STAGE%' /*Omitting outdated rationales which may have changed*/
+
 	/*Two projects (in addition to SI incorrect, quarantined projects) do not exist in planner inputs. 94519 and 94500. These are incorrect geocodes according to KS, and are accurately not included.*/
 ) as mapped_planner_inputs_consolidated_inputs_ms
 

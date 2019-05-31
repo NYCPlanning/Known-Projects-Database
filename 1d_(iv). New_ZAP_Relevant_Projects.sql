@@ -1283,7 +1283,7 @@ from
 			WHEN upper(b.planner_input)  	like '%S.A.R.A%' THEN 1 else a.senior_housing_flag end as Senior_Housing_Flag,
 		CASE
 			WHEN upper(b.planner_input)  	like '%ASSISTED LIVING%' THEN 1 else a.Assisted_Living_Flag end as Assisted_Living_Flag,
-		coalesce(nullif(b.planner_input,''),c.rationale) as planner_input,
+		b.planner_input,
 		row_number() over(partition by a.project_id) as project_id_instance
 	from
 		relevant_dcp_projects_housing_pipeline_ms_v4 a
@@ -1292,11 +1292,6 @@ from
 	on
 		a.project_id = b.project_id or (a.map_id is not null and a.map_id = b.map_id)
 	/*Joining on DCP Inputs from 2018 SCA Housing Pipeline to provide additional planner rationale where it is not available in 2019*/
-	left join
-		dcp_2018_sca_inputs_share c
-	on
-		a.project_id = c.project_id and
-		upper(c.rationale) not like '%TOO EARLY STAGE%' /*Omitting outdated rationales which may have changed*/
 ) x
 	where 
 		project_id_instance = 1
