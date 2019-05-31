@@ -37,6 +37,9 @@ from(
 			coalesce(g.nstudy_incremental_units,0)				-
 			coalesce(h.public_sites_incremental_units,0)				
 		) as planner_projects_incremental_units,
+		a.portion_built_2025,
+		a.portion_built_2035,
+		a.portion_built_2055,
 		b.dob_job_numbers,
 		b.dob_units_net,
 		c.hpd_project_ids,

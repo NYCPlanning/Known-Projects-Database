@@ -154,8 +154,8 @@ from
 	) or
 		/*Identifying the following Kedem Winery and DOB jobs matches which should be omitted*/
 	(
-		(a.project_id = 'P2012K0103' and b.dob_job_number = 320597476) or
-		(a.project_id = 'P2015K0227' and b.dob_job_number = 320622616)
+		(a.project_id = 'P2012K0103' and a.dob_job_number = 320597476 and b.dob_job_number = 320597476) or
+		(a.project_id = 'P2015K0227' and a.dob_job_number = 320622616 and b.dob_job_number = 320622616)
 	)
 	where
 		b.dob_job_number is null
