@@ -49,7 +49,7 @@ from
 		a.NYCHA_Flag,
 		a.gq_flag,
 		a.Assisted_Living_Flag,
-		a.Senior_Housing_Flag,
+		case when a.Senior_Housing_Flag = 1 then 1 else 0 end as Senior_Housing_Flag,
 		a.planner_input,
 		b.dob_job_numbers,
 		b.dob_units_net,

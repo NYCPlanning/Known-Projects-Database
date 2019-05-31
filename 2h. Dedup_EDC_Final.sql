@@ -21,10 +21,18 @@ from
 		a.cartodb_id,
 		a.the_geom,
 		a.the_geom_webmercator,
+		'EDC' as source,
 		a.edc_project_id as project_id,
 		a.project_name,
 		a.project_description,
 		a.comments_on_phasing,
+		case 
+				when a.EDC_Project_ID 	= 1 		then 'Brooklyn'
+				when a.EDC_Project_ID 	in(3,4) 	then 'Bronx'
+				when a.EDC_Project_ID 	= 2 		then 'Manhattan'
+				when a.EDC_Project_ID 	in(5,6,7) 	then 'Staten Island'
+				when a.EDC_Project_ID   >7 			then 'Staten Island'  end as borough,
+
 		a.build_year,
 		a.total_units,
 		greatest
@@ -37,7 +45,7 @@ from
 		a.NYCHA_Flag,
 		a.gq_flag,
 		a.Assisted_Living_Flag,
-		a.Senior_Housing_Flag,
+		case when a.Senior_Housing_Flag = 1 then 1 else 0 end as Senior_Housing_Flag,
 		b.dob_job_numbers,
 		b.dob_units_net,
 		c.hpd_project_ids,

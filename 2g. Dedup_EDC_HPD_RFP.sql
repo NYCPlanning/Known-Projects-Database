@@ -93,9 +93,9 @@ from
 		gq_flag,
 		Assisted_Living_Flag,
 		Senior_Housing_Flag,
-		array_to_string(array_agg(nullif(concat_ws(', ',nullif(hpd_rfp_id,''),nullif(project_name,'')),'')),' | ') 		as hpd_rfp_ids,
-		sum(hpd_rfp_total_units)																						as HPD_rfp_Total_Units,
-		sum(hpd_rfp_incremental_units) 																					as HPD_rfp_Incremental_Units
+		array_to_string(array_agg(nullif(concat_ws(', ',nullif(hpd_rfp_id,''),nullif(hpd_rfp_project_name,'')),'')),' | ') 		as hpd_rfp_ids,
+		sum(hpd_rfp_total_units)																								as HPD_rfp_Total_Units,
+		sum(hpd_rfp_incremental_units) 																							as HPD_rfp_Incremental_Units
 	from
 		capitalplanning.edc_hpd_rfp a
 	group by 

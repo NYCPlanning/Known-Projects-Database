@@ -18,6 +18,7 @@ from
 	select
 		a.the_geom,
 		a.the_geom_webmercator,
+		'HPD RFPs' as Source,
 		a.project_id,
 		a.project_name,
 		a.lead_agency,
@@ -29,10 +30,15 @@ from
 				a.total_units - coalesce(a.dob_units_net,0) - coalesce(b.hpd_projected_closings_incremental_units,0)
 				,0
 			) as HPD_RFP_Incremental_Units,
+		a.likely_to_be_built_by_2025_flag,
+		a.excluded_project_flag,
+		a.rationale_for_exclusion,
 		a.nycha_flag,
 		a.gq_flag,
-		a.senior_housing_flag,
+		case when a.senior_housing_flag = 1 then 1 else 0 end as senior_housing_flag,
 		a.assisted_living_flag,
+		a.dob_job_numbers,
+		a.dob_units_net,
 		b.hpd_projected_closings_ids,
 		b.hpd_projected_closings_incremental_units
 	from
@@ -46,5 +52,3 @@ order by project_id::numeric asc
 
 /*Run in regular Carto to display table*/		      
 select cdb_cartodbfytable('capitalplanning','hpd_rfp_deduped')
-
-
