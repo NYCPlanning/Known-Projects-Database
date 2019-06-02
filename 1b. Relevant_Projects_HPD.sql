@@ -96,13 +96,11 @@ from
 			Excluded_Project_Flag,
 			rationale_for_exclusion,
 			source
-			-- ,building_instance
-		from(
-
-
+			,building_instance
+	from(
 		SELECT
-			coalesce(c.the_geom,b.the_geom)								as the_geom,
-			coalesce(c.the_geom_webmercator,b.the_geom_webmercator) 	as the_geom_webmercator,
+			b.the_geom													as the_geom,
+			b.the_geom_webmercator 										as the_geom_webmercator,
 			concat(a.project_id,'/',a.building_id) 						as project_id,
 			a.project_id 												as hpd_project_id,
 			a.building_id,
@@ -123,19 +121,14 @@ from
 			'HPD Projected Closings'									as Source,
 		/*There are two projects, building IDs 985433 & 985432, which have duplicates of the same building ID but different project ID. The unit counts and lots
 		  represent the same building, so the below field will be used to arbitrarily select one project for building 985433 and one project for building 985432*/
-			row_number() over(partition by a.building_id) 				as building_instance
+			row_number() over(partition by a.building_id order by (a.min_of_projected_units+a.max_of_projected_units)/2 desc) 				as building_instance
 		from
 			capitalplanning.hpd_projected_closings_190409_ms a
-		left join
-			capitalplanning.hpd_2018_sca_inputs_geo_pts c
-		on
-			a.project_id 	= c.project_id and
-			a.building_id 	= c.building_id
 		left join
 			capitalplanning.mappluto_v_18v2 b
 		on
 			a.bbl 	= b.bbl or
-			(a.bbl 	= 2027380037 and b.bbl = 2027380035) /*Accounting for project at 720 Tiffany Street which will clearly be on lot with BBL 2027380035, but is listed as a nonexistent lot 2027380037*/
+			(a.bbl 	= 2027380037 and b.bbl = 2027380035) /*Accounting for project at 720 Tiffany Street which will clearly be on lot with BBL 2027380035, but is listed as a nonexistent BBL 2027380037*/
 		union
 		select
 			st_union(coalesce(b.the_geom,c.the_geom)) 						as the_geom,
@@ -204,9 +197,9 @@ from
 ) hpd_2018_sca_inputs_ms
 /*There are two HPD Projected Closings, building IDs 985433 & 985432, which have duplicates of the same building ID but different project ID. The unit counts and lots
   represent the same building, so the below where statement will be used to arbitrarily select one project for building 985433 and one project for building 985432*/
--- where
--- 	building_instance is null or
--- 	building_instance > 1
+where
+	building_instance is null or
+	building_instance = 1
 order by
 	source,
 	project_id asc

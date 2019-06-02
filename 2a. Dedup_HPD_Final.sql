@@ -109,10 +109,10 @@ from
 	SELECT 
 		dob_job_number, 
 		count(*) as count, 
-		count(case when dob_match_type = 'Address' then 1 end) as address, 
-		count(case when dob_match_type = 'BBL' then 1 end) as BBL, 
-		count(case when dob_match_type = 'Spatial' then 1 end) as spatial, 
-		count(case when dob_match_type = 'Proximity' then 1 end) as proximity 
+		sum(case when dob_match_type = 'Address' 				then 1 else 0 end) as address, 
+		sum(case when dob_match_type = 'BBL' 					then 1 else 0 end) as BBL, 
+		sum(case when dob_match_type = 'Spatial' 				then 1 else 0 end) as spatial, 
+		sum(case when dob_match_type = 'Proximity' 			then 1 else 0 end) as proximity 
 	FROM 
 		capitalplanning.hpd_dob_match 
 	group by
