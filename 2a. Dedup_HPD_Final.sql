@@ -120,7 +120,8 @@ from
 	having count(*) > 1
 ) multi_hpd_dob_matches
 
-/*Limiting matches of the DOB jobs identified in multi_hpd_dob_matches*/
+/*Limiting matches of the DOB jobs identified in multi_hpd_dob_matches. There are no cases when a DOB job matches both by more than 1 of address, BBL, and spatial overlap to multiple
+  HPD Projected Closings.*/
 
 SELECT
 	*

@@ -88,7 +88,7 @@ from
 			WHEN upper(project_name)  like '%CONTINUING CARE%' THEN 1
 			WHEN upper(project_name)  like '%NURSING%' THEN 1
 			WHEN project_name  		  like '% SARA %' THEN 1
-			WHEN upper(project_name)  like '%S.A.R.A%' THEN 1 end 					as Senior_Housing_Flag,
+			WHEN upper(project_name)  like '%S.A.R.A%' THEN 1 ELSE 0 end 					as Senior_Housing_Flag,
 		/*Identifying assisted living projects*/
 		CASE
 			WHEN upper(project_name)  like '%ASSISTED LIVING%' THEN 1 else 0 end 	as Assisted_Living_Flag,
