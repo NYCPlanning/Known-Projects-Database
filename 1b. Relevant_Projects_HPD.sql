@@ -149,8 +149,8 @@ from
 			a.borough,
 			null,
 			null,
-			a.announced_unit_count 											as total_units,
-			array_to_string(array_agg(concat(coalesce(b.bbl,c.bbl))),', ') 	as bbl,
+			case when a.announced_unit_count = 0 then null else a.announced_unit_count end	as total_units,
+			array_to_string(array_agg(concat(coalesce(b.bbl,c.bbl))),', ') 					as bbl,
 			case
 				when rfp_project_name = 'NYCHA Harborview Terrace' then 0 /*Project no longer in NYCHA pipeline*/
 				when estimated_build_year_by_2025 is true then 1 else 0 end as Likely_to_be_Built_by_2025_Flag,
