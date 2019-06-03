@@ -141,7 +141,7 @@ from
 
 /******************************************************************DIAGNOSTICS***********************************************************/
 /*
-	Of the 5 projects with matches, 3 have an exact unit count match. 2 are > 50 units apart. 
+	Of the 5 projects with matches, 3 have an exact unit count match. 1 is > 50 units apart. 
 */
 
 	select
@@ -180,7 +180,7 @@ from
 			when abs(units-hpd_project_total_units) > 50 then '>50' 
 															end
 
-/*Checking the matches with large unit count differences. The matches are for Phipps House and Sendero Verde, which are both expected to have future additional development.*/
+/*Checking the matches with large unit count differences. The matches is for Phipps House, which is expected to have future additional development.*/
 
 select
 	*
@@ -191,7 +191,7 @@ where
 
 
 
-/*Approx. 1/3rd of East Harlem has materialized. 1/4 of Inwood projects, all DTFR projects, and 1/9th of East Harlem projects have materialized. No BSC or Jerome projects
+/*Approx. 1/3rd of East Harlem has materialized. 1/4 of Inwood projects, all DTFR projects, and 1/9th of East Harlem projects have materialized when cnosidering projects, not units. No BSC or Jerome projects
   have materialized in HPD Projected Closings.*/
 
 select

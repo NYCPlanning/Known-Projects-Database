@@ -57,7 +57,7 @@ from
 
 
 /**********************RUN THE FOLLOWING QUERY IN REGULAR CARTO******************************/
-/*If there are any proximity-based matches, EXPORT THE FOLLOWING QUERY AS edc_hpd_proximate_matches_190524_v2. 
+/*If there are any proximity-based matches, EXPORT THE FOLLOWING QUERY AS edc_hpd_proximate_matches_190524_v2. THERE ARE NO PROXIMITY-BASED MATCHES.
   IDENTIFY WHETHER THE MATCHES IN THIS DATASET ARE ACCURATE BY FLAGGING.
   REIMPORT AS A LOOKUP AND OMIT INACCURATE MATCHES. */
 

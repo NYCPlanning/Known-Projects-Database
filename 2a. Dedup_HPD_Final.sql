@@ -89,7 +89,16 @@ from
 				b.bbl is not null
 			) 																		or
 			(
-				st_dwithin(a.the_geom::geography,b.the_geom::geography,20)
+				st_intersects(a.the_geom,b.the_geom)
+			)																		or
+			(
+				st_dwithin(a.the_geom::geography,b.the_geom::geography,20)			and
+				not st_intersects(a.the_geom,b.the_geom)							and
+				(
+					(a.total_units > 10 and abs(a.total_units-b.units_net)::float/a.total_units::float <=.5) or
+					(a.total_units <=10 and abs(a.total_units - b.units_net) <=5)
+				)																							/*Limiting proximity-matches to those that are close with unit count,
+																			  								  with a threshold for smaller buildings*/
 			)
 		)
 	order by
@@ -264,7 +273,7 @@ from
 
 /*EXPORT THE FOLLOWING QUERY AS HPD_DOB_PROXIMATE_MATCHES.
   IDENTIFY WHETHER THE MATCHES IN THIS DATASET ARE ACCURATE BY FLAGGING.
-  REIMPORT AS A LOOKUP (hpd_dob_proximate_matches_190523_v2) AND OMIT INACCURATE MATCHES. */
+  REIMPORT AS A LOOKUP (hpd_dob_proximate_matches_190603_v3) AND OMIT INACCURATE MATCHES. */
 (
 	select
 		*
@@ -309,14 +318,14 @@ from
 		gq_flag,
 		senior_housing_flag,
 		assisted_living_flag,
-		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_proximate_matches_190523_v2 where match =0) then null else dob_match_type 		end 	as dob_match_type,
-		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_proximate_matches_190523_v2 where match =0) then null else dob_job_number 		end 	as dob_job_number,
-		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_proximate_matches_190523_v2 where match =0) then null else dob_job_type   		end 	as dob_job_type,
-		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_proximate_matches_190523_v2 where match =0) then null else dob_job_description end 	as dob_job_description,
-		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_proximate_matches_190523_v2 where match =0) then null else dob_status		   	end 	as dob_status,
-		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_proximate_matches_190523_v2 where match =0) then null else dob_address	   		end 	as dob_address,
-		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_proximate_matches_190523_v2 where match =0) then null else units_net 			end		as units_net,
-		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_proximate_matches_190523_v2 where match =0) then null else geom_distance 		end 	as geom_distance
+		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_proximate_matches_190603_v3 where match =0) then null else dob_match_type 		end 	as dob_match_type,
+		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_proximate_matches_190603_v3 where match =0) then null else dob_job_number 		end 	as dob_job_number,
+		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_proximate_matches_190603_v3 where match =0) then null else dob_job_type   		end 	as dob_job_type,
+		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_proximate_matches_190603_v3 where match =0) then null else dob_job_description end 	as dob_job_description,
+		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_proximate_matches_190603_v3 where match =0) then null else dob_status		   	end 	as dob_status,
+		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_proximate_matches_190603_v3 where match =0) then null else dob_address	   		end 	as dob_address,
+		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_proximate_matches_190603_v3 where match =0) then null else units_net 			end		as units_net,
+		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_proximate_matches_190603_v3 where match =0) then null else geom_distance 		end 	as geom_distance
 	from
 		hpd_dob_match_3
 	order by
@@ -405,23 +414,21 @@ from
 SELECT
 	*
 into
-	hpd_deduped
+	hpd_deduped_pre_1
 from
 (
 	SELECT
 		a.cartodb_id,
 		a.the_geom,
 		a.the_geom_webmercator,
-		'HPD Projected Closings' as Source,
 		a.project_id,
 		a.address,
-		'Projected' as Status,
 		a.borough,
 		a.total_units,
 		greatest(a.total_units - coalesce(c.units_net,a.DOB_Units_Net,0),0) 	as hpd_incremental_units,
 		a.nycha_flag,
 		a.gq_flag,
-		'Unknown' as senior_housing_flag,
+		a.senior_housing_flag,
 		a.assisted_living_flag,
 		coalesce(
 					nullif
@@ -449,7 +456,45 @@ from
 		c.job_number = b.corrected_dob_job_number_match
 	order by
 		a.project_id asc
+) hpd_deduped_pre_1
+
+
+/*Joining onto full list of HPD Projected Closings*/
+
+SELECT
+	*
+into
+	hpd_deduped
+from
+(
+	SELECT
+		a.cartodb_id,
+		a.the_geom,
+		a.the_geom_webmercator,
+		a.Source,
+		a.project_id,
+		a.address,
+		'Projected' as Status,
+		a.projected_fiscal_year_range,
+		a.borough,
+		a.bbl,
+		a.total_units,
+		greatest(a.total_units - coalesce(b.dob_units_net,0),0) 	as hpd_incremental_units,
+		a.nycha_flag,
+		a.gq_flag,
+		'Unknown' as senior_housing_flag,
+		a.assisted_living_flag,
+		b.dob_job_numbers,
+		b.dob_units_net
+	from
+		(select * from hpd_2018_sca_inputs_ms where source = 'HPD Projected Closings') a
+	left join
+		hpd_deduped_pre_1 b
+	on
+		a.project_id = b.project_id
 ) hpd_deduped
+order by
+	project_id asc
 
 		      
 /*Run in regular Carto to display table*/		      
@@ -458,7 +503,7 @@ select cdb_cartodbfytable('capitalplanning','hpd_deduped')
 /************************************************************************DIAGNOSTICS****************************************************************************************************/
 
 /*
-73/180 projects have materialized in DOB data.
+70/182 projects have materialized in DOB data.
 */
 SELECT
 	COUNT(CASE WHEN dob_job_numbers <> '' then 1 end) as matched_projects,
@@ -467,7 +512,7 @@ from
 	hpd_deduped
 
 /*
-51/65 projects expected to close by FY 2020 have materialized. 19/103 projects expected to close by FY2021 have materialized. 3 projects past FY 2021 have materialized. 
+49/67 projects expected to close by FY 2020 have materialized. 18/102 projects expected to close by FY2021 have materialized. 3 projects past FY 2021 have materialized. 
 */
 SELECT
 	projected_fiscal_year_range,
@@ -479,7 +524,7 @@ group by
 	projected_fiscal_year_range
 
 
-/*Of the 73 materialized jobs, 56 match exactly with their DOB unit count. 7 match between 1-5 units, 3 b/w 5-10, 2 b/w 10-15, 3 b/w 35-40, and 2 > 50.*/
+/*Of the 70 materialized jobs, 55 match exactly with their DOB unit count. 7 match between 1-5 units, 2 b/w 5-10, 2 b/w 10-15, 3 b/w 35-40, and 2 > 50.*/
 
 	select
 		case
@@ -515,7 +560,7 @@ group by
 			when abs(total_units-dob_units_net) > 50 then '>50' end
 
 /*
-	The >50 unit difference matches below are correct. For 20-52 Mott Avenue, see https://therealdeal.com/2018/07/23/phipps-houses-lands-233m-from-city-for-far-rockaway-complex/
+	The >50 unit difference matches below are correct. For 202-258 WEST 124 STREET, see the DOB address is 206 West 124th St.
 	For the match at 3875 9 Avenue, see https://therealdeal.com/2018/08/31/maddd-equities-planning-614-unit-project-for-inwood/
 */
 SELECT

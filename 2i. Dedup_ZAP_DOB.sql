@@ -29,7 +29,7 @@ from
 			when
 				c.dob_job_number is not null and b.job_number is not null															then 'MQL Manual Match' 																					
 			when
-				b.job_number is not null																							then 'Proximity' end 	as DOB_Match_Type, /*Lookup shows that 2/35 proximity matches >=50 units are accurate. 
+				b.job_number is not null																							then 'Proximity' end 	as DOB_Match_Type, /*Lookup shows that 0/35 proximity matches >=50 units are accurate. 
 																																											  Given that <50 units makes a lookoup far more intensive, omitting proximity
 																																											  matching*/
 
@@ -66,7 +66,12 @@ from
 										 automate this.*/
 			and b.units_net > 0						
 		)  or
-		b.job_number = c.dob_job_number
+		b.job_number = c.dob_job_number or
+		/*Manually matching Domino Sugar P2013K0179 to DOB Job Numbers 320917503 and 320916407. They should overlap, but do not due to DOB points
+		  being geocoded past the shoreline and due to a flawed Domino Sugar polygon*/
+		(
+			a.project_id = 'P2013K0179' and b.job_number in(320917503,320916407)
+		)
 	) as Raw_Merge
 
 

@@ -57,8 +57,16 @@ from
 					concat(b.bbl) = a.bbl or
 					position(concat(b.bbl) in a.bbl) > 0
 				)
-		) or
-		st_dwithin(a.the_geom::geography,b.the_geom::geography,20)
+		) 																		or
+		(
+			st_intersects(a.the_geom,b.the_geom)
+		)																		or
+		(
+			st_dwithin(a.the_geom::geography,b.the_geom::geography,20) and
+			case
+				when a.total_units > 10 then abs(a.total_units - b.units_net)::float/a.total_units::float 	<= .5
+				else 						 abs(a.total_units - b.units_net) 								<=  5 end
+		)
 		)
 	where
 		a.source = 'HPD RFPs' 
@@ -78,7 +86,7 @@ select dob_job_number from hpd_rfp_dob group by dob_job_number having count(*)>1
 
 /*Filter hpd_rfp_dob for only proximity matches that don't match in unit count.
   Manually examine these matches to assess whether they are accurate.
-  CREATE A LOOKUP AND REUPLOAD IT as lookup_proximity_hpdrfp_dob_matches */
+  CREATE A LOOKUP AND REUPLOAD IT as hpd_rfp_dob_proximate_matches_190523_v2 */
 
 select
 	*

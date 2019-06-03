@@ -77,7 +77,7 @@ from
 
 
 /*Assessing whether any HPD projected closings match with multiple ZAP projects. Preferencing matches by address,
-then spatially, then by proximity. THERE ARE NO HPD PROJECTED CLOSINGS MATCHING WITH MULTIPLE ZAP PROJECTS.*/
+then spatially, then by proximity. THERE ARE TWO HPD PROJECTED CLOSINGS MATCHING WITH MULTIPLE ZAP PROJECTS.*/
 
 select
 	*
@@ -91,8 +91,10 @@ from
 			sum(case when match_type = 'Spatial' 		then 1 else 0 end) 	as Spatial_Matches,
 			sum(case when match_type = 'Proximity' 		then 1 else 0 end) 	as Proximity_Matches,
 			count(*)														as total_matches,
-			min(case when match_type = 'Proximity' then distance end)		as minimum_proximity_distance,
-			min(abs(HPD_Project_Total_Units - coalesce(total_units,0))) 	as min_unit_difference
+			min(case when match_type = 'Proximity' 	then distance end)		as minimum_proximity_distance,
+			min(case when match_type = 'Address' 	then abs(HPD_Project_Total_Units - coalesce(total_units,0)) end) 	as min_unit_difference_address,
+			min(case when match_type = 'Spatial' 	then abs(HPD_Project_Total_Units - coalesce(total_units,0)) end) 	as min_unit_difference_spatial,
+			min(case when match_type = 'Proximity' 	then abs(HPD_Project_Total_Units - coalesce(total_units,0)) end) 	as min_unit_difference_proximity
 		from
 			zap_hpd_projected_closings
 		where
@@ -104,7 +106,7 @@ from
 ) multi_dcp_hpd_projected_closings_matches
 
 
-/*0 HPD Projected Closings match with multiple ZAP projects.*/
+/*2 HPD Projected Closings match with multiple ZAP projects.*/
 /*REMOVE THE MATCHES BY THE PREFERENCING SYSTEM ABOVE*/
 
 select
@@ -178,7 +180,7 @@ from
 
 /*Checking proximity matches. There are 0 matches by proximity. 
   If there are >0 proximity-based matches, create 
-  lookup zap_hpd_closings_proximate_matches_190529_v2 with manual
+  lookup zap_hpd_projected_closings_proximate_matches_190603_v3 with manual
   checks on the accuracy of each proximity match. */
 
   select
@@ -213,7 +215,7 @@ from
 	from
 		zap_hpd_projected_closings_1 a
 	left join
-		zap_hpd_projected_closings_proximate_matches_190529_v2 b
+		zap_hpd_projected_closings_proximate_matches_190603_v3 b
 	on
 		concat(a.project_id,a.hpd_project_id) = concat(b.zap_project_id,b.hpd_projected_closing_id) and
 		b.accurate_match = 0

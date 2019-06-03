@@ -462,9 +462,13 @@ FROM
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  	like '%CONTINUING CARE%' THEN 1
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  	like '%NURSING%' THEN 1
 			WHEN concat(a.project_description,' ',a.project_brief)  		like '% SARA%' THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  	like '%S.A.R.A%' THEN 1 end as Senior_Housing_Flag,
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  	like '%S.A.R.A%' THEN 1 
+			ELSE 0 end 																						as Senior_Housing_Flag,
 		CASE
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%ASSISTED LIVING%' THEN 1 else 0 end as Assisted_Living_Flag,
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%ASSISTED LIVING%' THEN 1 
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%LONG-TERM CARE%' THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%LONG TERM CARE%' THEN 1
+			else 0 end 																						as Assisted_Living_Flag,
 
 
 
@@ -669,6 +673,7 @@ from
 			dcp_target_certification_date,
 			system_target_certification_date,
 			coalesce(dcp_target_certification_date,system_target_certification_date) as target_certified_date,
+			ulurp_non_ulurp as ULURP,
 			project_status_date as latest_status_date,
 
 		/*	The following field is calculated by coalescing total units taken from the description of projects deemed residential using text search and
@@ -1046,6 +1051,7 @@ from
 			dcp_target_certification_date,
 			certified_referred,
 			project_completed,
+			ulurp,
 			si_seat_cert,
 			initiation_flag,
 			pre_pas_flag,
@@ -1060,12 +1066,6 @@ from
 	) x
 	order by
 		project_id asc
-
-
-/**********************RUN IN REGULAR CARTO**************************/
-
-select cdb_cartodbfytable('capitalplanning', 'relevant_dcp_projects_housing_pipeline_ms_v3')
-
 
 /*********************RUN IN CARTO BATCH**************************/
 
@@ -1174,6 +1174,7 @@ from
 		a.dcp_target_certification_date,
 		a.certified_referred,
 		a.project_completed,
+		a.ulurp_non_ulurp as ulurp,
 		a.si_seat_cert,
 		a.initiation_flag,
 		a.pre_pas_flag,
@@ -1236,6 +1237,7 @@ from
 		a.dcp_target_certification_date,
 		a.certified_referred,
 		a.project_completed,
+		a.ulurp,
 		a.Anticipated_year_built,
 		b.remaining_units_likely_to_be_built_2018,
 		b.rationale_2018,
@@ -1251,40 +1253,45 @@ from
 			when a.initiation_flag 	= 1 then 1 else 0 end as early_stage_flag,
 		/*Identifying NYCHA Projects*/
 		CASE 
-			WHEN upper(b.planner_input)  like '%NYCHA%' THEN 1   		
-			WHEN upper(b.planner_input)  like '%BTP%' THEN 1  		
-			WHEN upper(b.planner_input)  like '%HOUSING AUTHORITY%' THEN 1  		
-			WHEN upper(b.planner_input)  like '%NEXT GEN%' THEN 1  		
-			WHEN upper(b.planner_input)  like '%NEXT-GEN%' THEN 1  		
-			WHEN upper(b.planner_input)  like '%NEXTGEN%' THEN 1  		
-			WHEN upper(b.planner_input)  like '%BUILD TO PRESERVE%' THEN 1 ELSE a.nycha_flag END 		
-																								AS NYCHA_Flag,
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%NYCHA%' THEN 1   		
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%BTP%' THEN 1  		
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%HOUSING AUTHORITY%' THEN 1  		
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%NEXT GEN%' THEN 1  		
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%NEXT-GEN%' THEN 1  		
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%NEXTGEN%' THEN 1  		
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%BUILD TO PRESERVE%' THEN 1 
+			ELSE coalesce(a.nycha_flag,0) 									END	AS NYCHA_Flag,
 		CASE 
-			WHEN upper(b.planner_input)  like '%CORRECTIONAL%' THEN 1   		
-			WHEN upper(b.planner_input)  like '%NURSING%' THEN 1  		
-			WHEN upper(b.planner_input)  like '% MENTAL%' THEN 1  		
-			WHEN upper(b.planner_input)  like '%DORMITOR%' THEN 1  		
-			WHEN upper(b.planner_input)  like '%MILITARY%' THEN 1  		
-			WHEN upper(b.planner_input)  like '%GROUP HOME%' THEN 1  		
-			WHEN upper(b.planner_input)  like '%BARRACK%' THEN 1 ELSE a.gq_flag 			END	AS GQ_fLAG,
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%CORRECTIONAL%' THEN 1   		
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%NURSING%' THEN 1  		
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '% MENTAL%' THEN 1  		
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%DORMITOR%' THEN 1  		
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%MILITARY%' THEN 1  		
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%GROUP HOME%' THEN 1  		
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%BARRACK%' THEN 1 
+			ELSE coalesce(a.gq_flag,0) 										END	AS GQ_fLAG,
 
 
 		/*Identifying definite senior housing projects*/
 		CASE 
 			when a.project_id = 'P2012M0285' then 0 /*Existing site, not future site is senior home*/
 			when a.project_id = 'P2014M0257' then 1 /*Senior home in future site*/
-			WHEN upper(b.planner_input)  	like '%SENIOR%' THEN 1
-			WHEN upper(b.planner_input)  	like '%ELDERLY%' THEN 1 	
-			WHEN b.planner_input  			like '% AIRS%' THEN 1
-			WHEN upper(b.planner_input)  	like '%A.I.R.S%' THEN 1 
-			WHEN upper(b.planner_input)  	like '%CONTINUING CARE%' THEN 1
-			WHEN upper(b.planner_input)  	like '%NURSING%' THEN 1
-			WHEN b.planner_input  			like '% SARA%' THEN 1
-			WHEN upper(b.planner_input)  	like '%S.A.R.A%' THEN 1 else a.senior_housing_flag end as Senior_Housing_Flag,
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  	like '%SENIOR%' THEN 1
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  	like '%ELDERLY%' THEN 1 	
+			WHEN concat(b.planner_input,a.project_description,a.project_brief)  		like '% AIRS%' THEN 1
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  	like '%A.I.R.S%' THEN 1 
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  	like '%CONTINUING CARE%' THEN 1
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  	like '%NURSING%' THEN 1
+			WHEN concat(b.planner_input,a.project_description,a.project_brief)  		like '% SARA%' THEN 1
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  	like '%S.A.R.A%' THEN 1 
+			else coalesce(a.senior_housing_flag,0) 							end	as Senior_Housing_Flag,
 		CASE
-			WHEN upper(b.planner_input)  	like '%ASSISTED LIVING%' THEN 1 else a.Assisted_Living_Flag end as Assisted_Living_Flag,
-		b.planner_input,
-		row_number() over(partition by a.project_id) as project_id_instance
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  	like '%ASSISTED LIVING%' THEN 1 
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))	like '%LONG-TERM CARE%'  THEN 1 
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))   like '%LONG TERM CARE%'	 THEN 1 
+			else a.Assisted_Living_Flag 									end as Assisted_Living_Flag,
+		coalesce(b.planner_input,'') 											as planner_input,
+		row_number() over(partition by a.project_id) 							as project_id_instance
 	from
 		relevant_dcp_projects_housing_pipeline_ms_v4 a
 	left join
@@ -1294,12 +1301,11 @@ from
 	/*Joining on DCP Inputs from 2018 SCA Housing Pipeline to provide additional planner rationale where it is not available in 2019*/
 ) x
 	where 
-		project_id_instance = 1
+		project_id_instance = 1 and 							/*Omitting duplicate project_id from relevant_dcp_projects_housing_pipeline_ms_v4*/ 
+		upper(planner_input) not like '%EXISTING UNITS%' AND	/*Omitting projects where we have not identified materialization but the planner has noted that 
+																			the units identified are existing units*/ 
+		upper(planner_input) not like '%DUPLICATE%' 			/*Omitting project IDs which planner suggest are duplicates of others. Only eliminates P2017Q0385*/
 
-
-
-/*Ensure that there are no added projects in ZAP already. If there are, replace the information.*/
-/*Pull out added projects from ZAP. If there are, replace the information.*/
 
 select cdb_cartodbfytable('capitalplanning', 'relevant_dcp_projects_housing_pipeline_ms_v5')
 

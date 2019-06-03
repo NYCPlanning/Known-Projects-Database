@@ -41,10 +41,10 @@ from
 					coalesce(e.edc_incremental_units,0)
 				) as zap_incremental_units,
 		a.applicant_type,
-		a.ulurp_non_ulurp,
 		a.dcp_target_certification_date,
 		a.certified_referred,
 		a.project_completed,
+		a.ulurp,
 		a.Anticipated_year_built as applicant_projected_build_year,
 		a.early_stage_flag,
 		a.si_seat_cert,
