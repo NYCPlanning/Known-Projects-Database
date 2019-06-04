@@ -17,6 +17,7 @@ into
 from
 (
 	select
+		ROW_NUMBER() OVER() AS CARTODB_ID,
 		a.the_geom,
 		a.the_geom_webmercator,
 		a.project_id,
@@ -51,7 +52,7 @@ from
 		f.zap_project_ids,
 		f.zap_incremental_units
 	from
-		(select * from capitalplanning.dep_ndf_by_site where status = 'Rezoning Commitment') a
+		capitalplanning.dep_ndf_by_site  a
 	left join
 		capitalplanning.nstudy_dob_final b
 	on 

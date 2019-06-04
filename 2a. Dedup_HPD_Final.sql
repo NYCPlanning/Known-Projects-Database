@@ -570,3 +570,12 @@ from
 where
 	dob_job_numbers <> '' and
 	abs(total_units - dob_units_net) > 50
+
+
+
+/*
+	Checking if any excessively small DOB jobs have matched with HPD Projected Closings.
+	There are 7 projects which have matched with DOB but have not been zeroed out. The matches are all within ~30 units of the HPD total.
+*/ 
+
+select * from hpd_deduped where hpd_incremental_units <> total_units and hpd_incremental_units <> 0

@@ -379,3 +379,12 @@ from
 where
 	abs(total_units - HPD_Project_Total_Units) > 50
 
+
+/*
+	Checking HPD Projected Closings matches to ZAP projects which are much larger. There are 31 projects where this is the case. All seem accurate because they are either:
+	1. large, multi-building rezonings
+	2. confirmed to be the same building
+	3. confirmed to be the same lot
+*/
+
+	select * from zap_hpd_projected_closings_final where HPD_Project_Total_Units < .5*total_units::float

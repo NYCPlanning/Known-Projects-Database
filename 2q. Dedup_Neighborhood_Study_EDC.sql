@@ -27,7 +27,7 @@ from
 			when
 				st_dwithin(a.the_geom::geography,b.the_geom::geography,20)					then 'Proximity' 
 			end																				as match_type,
-		b.edc_project_id,
+		b.project_id 											as edC_project_id,
 		b.project_name 											as edc_project_name,
 		b.project_description 									as edc_project_description,
 		b.comments_on_phasing									as edc_comments_on_phasing,
@@ -36,11 +36,13 @@ from
 		b.edc_incremental_units,
 	 	st_distance(a.the_geom::geography,b.the_geom::geography) as distance
 	from
-		(select * from capitalplanning.dep_ndf_by_site where status = 'Rezoning Commitment') a
+		capitalplanning.dep_ndf_by_site a
 	left join
 		capitalplanning.edc_deduped b
 	on 
-		st_dwithin(a.the_geom::geography,b.the_geom::geography,20)
+		case
+			when a.status = 'Rezoning Commitment' then 	st_dwithin(a.the_geom::geography,b.the_geom::geography,20) 
+			else 										st_intersects(a.the_geom,b.the_geom) end
 	order by 
 		project_id asc
 ) nstudy_edc
@@ -58,7 +60,6 @@ from
 	select
 		the_geom,
 		the_geom_webmercator,
-		cartodb_id,
 		project_id,
 		project_name,
 		neighborhood,
@@ -81,7 +82,6 @@ from
 	group by 
 		the_geom,
 		the_geom_webmercator,
-		cartodb_id,
 		project_id,
 		project_name,
 		neighborhood,

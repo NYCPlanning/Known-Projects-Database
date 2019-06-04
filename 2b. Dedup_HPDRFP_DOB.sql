@@ -252,7 +252,13 @@ where
 	abs(total_units - dob_units_net) > 50
 
 
+/*
+	Checking if any excessively small DOB jobs have matched with HPD RFPs.
+	There is 1 project that has materialized with fewer than 50% of its expected units. This is project ID 33--the first phase of Spofford
+	and is correct.
+*/ 
 
+select * from hpd_rfp_dob_final where dob_units_net < total_units::float*.5 
 
 
 

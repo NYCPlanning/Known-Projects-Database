@@ -32,12 +32,14 @@ from
 		b.hpd_incremental_units 															as HPD_Project_Incremental_Units,
 		st_distance(a.the_geom::geography,b.the_geom::geography)							as distance
 	from
-		(select * from capitalplanning.dep_ndf_by_site where status = 'Rezoning Commitment') a
+		capitalplanning.dep_ndf_by_site a
 	left join
 		capitalplanning.hpd_deduped b
 	on
 		position(b.bbl in a.included_bbls) > 0 						or
-		st_dwithin(a.the_geom::geography,b.the_geom::geography,20) 
+		case
+			when a.status = 'Rezoning Commitment' then st_dwithin(a.the_geom::geography,b.the_geom::geography,20)
+			else st_intersects(a.the_geom,b.the_geom) end 
 	order by
 		project_id asc
 ) nstudy_hpd_projected_closings
@@ -97,7 +99,6 @@ from
 	select
 		the_geom,
 		the_geom_webmercator,
-		cartodb_id,
 		project_id,
 		project_name,
 		neighborhood,
@@ -120,7 +121,6 @@ from
 	group by
 		the_geom,
 		the_geom_webmercator,
-		cartodb_id,
 		project_id,
 		project_name,
 		neighborhood,
@@ -163,7 +163,7 @@ from
 	from 
 		nstudy_hpd_projected_closings_final
 	where
-		hpd_project_ids <>'' and units is not null and units is not null 
+		hpd_project_ids <>'' and units is not null and units is not null and status = 'Rezoning Commitment'
 	group by 
 		case
 			when abs(units-hpd_project_total_units) < 0 then '<0'
@@ -187,7 +187,7 @@ select
 from
 	nstudy_hpd_projected_closings_final
 where
-	abs(units - hpd_project_total_units) > 50
+	abs(units - hpd_project_total_units) > 50 and status = 'Rezoning Commitment'
 
 
 
@@ -200,6 +200,8 @@ select
 	sum(units) as unit_count,
 	count(case when hpd_project_ids <> '' then 1 end) as match_count,
 	sum(hpd_project_total_units) as matched_units
+where
+	status = 'Rezoning Commitment'
 from
 	nstudy_hpd_projected_closings_final
 group by

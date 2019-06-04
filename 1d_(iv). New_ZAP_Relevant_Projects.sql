@@ -270,6 +270,13 @@ set 	total_dwelling_units_in_project = 6074,
 		new_dwelling_units				= 6074
 where project_id = 'P2009M0294';
 
+/*Pfizer Sites: Units taken from EIS.*/	
+update capitalplanning.dcp_zap_consolidated_20190510_ms a
+set 	total_dwelling_units_in_project = 1146,
+		new_dwelling_units				= 1146
+where project_id = 'P2013K0309';
+
+
 
 /*****************************************************************
 		Adding Empire State Development Projects
@@ -359,20 +366,27 @@ FROM
 				coalesce(a.mih_dwelling_units_lower_number,0) 	+ 
 				coalesce(a.new_dwelling_units,0)		+ 
 				coalesce(a.voluntary_affordable_dwelling_units_non_mih,0)
-			) > 0 													or
+			) > 0 																								or
 					
 			(
-				a.residential_sq_ft > 0 									and 
+				a.residential_sq_ft > 0 																		and 
 				/*Eliminating Parking application for large building (P2015M0047)*/
-				upper(concat(a.project_description,a.project_brief)) not like '%APPLICATION FOR PARKING%') 	or
+				upper(concat(a.project_description,a.project_brief)) not like '%APPLICATION FOR PARKING%'
+			) 																									or
 				/*Adding in Hudson Yards, Western Rail Yards, and 550 Washington*/							
 				a.project_id in('P2005M0053','P2009M0294','P2014M0257') 		
-			)													and
+		)																										and
 				/*Omitting applications for modifications to existing single-family homes*/
 				upper(concat(a.project_description,' ',a.project_brief)) not like '%EXISTING SINGLE-FAMILY%' 	and
-				upper(concat(a.project_description,' ',a.project_brief)) not like '%EXISTING ONE-FAMILY%'	and
-				upper(concat(a.project_description,' ',a.project_brief)) not like '%EXISTING 1-FAMILY%' 	and
-				upper(concat(a.project_description,' ',a.project_brief)) not like '%EXISTING HOME%'
+				upper(concat(a.project_description,' ',a.project_brief)) not like '%EXISTING ONE-FAMILY%'		and
+				upper(concat(a.project_description,' ',a.project_brief)) not like '%EXISTING 1-FAMILY%' 		and
+				upper(concat(a.project_description,' ',a.project_brief)) not like '%EXISTING HOME%'				and
+				/*Omitting Chairperson certifications for Rooftop Recreation Space. Omits 2-5 projects*/
+				(
+					upper(concat(a.project_description,' ',a.project_brief)) not like '%CHAIRPERSON CERTIFICATION%'	and
+					upper(concat(a.project_description,' ',a.project_brief)) not like '%ROOFTOP%'
+				)
+
 																THEN 1 else 0 
 																END AS Dwelling_Units, 
 
@@ -385,94 +399,52 @@ FROM
 	coalesce(
 		/* +1 for text which indicates a potential residence*/
 		CASE
-			when upper(concat(a.project_description,' ',a.project_brief)) 	like '%AFFORDABLE%' 	then 1 
-			when upper(concat(a.project_description,' ',a.project_brief)) 	like '%RESID%' 		then 1 
-			when upper(concat(a.project_description,' ',a.project_brief)) 	like '%RESIDENCE%' 	then 1 
-			when upper(concat(a.project_description,' ',a.project_brief)) 	like '%APARTM%'		then 1 
-			when upper(concat(a.project_description,' ',a.project_brief)) 	like '%APT%' 		then 1 
-			when upper(concat(a.project_description,' ',a.project_brief)) 	like '%DWELL%' 		then 1 
-			when upper(concat(a.project_description,' ',a.project_brief)) 	like '%LIVING%'		then 1 
-			when upper(concat(a.project_description,' ',a.project_brief)) 	like '%HOUSI%' 		then 1 
-			when upper(concat(a.project_description,' ',a.project_brief)) 	like '%MIH%' 		then 1 
-			when upper(concat(a.project_description,' ',a.project_brief)) 	like '%HOMES%' 		then 1  
-			when (concat(a.project_description,' ',a.project_brief)) 	like '%DUs%'		then 1 
-														END  - 
+			when upper(concat(a.project_description,' ',a.project_brief)) 	like '%AFFORDABLE%' 						THEN 1  
+			when upper(concat(a.project_description,' ',a.project_brief)) 	like '%RESID%' 								THEN 1 
+			when upper(concat(a.project_description,' ',a.project_brief)) 	like '%RESIDENCE%' 							THEN 1  
+			when upper(concat(a.project_description,' ',a.project_brief)) 	like '%APARTM%'								THEN 1 
+			when upper(concat(a.project_description,' ',a.project_brief)) 	like '%APT%' 								THEN 1 
+			when upper(concat(a.project_description,' ',a.project_brief)) 	like '%DWELL%' 								THEN 1  
+			when upper(concat(a.project_description,' ',a.project_brief)) 	like '%LIVING%'								THEN 1 
+			when upper(concat(a.project_description,' ',a.project_brief)) 	like '%HOUSI%' 								THEN 1  
+			when upper(concat(a.project_description,' ',a.project_brief)) 	like '%MIH%' 								THEN 1 
+			when upper(concat(a.project_description,' ',a.project_brief)) 	like '%HOMES%' 								THEN 1 
+			when (concat(a.project_description,' ',a.project_brief)) 		like '%DUs%'								THEN 1 
+																														END  - 
 		/* -1 for text which indicates that the project is not residential, or simply a modification of a single-homes.*/
 		CASE 	 
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%RESIDENTIAL TO COMMERCIAL%' 	THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%SINGLE-FAMILY%' 			THEN 1 
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%SINGLE FAMILY%' 			THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%1-FAMILY%' 			THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%ONE FAMILY%' 			THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%ONE-FAMILY%' 			THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%1 FAMILY%' 			THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%FLOATING%' 			THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%TRANSITIONAL%' 			THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%FOSTER%' 				THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%ILLUMIN%' 			THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%RESIDENCE DISTRICT%' 		THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%LANDMARKS PRESERVATION COMMISSION%' THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%EXISTING HOME%' 			THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%EXISTING HOUSE%' 			THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%NUMBER OF BEDS%' 			THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%EATING AND DRINKING%' 		THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%NO INCREASE%' 			THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%ENLARGEMENT%' 			THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%NON-RESIDENTIAL%' 		THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief)) like  '%LIVINGSTON%' 			THEN 1 
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%AMBULATORY%' 			THEN 1 
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%RESIDENTIAL TO COMMERCIAL%' 			THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%SINGLE-FAMILY%' 						THEN 1 
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%SINGLE FAMILY%' 						THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%1-FAMILY%' 							THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%ONE FAMILY%' 							THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%ONE-FAMILY%' 							THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%1 FAMILY%' 							THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%FLOATING%' 							THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%TRANSITIONAL%' 						THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%FOSTER%' 								THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%ILLUMIN%' 							THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%RESIDENCE DISTRICT%' 					THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%LANDMARKS PRESERVATION COMMISSION%' 	THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%EXISTING HOME%' 						THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%EXISTING HOUSE%' 						THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%NUMBER OF BEDS%' 						THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%EATING AND DRINKING%' 				THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%NO INCREASE%' 						THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%ENLARGEMENT%' 						THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%NON-RESIDENTIAL%' 					THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like  '%LIVINGSTON%'							THEN 1 
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%AMBULATORY%' 							THEN 1 
+				/*Omitting Chairperson certifications for Rooftop Recreation Space. Omits 2-5 projects*/
+			WHEN(
+					upper(concat(a.project_description,' ',a.project_brief)) like '%CHAIRPERSON CERTIFICATION%'	and
+					upper(concat(a.project_description,' ',a.project_brief)) like '%ROOFTOP%'
+				)
+ 																														THEN 1 
+
 					  									ELSE 0
 					  									END
 		,0) 														AS Potential_Residential,
-
-		/*Identifying NYCHA Projects*/
-		CASE 
-			when a.project_id = 'P2012Q0062'											  then 0 /*NYCHA only a small part of this Hallets Point*/
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%NYCHA%' THEN 1   		
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%BTP%' THEN 1  		
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%HOUSING AUTHORITY%' THEN 1  		
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%NEXT GEN%' THEN 1  		
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%NEXT-GEN%' THEN 1  		
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%NEXTGEN%' THEN 1  		
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%BUILD TO PRESERVE%' THEN 1 ELSE 0 END 		AS NYCHA_Flag,
-
-		CASE 
-			when a.project_id = 'P2018M0058'												then 0 /*Nursing facility only small part of this project*/
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%CORRECTIONAL%' THEN 1   		
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%NURSING%' THEN 1  		
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '% MENTAL%' THEN 1  		
-			-- WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%MEDICAL%' THEN 1  		
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%DORMITOR%' THEN 1  		
-			-- WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%HOSPITAL%' THEN 1  		
-			-- WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%COLLEGE%' THEN 1  		
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%MILITARY%' THEN 1  		
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%GROUP HOME%' THEN 1  		
-			-- WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%SHELTER%' THEN 1  		
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%BARRACK%' THEN 1 ELSE 0 END 		AS GQ_fLAG,
-
-
-		/*Identifying definite senior housing projects*/
-		CASE 
-			when a.project_id in('P2012R0625','P2018M0058','P2016Q0306')						then 0 /*Three projects which only include
-																									 senior housing as a small portion*/
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  	like '%SENIOR%' THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  	like '%ELDERLY%' THEN 1 	
-			WHEN concat(a.project_description,' ',a.project_brief)  		like '% AIRS%' THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  	like '%A.I.R.S%' THEN 1 
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  	like '%CONTINUING CARE%' THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  	like '%NURSING%' THEN 1
-			WHEN concat(a.project_description,' ',a.project_brief)  		like '% SARA%' THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  	like '%S.A.R.A%' THEN 1 
-			ELSE 0 end 																						as Senior_Housing_Flag,
-		CASE
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%ASSISTED LIVING%' THEN 1 
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%LONG-TERM CARE%' THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%LONG TERM CARE%' THEN 1
-			else 0 end 																						as Assisted_Living_Flag,
-
-
-
-
 
 		case when a.process_stage_name_stage_id_process_stage = 'Initiation' then 1 else 0 end 				as Initiation_Flag, /*Potential exclusion if 1*/
 		case when a.process_stage_name_stage_id_process_stage = 'Pre-Pas' then 1 else 0 end 				as Pre_PAS_Flag, /*Potential exclusion if 1*/
@@ -730,10 +702,6 @@ from
 			dwelling_units as dwelling_units_flag,
 			confirmed_potential_residential as potential_residential_flag,
 			need_manual_research_flag,
-			NYCHA_Flag,
-			GQ_Flag,
-			Senior_Housing_Flag,
-			Assisted_Living_Flag,
 			initiation_flag,
 			pre_pas_flag,
 			Diff_Between_Total_and_New_Units,
@@ -1039,10 +1007,6 @@ from
 				when project_id in('P2017Q0067','P2018Q0046') then null 
 				when total_unit_source = 'ZAP or Internal Research' then total_units_source end as ZAP_Unit_Source,
 			applicant_type,
-			NYCHA_flag,
-			GQ_Flag,
-			Senior_Housing_Flag,
-			Assisted_Living_Flag,
 			project_status,
 			previous_project_status,
 			process_stage,
@@ -1162,10 +1126,6 @@ from
 			 when b.ks_assumed_units <> '' then 'PLUTO FAR Estimate' end total_unit_source,
 		null as ZAP_Unit_Source,
 		a.applicant_type,
-		a.NYCHA_flag,
-		a.GQ_Flag,
-		a.Senior_Housing_Flag,
-		a.Assisted_Living_Flag,
 		a.project_status,
 		a.previous_project_status,
 		a.process_stage_name_stage_id_process_stage as process_stage,
@@ -1261,43 +1221,48 @@ from
 			when a.initiation_flag 	= 1 then 1 else 0 end as early_stage_flag,
 		/*Identifying NYCHA Projects*/
 		CASE 
-			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%NYCHA%' THEN 1   		
-			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%BTP%' THEN 1  		
-			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%HOUSING AUTHORITY%' THEN 1  		
-			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%NEXT GEN%' THEN 1  		
-			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%NEXT-GEN%' THEN 1  		
-			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%NEXTGEN%' THEN 1  		
-			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%BUILD TO PRESERVE%' THEN 1 
-			ELSE coalesce(a.nycha_flag,0) 									END	AS NYCHA_Flag,
+			when a.project_id = 'P2012Q0062'											  								THEN 0 /*NYCHA only a small part of this Hallets Point*/
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%NYCHA%' 					THEN 1   		
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%BTP%' 					THEN 1  		
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%HOUSING AUTHORITY%' 		THEN 1  		
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%NEXT GEN%' 				THEN 1  		
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%NEXT-GEN%' 				THEN 1  		
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%NEXTGEN%' 				THEN 1  		
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%BUILD TO PRESERVE%' 		THEN 1 
+			ELSE 0 																										END	AS NYCHA_Flag,
 		CASE 
-			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%CORRECTIONAL%' THEN 1   		
-			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%NURSING%' THEN 1  		
-			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '% MENTAL%' THEN 1  		
-			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%DORMITOR%' THEN 1  		
-			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%MILITARY%' THEN 1  		
-			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%GROUP HOME%' THEN 1  		
-			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%BARRACK%' THEN 1 
-			ELSE coalesce(a.gq_flag,0) 										END	AS GQ_fLAG,
+			when a.project_id = 'P2018M0058'																			THEN 0 /*Nursing facility only small part of this project*/
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%CORRECTIONAL%' 			THEN 1   		
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%NURSING%' 				THEN 1  		
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '% MENTAL%' 				THEN 1  		
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%DORMITOR%' 				THEN 1  		
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%MILITARY%' 				THEN 1  		
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%GROUP HOME%' 				THEN 1  		
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  like '%BARRACK%' 				THEN 1 
+			ELSE 0 																										END	AS GQ_fLAG,
 
 
 		/*Identifying definite senior housing projects*/
 		CASE 
-			when a.project_id = 'P2012M0285' then 0 /*Existing site, not future site is senior home*/
-			when a.project_id = 'P2014M0257' then 1 /*Senior home in future site*/
-			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  	like '%SENIOR%' THEN 1
-			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  	like '%ELDERLY%' THEN 1 	
-			WHEN concat(b.planner_input,a.project_description,a.project_brief)  		like '% AIRS%' THEN 1
-			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  	like '%A.I.R.S%' THEN 1 
-			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  	like '%CONTINUING CARE%' THEN 1
-			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  	like '%NURSING%' THEN 1
-			WHEN concat(b.planner_input,a.project_description,a.project_brief)  		like '% SARA%' THEN 1
-			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  	like '%S.A.R.A%' THEN 1 
-			else coalesce(a.senior_housing_flag,0) 							end	as Senior_Housing_Flag,
+			when a.project_id in('P2012R0625','P2018M0058','P2016Q0306')												THEN 0 /*Three projects which only include
+																									 								senior housing as a small portion*/
+			when a.project_id = 'P2012M0285' 																			THEN 0 /*Existing site, not future site is senior home*/
+			when a.project_id = 'P2014M0257' 																			THEN 1 /*Senior home in future site*/
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  	like '%SENIOR%' 				THEN 1
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  	like '%ELDERLY%' 				THEN 1 	
+			WHEN concat(b.planner_input,a.project_description,a.project_brief)  		like '% AIRS%' 					THEN 1
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  	like '%A.I.R.S%' 				THEN 1 
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  	like '%CONTINUING CARE%' 		THEN 1
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  	like '%NURSING%' 				THEN 1
+			WHEN concat(b.planner_input,a.project_description,a.project_brief)  		like '% SARA%' 					THEN 1
+			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  	like '%S.A.R.A%' 				THEN 1 
+			else 0								 																		end	as Senior_Housing_Flag,
 		CASE
 			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))  	like '%ASSISTED LIVING%' THEN 1 
 			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))	like '%LONG-TERM CARE%'  THEN 1 
 			WHEN upper(concat(b.planner_input,a.project_description,a.project_brief))   like '%LONG TERM CARE%'	 THEN 1 
-			else a.Assisted_Living_Flag 									end as Assisted_Living_Flag,
+			else 0 																	 									end as Assisted_Living_Flag,
+
 		coalesce(b.planner_input,'') 											as planner_input,
 		row_number() over(partition by a.project_id) 							as project_id_instance
 	from
@@ -1309,10 +1274,10 @@ from
 	/*Joining on DCP Inputs from 2018 SCA Housing Pipeline to provide additional planner rationale where it is not available in 2019*/
 ) x
 	where 
-		project_id_instance = 1 and 								/*Omitting duplicate project_id from relevant_dcp_projects_housing_pipeline_ms_v4*/ 
-		upper(planner_input) not like '%EXISTING UNITS%' AND		/*Omitting projects where we have not identified materialization but the planner has noted that 
+		project_id_instance = 1 							AND		/*Omitting duplicate project_id from relevant_dcp_projects_housing_pipeline_ms_v4*/ 
+		upper(planner_input) not like '%EXISTING UNITS%' 	AND		/*Omitting projects where we have not identified materialization but the planner has noted that 
 																			the units identified are existing units*/ 
-		upper(planner_input) not like '%DUPLICATE%' 	 AND		/*Omitting project IDs which planner suggest are duplicates of others. Only eliminates P2017Q0385*/
+		upper(planner_input) not like '%DUPLICATE%' 	 	AND		/*Omitting project IDs which planner suggest are duplicates of others. Only eliminates P2017Q0385*/
 		upper(project_status) not in('WITHDRAWN','RECORD CLOSED')	/*Omitting one planner-added project with Record Closed*/
 
 

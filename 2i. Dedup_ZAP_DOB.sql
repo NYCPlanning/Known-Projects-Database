@@ -38,7 +38,8 @@ from
 		b.units_net 						as dob_units_net,
 		b.address 							as dob_address,
 		b.job_type							as dob_job_type,
-		b.status 							as dob_status
+		b.status 							as dob_status,
+		b.job_completion_date				as dob_completion_date							
 	from
 		capitalplanning.relevant_dcp_projects_housing_pipeline_ms_v5 a
 	/*Adding in additional manual matches identified by MQL in the 2018 SCA Housing Pipeline*/
@@ -58,13 +59,21 @@ from
 				)
 			) 
 			and
-			b.job_type <> 'Demolition' and not
-			(a.project_id = 'P2012M0635' and b.job_number = 120481246) /*Manual removal -- previously this code had
+			/*Limiting potentially inaccurate Alterations matches.*/
+			not (b.job_type = 'Alteration' and a.total_units > 10 		and b.units_net<=2) 		and
+			not (b.job_type = 'Alteration' and a.early_stage_flag = 1 	and b.status = 'Complete') 	and
+			/*Excluding demolitions*/
+			b.job_type <> 'Demolition'																and
+			/*Excluding an inaccurate match*/ 															
+			not (a.project_id = 'P2012M0635' and b.job_number = 120481246) 							and
+										/*Manual removal -- previously this code had
 										 matched 625 W 57th St DOB job to a 606 W 57th
 										 street DCP rezoning. This was an inaccurate match,
 										 but I cannot currently think through a logic to 
 										 automate this.*/
-			and b.units_net > 0						
+			b.units_net > 0																			and
+			/*Omitting DOB matches where the ZAP job was Certified 3 or more years after the DOB job was completed*/ 
+			not(a.certified_referred is not null and b.job_completion_date <> '' and extract(year from a.certified_referred::date) - extract(year from b.job_completion_date::date) >=3)						
 		)  or
 		b.job_number = c.dob_job_number or
 		/*Manually matching Domino Sugar P2013K0179 to DOB Job Numbers 320917503 and 320916407. They should overlap, but do not due to DOB points
@@ -146,7 +155,8 @@ from
 		a.dob_units_net,
 		a.dob_address,
 		a.dob_job_type,
-		a.dob_status
+		a.dob_status,
+		a.dob_completion_date
 	from
 		zap_dob a
 	left join
@@ -327,3 +337,31 @@ from
 	zap_dob_final
 where
 	abs(total_units - dob_units_net) > 50
+
+
+
+/*
+	Checking if any excessively small DOB jobs have matched with larger ZAP projects. 25 matches, 17 of which are correct. The rest
+	can be solved by omitting alteration matches which are:
+															< 50% of the ZAP project and
+															cannot be Complete if the ZAP project is in Initiation or Pre-PAS stages and
+															<=2 units if the ZAP project >10 units
+*/ 
+
+
+select * from zap_dob_1 where dob_units_net < total_units::float*.5 and dob_job_type = 'Alteration' 
+
+
+/*
+	Checking Complete DOB matches to ZAP projects certified 3 years or after DOB completion. There are only 3 matches and all are inaccurate.
+*/
+
+select * from zap_dob_1 where certified_referred is not null and dob_completion_date<>'' and extract(year from certified_referred::date) - extract(year from nullif(dob_completion_date,'')::date) >=3
+
+/*
+	Checking DOB matches to ZAP projects which are much larger. There are 31 projects where this is the case.
+*/
+
+	select * from zap_dob_final where dob_units_net < .5*total_units::float and total_units > 10
+
+

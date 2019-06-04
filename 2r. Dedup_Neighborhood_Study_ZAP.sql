@@ -28,7 +28,7 @@ from
 			end																				as match_type,
 		b.project_id 																		as ZAP_Project_ID,
 		b.project_name 																		as ZAP_Project_Name,
-		b.project_status 																	as ZAP_Project_Status,
+		b.status 		 																	as ZAP_Project_Status,
 		b.project_description																as ZAP_Project_Description,
 		b.project_brief 																	as ZAP_Project_Brief,
 		b.applicant_type 																	as ZAP_Applicant_Type,
@@ -151,7 +151,6 @@ from
 	select
 		the_geom,
 		the_geom_webmercator,
-		cartodb_id,
 		project_id,
 		project_name,
 		neighborhood,
@@ -174,7 +173,6 @@ from
 	group by
 		the_geom,
 		the_geom_webmercator,
-		cartodb_id,
 		project_id,
 		project_name,
 		neighborhood,

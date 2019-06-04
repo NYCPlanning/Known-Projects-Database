@@ -232,3 +232,13 @@ from
 where
 	hpd_projected_closings_ids <> '' and
 	abs(total_units - hpd_projected_closings_total_units) > 50
+
+
+/*
+	Checking if any excessively small HPD Projected Closings jobs have matched with HPD RFPs.
+	There is 1 project that has materialized with fewer than 50% of its expected units. This is project ID 33--the first phase of Spofford
+	and is correct.
+*/ 
+
+select * from hpd_rfp_hpd_final where hpd_projected_closings_total_units < total_units::float*.5 
+

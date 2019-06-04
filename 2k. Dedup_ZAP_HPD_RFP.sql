@@ -374,3 +374,11 @@ from
 where
 	hpd_rfp_ids <> '' and
 	applicant_type = 'Private'
+
+
+
+/*
+	Checking HPD RFP matches to ZAP projects which are much larger. There are 0 projects where this is the case.
+*/
+
+	select * from zap_hpd_rfps_final where HPD_rfp_Total_Units < .5*total_units::float

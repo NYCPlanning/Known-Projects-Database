@@ -33,11 +33,13 @@ from
 		b.hpd_rfp_incremental_units,
 	 	st_distance(a.the_geom::geography,b.the_geom::geography) as distance
 	from
-		(select * from capitalplanning.dep_ndf_by_site where status = 'Rezoning Commitment') a
+		capitalplanning.dep_ndf_by_site a
 	left join
 		capitalplanning.hpd_rfp_deduped b
 	on
-		st_dwithin(a.the_geom::geography,b.the_geom::geography,20) 
+		case
+			when a.status = 'Rezoning Commitment' then 	st_dwithin(a.the_geom::geography,b.the_geom::geography,20) 
+			else 										st_intersects(a.the_geom,b.the_geom) end
 	order by
 		project_id asc
 ) nstudy_hpd_rfp
@@ -96,7 +98,6 @@ from
 	select
 		the_geom,
 		the_geom_webmercator,
-		cartodb_id,
 		project_id,
 		project_name,
 		neighborhood,
@@ -119,7 +120,6 @@ from
 	group by
 		the_geom,
 		the_geom_webmercator,
-		cartodb_id,
 		project_id,
 		project_name,
 		neighborhood,

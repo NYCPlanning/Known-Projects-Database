@@ -9,6 +9,8 @@ METHODOLOGY:
 2. If a DOB job maps to multiple neighborhood study projects, create a preference methodology to make 1-1 matches
 3. Omit inaccurate proximity-based matches within 20 meters.
 4. Calculate incremental units.
+
+NOTE: ALL NOTES PERTAIN TO RSEULTS FROM MATCHING TO NEIGHBORHOOD STUDY REZONING COMMITMENTS, NOT PROJECTED/POTENTIAL SITES
 ************************************************************************************************************************************************************************************/
 /*************************RUN IN CARTO BATCH********************/
 
@@ -31,12 +33,17 @@ from
 		b.job_type							as dob_job_type,
 		b.status 							as dob_status
 	from
-		(select * from capitalplanning.dep_ndf_by_site where status = 'Rezoning Commitment') a
+		capitalplanning.dep_ndf_by_site a
+		-- (select * from capitalplanning.dep_ndf_by_site where status = 'Rezoning Commitment') a
 	left join
 		capitalplanning.dob_2018_sca_inputs_ms b
 	on 
 		st_dwithin(cast(a.the_geom as geography),cast(b.the_geom as geography),20) 	and
-		b.job_type <> 'Demolition'													 
+		b.job_type <> 'Demolition' and
+		case 
+			when a.status <> 	'Rezoning Commitment' then st_intersects(a.the_geom,b.the_geom)
+			else a.status = 	'Rezoning Commitment' end
+
 ) nstudy_dob
 
 
@@ -120,10 +127,11 @@ into
 from
 (
 	select
+		row_number() over() as cartodb_id,
 		a.*,
 		b.*
 	from
-		(select * from capitalplanning.dep_ndf_by_site where status = 'Rezoning Commitment') a
+		capitalplanning.dep_ndf_by_site a
 	left join
 		nstudy_dob_1_pre b
 	on
@@ -207,9 +215,9 @@ from
 															 	as nstudy_Units_minus_DOB_Units,
 		count(*) as Count
 	from 
-		nstudy_dob_final
+		nstudy_dob_final 
 	where
-		dob_job_numbers <>'' and units is not null and units is not null 
+		dob_job_numbers <>'' and units is not null and status = 'Rezoning Commitment' 
 	group by 
 		case
 			when abs(units-dob_units_net) < 0 then '<0'
@@ -232,9 +240,9 @@ from
 select
 	*
 from
-	nstudy_dob_final
+	nstudy_dob_final 
 where
-	abs(units - dob_units_net) > 50
+	abs(units - dob_units_net) > 50 and status = 'Rezoning Commitment'
 
 
 
@@ -249,5 +257,7 @@ select
 	sum(dob_units_net) as matched_units
 from
 	nstudy_dob_final
+where
+	status = 'Rezoning Commitment'
 group by
 	neighborhood
