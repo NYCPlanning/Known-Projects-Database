@@ -1230,6 +1230,14 @@ from
 		a.total_unit_source,
 		a.ZAP_Unit_Source,
 		a.applicant_type,
+		case
+			when a.project_status = 'Complete' or 		a.project_completed is not null 	 	then 'Complete'
+			when a.certified_referred is not null or 	a.process_stage = 'Public Review' 		then 'Active, Certified'
+			when a.process_stage = 'Pre-Cert' and a.initiation_flag <> 1 and a.pre_pas_flag <>1 then 'Active, Pre-Cert'
+			when a.initiation_flag = 1															then 'Active, Initiation'
+			when a.pre_pas_flag = 1																then 'Active, Pre-PAS'
+			when a.project_status = 'On-Hold'													then concat(a.project_status,' ',a.process_stage)
+			else a.project_status end 															as dcp_edit_project_status,
 		a.project_status,
 		a.previous_project_status,
 		a.process_stage,
@@ -1301,10 +1309,11 @@ from
 	/*Joining on DCP Inputs from 2018 SCA Housing Pipeline to provide additional planner rationale where it is not available in 2019*/
 ) x
 	where 
-		project_id_instance = 1 and 							/*Omitting duplicate project_id from relevant_dcp_projects_housing_pipeline_ms_v4*/ 
-		upper(planner_input) not like '%EXISTING UNITS%' AND	/*Omitting projects where we have not identified materialization but the planner has noted that 
+		project_id_instance = 1 and 								/*Omitting duplicate project_id from relevant_dcp_projects_housing_pipeline_ms_v4*/ 
+		upper(planner_input) not like '%EXISTING UNITS%' AND		/*Omitting projects where we have not identified materialization but the planner has noted that 
 																			the units identified are existing units*/ 
-		upper(planner_input) not like '%DUPLICATE%' 			/*Omitting project IDs which planner suggest are duplicates of others. Only eliminates P2017Q0385*/
+		upper(planner_input) not like '%DUPLICATE%' 	 AND		/*Omitting project IDs which planner suggest are duplicates of others. Only eliminates P2017Q0385*/
+		upper(project_status) not in('WITHDRAWN','RECORD CLOSED')	/*Omitting one planner-added project with Record Closed*/
 
 
 select cdb_cartodbfytable('capitalplanning', 'relevant_dcp_projects_housing_pipeline_ms_v5')

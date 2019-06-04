@@ -462,7 +462,12 @@ from
 			cartodb_id,
 			source,
 			map_id,
-			boro,
+			case
+				when boro = 'MN' then 'Manhattan'
+				when boro = 'BK' then 'Brooklyn'
+				when boro = 'BX' then 'Bronx'
+				when boro = 'QN' then 'Queens'
+				when boro = 'SI' then 'Staten Island' end as boro,
 			cd,
 			project_name,
 			coalesce(

@@ -16,6 +16,8 @@ into
 	planner_projects_deduped
 from(
 	select
+		a.the_geom,
+		a.the_geom_webmercator,
 		a.map_id as project_id,
 		a.project_name,
 		a.boro as borough,
@@ -42,8 +44,8 @@ from(
 		a.portion_built_2055,
 		b.dob_job_numbers,
 		b.dob_units_net,
-		c.hpd_project_ids,
-		c.hpd_project_incremental_units,
+		c.hpd_project_ids as hpd_projected_closings_ids,
+		c.hpd_project_incremental_units as hpd_projected_closings_incremental_units,
 		d.hpd_rfp_ids,
 		d.hpd_rfp_incremental_units,
 		e.edc_project_ids,

@@ -48,8 +48,8 @@ from
 		case when a.Senior_Housing_Flag = 1 then 1 else 0 end as Senior_Housing_Flag,
 		b.dob_job_numbers,
 		b.dob_units_net,
-		c.hpd_project_ids,
-		c.hpd_project_incremental_units,
+		c.hpd_project_ids as hpd_projected_closings_ids,
+		c.hpd_project_incremental_units as hpd_projected_closings_incremental_units,
 		d.hpd_rfp_ids,
 		d.hpd_rfp_incremental_units
 	from

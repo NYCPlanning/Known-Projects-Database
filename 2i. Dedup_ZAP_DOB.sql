@@ -258,6 +258,7 @@ where
 
 select 
 	count(*)  as all, 
+	
 	count(case when dob_job_numbers<>'' then 1 end) as matched 
 from 
 	zap_dob_final 

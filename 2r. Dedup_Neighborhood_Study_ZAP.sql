@@ -198,7 +198,7 @@ from
 
 
 /*
-	Of the 4 projects with matches, all have an exact unit count match. 1 is > 50 units apart. 
+	Of the 4 projects with matches, all have an exact unit count match. 
 */
 
 	select

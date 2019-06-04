@@ -26,7 +26,12 @@ from
 		coalesce(b.the_geom_webmercator,c.the_geom_webmercator) as the_geom_webmercator,
 		a.unique_project_id,
 		concat('Public Site Pipeline ',a.project_id) as Public_Sites_ID,
-		a.boro,
+		case 
+			when a.boro = 'M' 	then 'Manhattan'
+			when a.boro = 'Bk' 	then 'Brooklyn'
+			when a.boro = 'Q'	then 'Queens'
+			when a.boro = 'SI'	then 'Staten Island'
+			when a.boro = 'Bx'	then 'Bronx'	end as boro,
 		a.lead,
 		a.project,
 		a.zap_project_id,

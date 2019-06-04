@@ -387,6 +387,12 @@ from
 		case
 			when a.status = 'Rezoning Commitment' then a.project_name end 										as project_name,
 		initcap(a.neighborhood) as neighborhood,
+		case 
+			when upper(neighborhood) in('BAY STREET CORRIDOR') 					then 'Staten Island'
+			when upper(neighborhood) in('EAST NEW YORK') 						then 'Brooklyn'
+			when upper(neighborhood) in('JEROME') 								then 'Bronx'
+			when upper(neighborhood) in('DOWNTOWN FAR ROCKAWAY')				then 'Queens'
+			when upper(neighborhood) in('INWOOD','EAST HARLEM') 				then 'Manhattan' 				end as borough,
 		initcap(a.status) as status,
 		a.the_geom,
 		a.the_geom_webmercator,
