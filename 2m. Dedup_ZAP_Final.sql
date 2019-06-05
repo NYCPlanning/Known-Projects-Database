@@ -150,12 +150,12 @@ from
 				a.applicant_projected_build_year > 2035																then  
 																													0
 
-			when a.status in ('Active, Initiation','Active, Pre-PAS')										then
+			when a.status in ('Active, Initiation','Active, Pre-PAS')												then
 																													0
 			when 
 				a.status = 'Active, Pre-Cert'			and 
 				a.dcp_target_certification_date is not null 	and
-				a.applicant_projected_build_year <=2025																then
+				(a.applicant_projected_build_year <=2025 or a.applicant_projected_build_year is null)				then
 																													1
 			when 
 				a.status = 'Active, Pre-Cert'			and 
@@ -170,7 +170,7 @@ from
 			when 
 				a.status = 'Active, Pre-Cert'			and 	
 				a.dcp_target_certification_date is null 		and
-				a.applicant_projected_build_year	<=2035															then
+				(a.applicant_projected_build_year	<=2035 or a.applicant_projected_build_year is null)				then
 																													0
 			when 
 				a.status = 'Active, Pre-Cert'			and 	
