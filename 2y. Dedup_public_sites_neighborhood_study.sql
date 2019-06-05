@@ -36,7 +36,9 @@ from
 	left join
 		capitalplanning.nstudy_deduped b
 	on
-		st_dwithin(a.the_geom::geography,b.the_geom::geography,20) 
+	case
+		when b.status = 'Rezoning Commitment' then 	st_dwithin(cast(a.the_geom as geography),cast(b.the_geom as geography),20)
+		else										st_intersects(a.the_geom,b.the_geom) end
 	order by
 		public_sites_id asc
 )  public_sites_nstudy

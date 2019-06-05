@@ -310,7 +310,7 @@ from
 			b.ks_assumed_units,
 			b.units_remaining_not_accounted_for_in_other_sources,
 			b.lead_planner,
-			b.remaining_units_likely_to_be_built_2018,
+			c.remaining_likely_to_be_built as remaining_units_likely_to_be_built_2018,
 			b.rationale_2018,
 			b.rationale_2019,
 			b.phasing_notes_2019,

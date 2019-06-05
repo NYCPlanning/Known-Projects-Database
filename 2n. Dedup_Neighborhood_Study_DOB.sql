@@ -47,8 +47,8 @@ from
 ) nstudy_dob
 
 
-/*Assessing whether any DOB jobs match with multiple rezoning commitments. Preferencing spatial matches over proximity matches. 
-  THERE ARE NO DOB JOBS MATCHING WITH MULTIPLE REZONING COMMITMENTS.*/
+/*Assessing whether any DOB jobs match with multiple projects. Preferencing spatial matches over proximity matches. 
+  THERE ARE NO DOB JOBS MATCHING WITH MULTIPLE NSTUDY PROJECTS.*/
 
 select
 	*
@@ -127,7 +127,6 @@ into
 from
 (
 	select
-		row_number() over() as cartodb_id,
 		a.*,
 		b.*
 	from

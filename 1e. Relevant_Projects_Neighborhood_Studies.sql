@@ -210,7 +210,7 @@ where (
 /*Workaround for 15 BBLs which are not current and do not have BBLs. Assigning them a random polygon from another BBL on their site.*/
 with distinct_site_geoms as
 (
-	select distinct site, the_geom
+	select distinct site, neighborhood, the_geom
 	from capitalplanning.dep_ndf_polygon_matching_ms
 	where the_geom is not null
 )
@@ -220,6 +220,7 @@ set the_geom = coalesce(a.the_geom,b.the_geom)
 from distinct_site_geoms b
 where 	a.the_geom is null and 
 	 	a.site = b.site and 
+	 	a.neighborhood = b.neighborhood and
 	 	a.site is not null
 
 /*Adding in project identifiers*/
@@ -383,6 +384,7 @@ INTO
 from
 (
 	SELECT
+		ROW_NUMBER() OVER() AS cartodb_id,
 		concat(initcap(a.neighborhood),' ', initcap(a.status),' ', row_number() over(partition by a.neighborhood, a.status )) 	as project_id,
 		case
 			when a.status = 'Rezoning Commitment' then a.project_name end 										as project_name,

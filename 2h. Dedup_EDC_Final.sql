@@ -34,6 +34,7 @@ from
 				when a.EDC_Project_ID   >7 			then 'Staten Island'  end as borough,
 
 		a.build_year,
+		'Projected'															 as status,
 		a.total_units,
 		greatest
 			(

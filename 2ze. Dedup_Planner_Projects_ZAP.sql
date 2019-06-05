@@ -28,7 +28,7 @@ from
 			end																				as match_type,
 		b.project_id 																		as ZAP_Project_ID,
 		b.project_name 																		as ZAP_Project_Name,
-		b.project_status 																	as ZAP_Project_Status,
+		b.status 																			as ZAP_Project_Status,
 		b.project_description																as ZAP_Project_Description,
 		b.project_brief 																	as ZAP_Project_Brief,
 		b.applicant_type 																	as ZAP_Applicant_Type,
@@ -86,7 +86,7 @@ from
 			end																				as match_type,
 		b.project_id 																		as ZAP_Project_ID,
 		b.project_name 																		as ZAP_Project_Name,
-		b.project_status 																	as ZAP_Project_Status,
+		b.status 																			as ZAP_Project_Status,
 		b.project_description																as ZAP_Project_Description,
 		b.project_brief 																	as ZAP_Project_Brief,
 		b.applicant_type 																	as ZAP_Applicant_Type,
@@ -99,7 +99,7 @@ from
 		capitalplanning.zap_deduped b
 	on 
 		st_dwithin(cast(a.the_geom as geography),cast(b.the_geom as geography),20) and
-		b.project_status <> 'Complete'
+		b.status <> 'Complete'
 	order by
 		a.map_id asc 													 
 )   planner_projects_zap_1

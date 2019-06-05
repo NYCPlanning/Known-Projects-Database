@@ -36,7 +36,10 @@ from
 	left join
 		capitalplanning.nstudy_deduped b
 	on 
-		st_dwithin(cast(a.the_geom as geography),cast(b.the_geom as geography),20) 	
+	case
+		when b.status = 'Rezoning Commitment' then 	st_dwithin(cast(a.the_geom as geography),cast(b.the_geom as geography),20)
+		else										st_intersects(a.the_geom,b.the_geom) end
+		 	
 	order by
 		a.map_id asc 													 
 )   planner_projects_nstudy
@@ -44,7 +47,7 @@ from
 
 
 /************************************************************DIAGNOSTICS*******************************************************/
-/*There are two matches.
+/*There are 2 matches.
 MAP ID 85321, Chestnut Commons, 	to East New York Rezoning Commitment 1, Dinsmore-Chestnut. 	This match is spatial and accurate.
 MAP ID 85326, Grace Baptist Church, to East New York Rezoning Commitment 3, 247 Vermont St. 	This match is proximity-based and inaccurate based on unit count, project information, and distance.
 

@@ -72,14 +72,17 @@ from
 										 but I cannot currently think through a logic to 
 										 automate this.*/
 			b.units_net > 0																			and
-			/*Omitting DOB matches where the ZAP job was Certified 3 or more years after the DOB job was completed*/ 
-			not(a.certified_referred is not null and b.job_completion_date <> '' and extract(year from a.certified_referred::date) - extract(year from b.job_completion_date::date) >=3)						
+			/*Omitting DOB matches where the ZAP job was Certified 3 or more years after the DOB job was completed. See Diagnostic section below.*/ 
+			not(a.certified_referred is not null and b.job_completion_date <> '' and extract(year from a.certified_referred::date) - extract(year from b.job_completion_date::date) >=3) and
+			/*Omitting DOB Complete matches to incomplete ZAP projects. Removes 4 matches, all of which are inaccurate. See Diagnostic section below.*/
+			not(a.project_id not like '%ESD%' and a.certified_referred is null and a.project_status <> 'Complete' and b.status = 'Complete')					
 		)  or
 		b.job_number = c.dob_job_number or
 		/*Manually matching Domino Sugar P2013K0179 to DOB Job Numbers 320917503 and 320916407. They should overlap, but do not due to DOB points
-		  being geocoded past the shoreline and due to a flawed Domino Sugar polygon*/
+		  being geocoded past the shoreline and due to a flawed Domino Sugar polygon. Also manually matching 535 Carlton to Atlantic Yards ESD Project*/
 		(
-			a.project_id = 'P2013K0179' and b.job_number in(320917503,320916407)
+			(a.project_id = 'P2013K0179' and b.job_number in(320917503,320916407)) or
+			(a.project_id =  '1 [ESD Project]' and b.job_number = 320626710)
 		)
 	) as Raw_Merge
 
@@ -358,8 +361,27 @@ select * from zap_dob_1 where dob_units_net < total_units::float*.5 and dob_job_
 
 select * from zap_dob_1 where certified_referred is not null and dob_completion_date<>'' and extract(year from certified_referred::date) - extract(year from nullif(dob_completion_date,'')::date) >=3
 
+
 /*
-	Checking DOB matches to ZAP projects which are much larger. There are 31 projects where this is the case.
+	Checking Complete DOB matches to incomplete ZAP projects where unit counts do not equal each other. There are only 4 matches. 
+	project_id	project_name	dob_job_number	dob_address
+	2019K0190	862-868 Kent Ave	310122621	133 TAAFFE PLACE
+	2019K0211	Bedford Ave Overlay Extension	310159690	142 NORTH 1 STREET
+	P2016Q0098	52nd Street Rezoning	402639971	52-01 QUEENS BOULEVARD
+	P2018K0320	2892 Nostrand Avenue Rezoning	310146204	2910 NOSTRAND AVENUE
+
+	All are inaccurate. Removing these matches in step zap_dob.
+*/
+
+select * from zap_dob_1 where (certified_referred is null and project_status <> 'Complete') and dob_completion_date <> '' and dob_completion_date is not null and total_units <> dob_units_net
+
+
+/*
+	Checking DOB matches to ZAP projects which are much larger. There are 31 projects where this is the case. At least 29 out of these 31 are accurate. For matches with the criteria below,
+	and an assessment of whether they are accurate, see link below. Assessment made by comparing address of DOB job to ZAP project name, reading through ZAP application documents to see whether
+	DOB lot was included in application, and assuming that multi-building ZAP developments could have small DOB matches.
+
+	G:\03. Schools Planning\01_Inputs to SCA CP\Housing pipeline\01_Analysis\Jan 2019 SCA Housing Pipeline\Diagnostics\20190605_Small_DOB_Matches_to_ZAP.xlsx
 */
 
 	select * from zap_dob_final where dob_units_net < .5*total_units::float and total_units > 10

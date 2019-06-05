@@ -36,15 +36,18 @@ from
 		b.zap_incremental_units 															as zap_incremental_units,
 		st_distance(a.the_geom::geography,b.the_geom::geography)							as distance
 	from
-		(select * from capitalplanning.dep_ndf_by_site where status = 'Rezoning Commitment') a
+		capitalplanning.dep_ndf_by_site a
 	left join
 		capitalplanning.zap_deduped b
 	on
-		st_dwithin(a.the_geom::geography,b.the_geom::geography,20)
+		case
+			when a.status = 'Rezoning Commitment' then 	st_dwithin(a.the_geom::geography,b.the_geom::geography,20) 
+			else 										st_intersects(a.the_geom,b.the_geom) end
 ) nstudy_zap		
 
 /*Assessing whether any ZAP projects match with multiple rezoning commitments. Preferencing spatial matches over proximity matches. 
-  THERE ARE NO ZAP PROJECTS MATCHING WITH MULTIPLE REZONING COMMITMENTS.*/
+  THERE ARE NO ZAP PROJECTS MATCHING WITH MULTIPLE REZONING COMMITMENTS, but there are zap projects matching multiple times with various
+  projected and potential sites. This is theoretically possible, given ZAP projects can span multiple lots and areas.*/
 
 
 select
@@ -130,7 +133,7 @@ from
 		a.*,
 		b.*
 	from
-		(select * from capitalplanning.dep_ndf_by_site where status = 'Rezoning Commitment') a
+		capitalplanning.dep_ndf_by_site a
 	left join
 		nstudy_zap_1_pre b
 	on

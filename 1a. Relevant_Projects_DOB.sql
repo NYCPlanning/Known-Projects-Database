@@ -102,7 +102,7 @@ select
 		WHEN upper(job_description)  like '%CONTINUING CARE%' THEN 1
 		WHEN upper(job_description)  like '%NURSING%' THEN 1
 		WHEN job_description  like '% SARA %' THEN 1
-		WHEN upper(job_description)  like '%S.A.R.A%' THEN 1 END 						as Senior_Housing_Flag,
+		WHEN upper(job_description)  like '%S.A.R.A%' THEN 1  else 0 END 						as Senior_Housing_Flag,
 	CASE
 		when UPPER(concat(occ_init,occ_prop)) like '%ASSISTED LIVING%' then 1
 		WHEN upper(job_description)  like '%ASSISTED LIVING%' THEN 1 else 0 end 		as Assisted_Living_Flag

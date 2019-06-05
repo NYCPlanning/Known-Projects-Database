@@ -18,6 +18,7 @@ from
 (
 	select
 		ROW_NUMBER() OVER() AS CARTODB_ID,
+		'Neighborhood Study Development Sites' as Source,
 		a.the_geom,
 		a.the_geom_webmercator,
 		a.project_id,
@@ -26,11 +27,14 @@ from
 		a.borough,
 		a.status,
 		a.units as total_units,
+		a.planner_input,
+		a.portion_built_2025,
+		a.portion_built_2035,
+		a.portion_built_2055,
 		a.nycha_flag,
 		a.gq_flag,
 		a.assisted_living_flag,
 		a.senior_housing_flag,
-		a.planner_input,
 		greatest
 				(
 					0,
@@ -73,6 +77,8 @@ from
 		capitalplanning.nstudy_zap_final f
 	on
 		a.project_id = f.project_id
+	where
+		a.status <> 'Potential'
 ) nstudy_deduped
 
 

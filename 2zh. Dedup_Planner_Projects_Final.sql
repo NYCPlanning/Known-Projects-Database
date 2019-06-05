@@ -18,15 +18,11 @@ from(
 	select
 		a.the_geom,
 		a.the_geom_webmercator,
+		'DCP Planner-Added Projects' as Source,
 		a.map_id as project_id,
 		a.project_name,
 		a.boro as borough,
 		a.total_units,
-		a.nycha_flag,
-		a.gq_flag,
-		a.assisted_living_flag,
-		a.senior_housing_flag,
-		a.planner_input,
 		greatest
 		(
 			0,
@@ -42,6 +38,11 @@ from(
 		a.portion_built_2025,
 		a.portion_built_2035,
 		a.portion_built_2055,
+		a.planner_input,
+		a.nycha_flag,
+		a.gq_flag,
+		a.assisted_living_flag,
+		a.senior_housing_flag,
 		b.dob_job_numbers,
 		b.dob_units_net,
 		c.hpd_project_ids as hpd_projected_closings_ids,

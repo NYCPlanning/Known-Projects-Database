@@ -21,10 +21,10 @@ from
 		c.Source,
 		c.project_id,
 		c.project_name,
-		c.lead_agency,
-		c.status,
 		c.borough,
 		c.bbl,
+		c.lead_agency,
+		c.status,
 		c.total_units,
 		greatest
 			(
