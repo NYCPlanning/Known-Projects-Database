@@ -109,7 +109,10 @@ from
 		a.certified_referred,
 		a.project_completed,
 		a.ulurp,
+		b.lead_action,
 		a.applicant_projected_build_year,
+		c.remaining_likely_to_be_built as remaining_likely_to_be_built_2018,
+		/*Assigning 2025 Portion Built*/
 		case
 			when coalesce(a.portion_built_2025,0)+coalesce(a.portion_built_2035,0)+coalesce(a.portion_built_2055,0) > 0
 																												 	then
@@ -138,15 +141,15 @@ from
 																													then 
 																													0
 			when 
-				a.status = 'Complete'				and
+				a.status in('Complete','Active, Certified')				and
 				(a.applicant_projected_build_year is null or a.applicant_projected_build_year <=2025)				then  
 																													1
 			when 
-				a.status = 'Complete'				and
+				a.status in('Complete','Active, Certified')				and
 				a.applicant_projected_build_year between 2025 and 2035												then  
 																													0
 			when 
-				a.status = 'Complete'				and
+				a.status in('Complete','Active, Certified')				and
 				a.applicant_projected_build_year > 2035																then  
 																													0
 
@@ -188,6 +191,164 @@ from
 			else
 																													null
 			END 																									as portion_built_2025,
+		/*Assigning 2035 Portion Built*/
+		case
+			when coalesce(a.portion_built_2025,0)+coalesce(a.portion_built_2035,0)+coalesce(a.portion_built_2055,0) > 0
+																												 	then
+																													coalesce(a.portion_built_2035,0)
+
+			when (a.total_units > 10 and a.total_units::float*.2 > a.zap_incremental_units::float)
+																													then 
+																													0
+			when (a.total_units <= 10 and a.total_units - a.zap_incremental_units > 3)
+																													then 
+																													0
+			/*Adding in HY Phasing, taken from 2018 planner input*/
+			when a.project_id = 'P2005M0053'																		then
+																													.8
+			/*Adding in WRY Phasing, taken from 2018 planner input*/
+			when a.project_id = 'P2009M0294'																		then
+																													.8
+			/*Adding in Pfizer Sites Phasing. STILL TO DO.*/
+			when a.project_id = 'P2013K0309'																		then
+																													.5
+			/*Adding in Peninsula phasing, taken from Peninsula EIS documents.*/
+			when a.project_id = 'P2016Q0306'																		then
+																													1338::float/2200::float
+
+			when c.remaining_likely_to_be_built = 'No'
+																													then 
+																													0
+			when 
+				a.status in('Complete','Active, Certified')				and
+				(a.applicant_projected_build_year is null or a.applicant_projected_build_year <=2025)				then  
+																													0
+			when 
+				a.status in('Complete','Active, Certified')				and
+				a.applicant_projected_build_year between 2025 and 2035												then  
+																													1
+			when 
+				a.status in('Complete','Active, Certified')				and
+				a.applicant_projected_build_year > 2035																then  
+																													0
+
+			when a.status in ('Active, Initiation','Active, Pre-PAS')												then
+																													1
+			when 
+				a.status = 'Active, Pre-Cert'			and 
+				a.dcp_target_certification_date is not null 	and
+				(a.applicant_projected_build_year <=2025 or a.applicant_projected_build_year is null)				then
+																													0
+			when 
+				a.status = 'Active, Pre-Cert'			and 
+				a.dcp_target_certification_date is not null 	and
+				a.applicant_projected_build_year between 2025 and 2035												then
+																													1
+			when 
+				a.status = 'Active, Pre-Cert'			and 
+				a.dcp_target_certification_date is not null 	and
+				a.applicant_projected_build_year > 2035																then
+																													0	
+			when 
+				a.status = 'Active, Pre-Cert'			and 	
+				a.dcp_target_certification_date is null 		and
+				(a.applicant_projected_build_year	<=2035 or a.applicant_projected_build_year is null)				then
+																													1
+			when 
+				a.status = 'Active, Pre-Cert'			and 	
+				a.dcp_target_certification_date is null 		and
+				a.applicant_projected_build_year	>2035															then
+																													0
+			when 
+				a.status like '%On-Hold%'				and
+				(a.applicant_projected_build_year is null or a.applicant_projected_build_year <=2035)				then  
+																													1
+			when 
+				a.status like '%On-Hold%'				and
+				a.applicant_projected_build_year > 2035																then  
+																													0
+			else
+																													null
+			END 																									as portion_built_2035,
+		/*Assigning 2055 Portion Built*/
+		case
+			when coalesce(a.portion_built_2025,0)+coalesce(a.portion_built_2035,0)+coalesce(a.portion_built_2055,0) > 0
+																												 	then
+																													coalesce(a.portion_built_2055,0)
+
+			when (a.total_units > 10 and a.total_units::float*.2 > a.zap_incremental_units::float)
+																													then 
+																													0
+			when (a.total_units <= 10 and a.total_units - a.zap_incremental_units > 3)
+																													then 
+																													0
+			/*Adding in HY Phasing, taken from 2018 planner input*/
+			when a.project_id = 'P2005M0053'																		then
+																													0
+			/*Adding in WRY Phasing, taken from 2018 planner input*/
+			when a.project_id = 'P2009M0294'																		then
+																													0
+			/*Adding in Pfizer Sites Phasing. STILL TO DO.*/
+			when a.project_id = 'P2013K0309'																		then
+																													0
+			/*Adding in Peninsula phasing, taken from Peninsula EIS documents.*/
+			when a.project_id = 'P2016Q0306'																		then
+																													0
+
+			when c.remaining_likely_to_be_built = 'No'
+																													then 
+																													1
+			when 
+				a.status in('Complete','Active, Certified')				and
+				(a.applicant_projected_build_year is null or a.applicant_projected_build_year <=2025)				then  
+																													0
+			when 
+				a.status in('Complete','Active, Certified')				and
+				a.applicant_projected_build_year between 2025 and 2035												then  
+																													0
+			when 
+				a.status in('Complete','Active, Certified')				and
+				a.applicant_projected_build_year > 2035																then  
+																													1
+
+			when a.status in ('Active, Initiation','Active, Pre-PAS')												then
+																													0
+			when 
+				a.status = 'Active, Pre-Cert'			and 
+				a.dcp_target_certification_date is not null 	and
+				(a.applicant_projected_build_year <=2025 or a.applicant_projected_build_year is null)				then
+																													0
+			when 
+				a.status = 'Active, Pre-Cert'			and 
+				a.dcp_target_certification_date is not null 	and
+				a.applicant_projected_build_year between 2025 and 2035												then
+																													0
+			when 
+				a.status = 'Active, Pre-Cert'			and 
+				a.dcp_target_certification_date is not null 	and
+				a.applicant_projected_build_year > 2035																then
+																													1	
+			when 
+				a.status = 'Active, Pre-Cert'			and 	
+				a.dcp_target_certification_date is null 		and
+				(a.applicant_projected_build_year	<=2035 or a.applicant_projected_build_year is null)				then
+																													0
+			when 
+				a.status = 'Active, Pre-Cert'			and 	
+				a.dcp_target_certification_date is null 		and
+				a.applicant_projected_build_year	>2035															then
+																													1
+			when 
+				a.status like '%On-Hold%'				and
+				(a.applicant_projected_build_year is null or a.applicant_projected_build_year <=2035)				then  
+																													0
+			when 
+				a.status like '%On-Hold%'				and
+				a.applicant_projected_build_year > 2035																then  
+																													1
+			else
+																													null
+			END 																									as portion_built_2055,
 		a.early_stage_flag,
 		a.si_seat_cert,
 		a.NYCHA_Flag,
@@ -231,123 +392,24 @@ from
 select cdb_cartodbfytable('capitalplanning','zap_deduped')
 
 
+/*Talk to MQL! There are 8 projects, 6 of which have remaining units and 4 of which are complete, that planners in 2018 said would not materialize. Given their
+  track record here, I suggest we omit this qualification*/
+
+  select * from zap_deduped_1_test where remaining_likely_to_be_built_2018 = 'No'
 
 
+/*
+	There are 23 incomplete non-materialized non-ULURP projects. Only 12 projects > 50 units, I recommend we focus on these.
+	3 of these projects are two bridges. THIS HELPED ME REALIZE THAT MAP ID 85339 IS THE BETTER POLYGON FOR ZAP PROJECT 2019K0219, which overlaps with
+	P2012K0231. MAKES SENSE TO INCLUDE THE PLANNER ADDED PROJECT WITH THE BETTER POLYGON, LIKE LIC WATERFRONT. DELETE THESE OTHER TWO ZAP PROJECTS. YOU COULD
+	RELABEL THEM TO 0 IN THE UNIDENTIFIED ZAP PROJECT LOOKUP, OR YOU COULD JUST MANUALLY DELETE. I'M INCLINED TO MANUALLY DELETE.
 
-		case
-			when coalesce(portion_built_2025,0)+coalesce(portion_built_2035,0)+coalesce(portion_built_2055,0) > 0 	then
-																													coalesce(portion_built_2025,0) 	as portion_built_2025,
-																													coalesce(portion_built_2035,0) 	as portion_built_2035,
-																													coalesce(portion_built_2055,0) 	as portion_built_2055,
+	WE ALSO NEED PHASING INFO FOR GREENPOINT LANDING.
+*/ 
 
-			when (total_units > 10 and total_units::float*.2 > zap_incremental_units::float)
-																													then 
-																													1 								as portion_built_2025,
-																													0 								as portion_built_2035,
-																													0 								as portion_built_2055,
-			when (total_units <= 10 and total_units - zap_incremental_units > 3)
-																													then 
-																													1 								as portion_built_2025,
-																													0 								as portion_built_2035,
-																													0 								as portion_built_2055,
-			/*Adding in HY Phasing, taken from 2018 planner input*/
-			when project_id = 'P2005M0053'																			then
-																													.2 								as portion_built_2025,
-																													.8 								as portion_built_2035,
-																													0 								as portion_built_2055,
-			/*Adding in WRY Phasing, taken from 2018 planner input*/
-			when project_id = 'P2009M0294'																			then
-																													.2 								as portion_built_2025,
-																													.8 								as portion_built_2035,
-																													0 								as portion_built_2055,
-			/*Adding in Pfizer Sites Phasing. STILL TO DO.*/
-			when project_id = 'P2013K0309'																			then
-																													.5 								as portion_built_2025,
-																													.5 								as portion_built_2035,
-																													0 								as portion_built_2055,
-			/*Adding in Peninsula phasing, taken from Peninsula EIS documents.*/
-			when project_id = 'P2016Q0306'																			then
-																													862::float/2200::float			as portion_built_2025,
-																													1338::float/2200::float			as portion_built_2035,
-																													0 								as portion_built_2055,
+/*The rest of the projects > 50 units look appropriately assigned. Consider adding a criteria for FRESH in 2025 and MTA in 2035. MTA does not 
+seem like a big deal here*/
 
-			when c.remaining_likely_to_be_built = 'No'
-																													then 
-																													0 								as portion_built_2025,
-																													0 								as portion_built_2035,
-																													1 								as portion_built_2055,
-			when 
-				project_status = 'Complete'				and
-				(applicant_projected_build_year is null or applicant_projected_build_year <=2025)					then  
-																													1 								as portion_built_2025,
-																													0 								as portion_built_2035,
-																													0 								as portion_built_2055,
-			when 
-				project_status = 'Complete'				and
-				applicant_projected_build_year between 2025 and 2035												then  
-																													0 								as portion_built_2025,
-																													1 								as portion_built_2035,
-																													0 								as portion_built_2055,
-			when 
-				project_status = 'Complete'				and
-				applicant_projected_build_year > 2035																then  
-																													0 								as portion_built_2025,
-																													0 								as portion_built_2035,
-																													1 								as portion_built_2055,
+  select * from zap_deduped_1_test where zap_incremental_units > 0 and ulurp = 'Non-ULURP' and status <> 'Complete'
 
-			when project_status in ('Active, Initiation','Active, Pre-PAS')											then
-																													0 								as portion_built_2025,
-																													1 								as portion_built_2035,
-																													0 								as portion_built_2055,
-			when 
-				project_status = 'Active, Pre-Cert'			and 
-				dcp_target_certification_date is not null 	and
-				applicant_projected_build_year <=2025																then
-																													1 								as portion_built_2025,
-																													0 								as portion_built_2035,
-																													0 								as portion_built_2055,
-			when 
-				project_status = 'Active, Pre-Cert'			and 
-				dcp_target_certification_date is not null 	and
-				applicant_projected_build_year between 2025 and 2035												then
-																													0 								as portion_built_2025,
-																													1 								as portion_built_2035,
-																													0 								as portion_built_2055,
-			when 
-				project_status = 'Active, Pre-Cert'			and 
-				dcp_target_certification_date is not null 	and
-				applicant_projected_build_year between > 2035														then
-																													0 								as portion_built_2025,
-																													0 								as portion_built_2035,	
-																													1 								as portion_built_2055,	
-			when 
-				project_status = 'Active, Pre-Cert'			and 	
-				dcp_target_certification_date is null 		and
-				applicant_projected_build_year	<=2035																then
-																													0 								as portion_built_2025,
-																													1 								as portion_built_2035,
-																													0 								as portion_built_2055,
-			when 
-				project_status = 'Active, Pre-Cert'			and 	
-				dcp_target_certification_date is null 		and
-				applicant_projected_build_year	>2035																then
-																													0 								as portion_built_2025,
-																													0 								as portion_built_2035,
-																													1 								as portion_built_2055,
-			when 
-				project_status like '%On-Hold%'				and
-				(applicant_projected_build_year is null or applicant_projected_build_year <=2035)					then  
-																													0 								as portion_built_2025,
-																													1 								as portion_built_2035,
-																													0 								as portion_built_2055,
-			when 
-				project_status like '%On-Hold%'				and
-				applicant_projected_build_year > 2035																then  
-																													0 								as portion_built_2025,
-																													0 								as portion_built_2035,
-																													1 								as portion_built_2055,
-			else
-																													null							as portion_built_2025,
-																													null							as portion_built_2035,
-																													null							as portion_built_2055,
-			END
+  select * from zap_deduped_1_test where upper(concat(project_name,project_description,project_brief)) like '%MTA%'
