@@ -27,10 +27,16 @@ from
 		a.borough,
 		a.status,
 		a.units as total_units,
+		case
+				when coalesce(a.portion_built_2025,0)+coalesce(a.portion_built_2035,0)+coalesce(a.portion_built_2055,0) > 0 then coalesce(a.portion_built_2025,0)
+				else 0 end as portion_built_2025,
+		case
+				when coalesce(a.portion_built_2025,0)+coalesce(a.portion_built_2035,0)+coalesce(a.portion_built_2055,0) > 0 then coalesce(a.portion_built_2035,0)
+				else 1 end as portion_built_2035,
+		case
+				when coalesce(a.portion_built_2025,0)+coalesce(a.portion_built_2035,0)+coalesce(a.portion_built_2055,0) > 0 then coalesce(a.portion_built_2055,0)
+				else 0 end as portion_built_2055,
 		a.planner_input,
-		a.portion_built_2025,
-		a.portion_built_2035,
-		a.portion_built_2055,
 		a.nycha_flag,
 		a.gq_flag,
 		a.assisted_living_flag,
@@ -56,7 +62,7 @@ from
 		f.zap_project_ids,
 		f.zap_incremental_units
 	from
-		capitalplanning.dep_ndf_by_site  a
+		(select * from capitalplanning.dep_ndf_by_site where status = 'Rezoning Commitment')  a
 	left join
 		capitalplanning.nstudy_dob_final b
 	on 
@@ -77,8 +83,6 @@ from
 		capitalplanning.nstudy_zap_final f
 	on
 		a.project_id = f.project_id
-	where
-		a.status <> 'Potential'
 ) nstudy_deduped
 
 

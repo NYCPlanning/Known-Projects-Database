@@ -43,6 +43,12 @@ from
 				coalesce(c.hpd_project_incremental_units,0) 		-
 				coalesce(d.hpd_rfp_incremental_units,0)
 			) as EDC_Incremental_Units,
+		case
+			when a.build_year <=2025 then 1 else 0 end as portion_built_2025,
+		case
+			when a.build_year between 2026 and 2035 then 1 else 0 end as portion_built_2035,
+		case
+			when a.build_year >2035 then 1 else 0 end as portion_built_2055,	
 		a.NYCHA_Flag,
 		a.gq_flag,
 		a.Assisted_Living_Flag,

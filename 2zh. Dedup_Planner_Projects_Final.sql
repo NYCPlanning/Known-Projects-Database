@@ -35,9 +35,15 @@ from(
 			coalesce(g.nstudy_incremental_units,0)				-
 			coalesce(h.public_sites_incremental_units,0)				
 		) as planner_projects_incremental_units,
-		a.portion_built_2025,
-		a.portion_built_2035,
-		a.portion_built_2055,
+		case
+				when coalesce(a.portion_built_2025,0)+coalesce(a.portion_built_2035,0)+coalesce(a.portion_built_2055,0) > 0 then coalesce(a.portion_built_2025,0)
+				else 0 end as portion_built_2025,
+		case
+				when coalesce(a.portion_built_2025,0)+coalesce(a.portion_built_2035,0)+coalesce(a.portion_built_2055,0) > 0 then coalesce(a.portion_built_2035,0)
+				else 0 end as portion_built_2035,
+		case
+				when coalesce(a.portion_built_2025,0)+coalesce(a.portion_built_2035,0)+coalesce(a.portion_built_2055,0) > 0 then coalesce(a.portion_built_2055,0)
+				else 1 end as portion_built_2055,
 		a.planner_input,
 		a.nycha_flag,
 		a.gq_flag,

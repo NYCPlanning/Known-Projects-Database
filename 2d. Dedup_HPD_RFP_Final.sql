@@ -31,7 +31,9 @@ from
 				c.total_units - coalesce(a.dob_units_net,0) - coalesce(b.hpd_projected_closings_incremental_units,0)
 				,0
 			) as HPD_RFP_Incremental_Units,
-		c.likely_to_be_built_by_2025_flag,
+		case when c.likely_to_be_built_by_2025_flag = 1 then 1 else 0 end as portion_built_2025,
+		0 as portion_built_2035,
+		0 as portion_built_2055,
 		c.excluded_project_flag,
 		c.rationale_for_exclusion,
 		c.nycha_flag,
