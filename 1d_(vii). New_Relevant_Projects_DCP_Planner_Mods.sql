@@ -101,7 +101,8 @@ from
 left join
 	mapped_planner_inputs_consolidated_inputs_ms b
 on
-	a.project_id = b.project_id
+	a.project_id = b.project_id or
+	(a.project_id = 'P2018R0276' and b.map_id = 94518) /*Matching Sea View in ZAP data with planner geometry for Sea View City Hall Public Sites project*/
 ) x
 
 select

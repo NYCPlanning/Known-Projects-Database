@@ -152,7 +152,7 @@ as
 																													1
 
 			/*Adding in conditions for non-ULURP projects. Note that some non-ULURP FRESH projects are labeled
-				as ULURP*/																													
+				as ULURP*/ /*USE ONLY NON-ULURP AS FILTER*/																													
 			when concat(a.project_name,a.project_description,a.project_brief) 			like '%FRESH%'					then 1
 								
 			/*Adding in conditions for non-ULURP subdivisions and school seat certs*/
