@@ -158,6 +158,11 @@ as
 					a.ulurp = 'Non-ULURP'	and
 					concat(a.project_name,a.project_description,a.project_brief) 			like '%FRESH%'					then 1
 								
+			/*Adding in conditions for Non-ULURP mods*/
+			when 
+					a.ulurp = 'Non-ULURP'	and
+					upper(a.project_name) 													like '%MOD%'					then 0
+
 			/*Adding in conditions for non-ULURP subdivisions and school seat certs*/
 			when 	a.ulurp = 'Non-ULURP' 	and
 					concat(a.project_name,a.project_description,a.project_brief) 			like '%SD%' or 								
@@ -256,6 +261,11 @@ as
 					a.ulurp = 'Non-ULURP'	and
 					concat(a.project_name,a.project_description,a.project_brief) 			like '%FRESH%'					then 0
 								
+			/*Adding in conditions for Non-ULURP mods*/
+			when 
+					a.ulurp = 'Non-ULURP'	and
+					upper(a.project_name) 													like '%MOD%'					then 1
+
 			/*Adding in conditions for non-ULURP subdivisions and school seat certs*/
 			when 	a.ulurp = 'Non-ULURP' and
 					concat(a.project_name,a.project_description,a.project_brief)		like '%SD%' or 								
@@ -354,6 +364,11 @@ as
 					a.ulurp = 'Non-ULURP'	and
 					concat(a.project_name,a.project_description,a.project_brief) 			like '%FRESH%'					then 0
 								
+			/*Adding in conditions for Non-ULURP mods*/
+			when 
+					a.ulurp = 'Non-ULURP'	and
+					upper(a.project_name) 													like '%MOD%'					then 0
+
 			/*Adding in conditions for non-ULURP subdivisions and school seat certs*/
 			when 	a.ulurp = 'Non-ULURP' and
 					concat(a.project_name,a.project_description,a.project_brief) 			like '%SD%' or 								

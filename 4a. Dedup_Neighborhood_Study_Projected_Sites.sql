@@ -115,8 +115,7 @@ from
 			from 
 				known_projects_db_20190609_v2 
 			where 
-				source not in('Neighborhood Study Development Sites', 'EDC', 'HPD RFPs') and
-				dob_job_type in('','New Building') 
+				dob_job_type in('','New Building')  
 				and total_units>0
 		) b
 	on

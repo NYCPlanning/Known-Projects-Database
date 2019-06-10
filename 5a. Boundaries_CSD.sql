@@ -9,7 +9,7 @@ Sources:
 select
 	*
 into
-	aggregated_csd_test1
+	aggregated_csd_v1
 from
 (
 	with aggregated_boundaries_csd as
@@ -78,6 +78,8 @@ from
 (
 	SELECT
 		a.*,
+		case when b.total_proportion is not null then cast(a.proportion_in_csd/b.total_proportion as decimal)
+			 else 1 			  end as proportion_in_csd_1,
 		case when b.total_proportion is not null then round(a.counted_units * cast(a.proportion_in_csd/b.total_proportion as decimal)) 
 			 else a.counted_units end as counted_units_1
 	from
@@ -146,7 +148,21 @@ from
 		a.csd_distance1=b.min_distance
 )
 
-select * from all_projects_csd order by source, project_id
+	select 
+		a.*, 
+		b.school_dist1 as CSD, 
+		b.proportion_in_csd_1 as proportion_in_csd,
+		a.counted_units * b.proportion_in_csd_1 as counted_units_in_CSD 
+	from 
+		known_projects_db_20190610_v4 a 
+	left join 
+		all_projects_csd b 
+	on 
+		a.source = b.source and 
+		a.project_id = b.project_id 
+	order by 
+		source, 
+		project_id
 ) as _3
 
 
