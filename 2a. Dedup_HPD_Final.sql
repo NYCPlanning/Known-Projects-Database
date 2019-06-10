@@ -483,10 +483,7 @@ from
 		'1' as portion_built_2025,
 		'0' as portion_built_2035,
 		'0' as portion_built_2055,
- 		a.nycha_flag,
-		a.gq_flag,
-		'Unknown' as senior_housing_flag,
-		a.assisted_living_flag,
+		a.hpd_children_unlikely_flag,
 		b.dob_job_numbers,
 		b.dob_units_net
 	from

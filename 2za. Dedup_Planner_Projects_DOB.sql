@@ -77,8 +77,7 @@ from
 	select
 		a.*,
 		case
-			when st_intersects(a.the_geom,b.the_Geom)				then 'Spatial'
-			when b.job_number is not null							then 'Proximity' end 	as DOB_Match_Type,
+			when st_intersects(a.the_geom,b.the_Geom)				then 'Spatial'	end 	as DOB_Match_Type,
 		st_distance(a.the_geom::geography,b.the_geom::geography)							as DOB_Distance,
 		b.job_number 						as dob_job_number,
 		b.units_net 						as dob_units_net,
@@ -90,13 +89,15 @@ from
 	left join
 		capitalplanning.dob_2018_sca_inputs_ms b
 	on 
-		st_dwithin(cast(a.the_geom as geography),cast(b.the_geom as geography),20) 	and
-		b.job_type <> 'Demolition'													and
-		case when b.job_type = 'Alteration' then a.total_units = b.units_net end    and 
-		b.status not in('Complete','Permit issued')
+		st_intersects(a.the_geom,b.the_geom)									 									and
+		b.job_type <> 'Demolition'																					and
+		case when b.job_type = 'Alteration' then a.total_units = b.units_net else b.job_number is not null end    	and not
+		(b.status in('Complete','Permit issued') and a.map_id <> 85339) /*Excepting complete matches for Greenpoint Landing, given
+																			that the planner-added project units encompass previous
+																			and future developments*/ 
 	order by
 		a.map_id asc 													 
-) planner_projects_dob
+) planner_projects_dob_1
 
 
 /*There is only one match, between map_id 85408 and DOB Job Number 420664310. This is a spatial overlap and both share a unit count of 202, so deeming this accurate*/

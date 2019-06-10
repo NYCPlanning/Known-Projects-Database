@@ -109,7 +109,7 @@ UNION
 /*Add BSC Neighborhood Study*/
 SELECT
 
-		'BAY ST CORRIDOR' as NEIGHBORHOOD,	
+		'BAY STREET CORRIDOR' as NEIGHBORHOOD,	
 		null AS SITE,
 		f.STATUS,
 		case when f.UNITS is null then null 
@@ -410,6 +410,8 @@ from
 		Senior_Housing_Flag
 	from
 		dep_ndf_by_site_pre_1 a
+	where
+		not(status = 'Rezoning Commitment' and units is null) /*Omitting one rezoning cmomitment, 130 West 182nd St, which is unidentifiable*/
 ) x
 
 

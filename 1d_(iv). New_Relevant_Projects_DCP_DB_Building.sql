@@ -189,7 +189,7 @@ select
 	st_union(the_geom) 				as the_geom,
 	st_union(the_geom_webmercator) 	as the_geom_webmercator
 into
-	zap_project_missing_geom_lookup_1
+	zap_project_missing_geom_lookup_20190609
 from
 (
 	select
@@ -211,6 +211,25 @@ from
 									trim(split_part(a.lot,',',2)),
 									trim(split_part(a.lot,',',3))
 									) end
+	union all
+	select
+		a.project_id,
+		b.the_geom as the_geom,
+		b.the_geom_webmercator
+	from
+		(
+			select
+				*
+			from
+				table_20190510_potential_residential_project_check_ms_v2 
+			where
+				bbl <> '' /*Adding in additional geometries provided by KS in HEIP on 6/8/2019*/
+		) a
+	left join
+		capitalplanning.mappluto_v_18v1_1 b
+	on
+		(a.bbl = concat(b.bbl)) or position(concat(b.bbl) in a.bbl) > 0
+
 ) as Lookup_Pluto_Merge
 group by 
 	project_id
@@ -221,7 +240,7 @@ set
 	the_geom = 					coalesce(a.the_geom,b.the_geom),
 	THE_GEOM_WEBMERCATOR=		coalesce(a.THE_GEOM_WEBMERCATOR,b.THE_GEOM_WEBMERCATOR),
 	match_lookup_pluto_geom = 	1
-from zap_project_missing_geom_lookup_1 b
+from zap_project_missing_geom_lookup_20190609 b
 where 
 	a.project_id 								= b.project_id 	and 
 	a.project_id 								is not null		and

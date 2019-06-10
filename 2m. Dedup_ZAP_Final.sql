@@ -54,11 +54,11 @@ from
 		case
 			when coalesce(a.portion_built_2025,0)+coalesce(a.portion_built_2035,0)+coalesce(a.portion_built_2055,0) > 0 then 1 else 0 end as Planner_Provided_Phasing,
 		case
-			when coalesce(a.portion_built_2025,0)+coalesce(a.portion_built_2035,0)+coalesce(a.portion_built_2055,0) > 0 then coalesce(a.portion_built_2025,0) as portion_built_2025,
+			when coalesce(a.portion_built_2025,0)+coalesce(a.portion_built_2035,0)+coalesce(a.portion_built_2055,0) > 0 then coalesce(a.portion_built_2025,0) end as portion_built_2025,
 		case
-			when coalesce(a.portion_built_2025,0)+coalesce(a.portion_built_2035,0)+coalesce(a.portion_built_2055,0) > 0 then coalesce(a.portion_built_2035,0) as portion_built_2035,
+			when coalesce(a.portion_built_2025,0)+coalesce(a.portion_built_2035,0)+coalesce(a.portion_built_2055,0) > 0 then coalesce(a.portion_built_2035,0) end as portion_built_2035,
 		case
-			when coalesce(a.portion_built_2025,0)+coalesce(a.portion_built_2035,0)+coalesce(a.portion_built_2055,0) > 0 then coalesce(a.portion_built_2055,0) as portion_built_2055,
+			when coalesce(a.portion_built_2025,0)+coalesce(a.portion_built_2035,0)+coalesce(a.portion_built_2055,0) > 0 then coalesce(a.portion_built_2055,0) end as portion_built_2055,
 		a.planner_input,
 		b.dob_job_numbers,
 		b.dob_units_net,
@@ -117,6 +117,7 @@ as
 		b.lead_action,
 		a.applicant_projected_build_year,
 		c.remaining_likely_to_be_built as remaining_likely_to_be_built_2018,
+		c.remaining_dcp_units,
 		case
 			when coalesce(a.portion_built_2025,0)+coalesce(a.portion_built_2035,0)+coalesce(a.portion_built_2055,0) > 0
 																												 	then
@@ -153,22 +154,24 @@ as
 
 			/*Adding in conditions for non-ULURP projects. Note that some non-ULURP FRESH projects are labeled
 				as ULURP*/ /*USE ONLY NON-ULURP AS FILTER*/																													
-			when concat(a.project_name,a.project_description,a.project_brief) 			like '%FRESH%'					then 1
+			when 
+					a.ulurp = 'Non-ULURP'	and
+					concat(a.project_name,a.project_description,a.project_brief) 			like '%FRESH%'					then 1
 								
 			/*Adding in conditions for non-ULURP subdivisions and school seat certs*/
-			when 	a.ulurp = 'Non-ULURP' and
+			when 	a.ulurp = 'Non-ULURP' 	and
 					concat(a.project_name,a.project_description,a.project_brief) 			like '%SD%' or 								
 				 	concat(a.project_name,a.project_description,a.project_brief) 			like '%SS%' or								
 				 	(upper(concat(a.project_name,a.project_description,a.project_brief)) 	like '%SUBDIVISION%' and
 				  	a.project_id like '%R%')																			then 1
 		
 			/*Adding in conditions for non-ULURP subway and MTA projects*/
-			when 	a.ulurp = 'Non-ULURP' and
+			when 	a.ulurp = 'Non-ULURP' 	and
 					upper(concat(a.project_name,a.project_description,a.project_brief)) 	like '%SUBWAY%' or
 				 	concat(a.project_name,a.project_description,a.project_brief) 			like '%MTA%'					then 0
 
 			/*Adding in conditions for non-ULURP waterfront*/
-			when 	a.ulurp = 'Non-ULURP' and
+			when 	a.ulurp = 'Non-ULURP' 	and
 					upper(concat(a.project_name,a.project_description,a.project_brief)) 	like '%WATERFRONT%'				then 1
 
 			when 
@@ -249,7 +252,9 @@ as
 																													0
 			/*Adding in conditions for non-ULURP projects. Note that some non-ULURP FRESH projects are labeled
 				as ULURP*/																													 
-			when concat(a.project_name,a.project_description,a.project_brief) 			like '%FRESH%'					then 0
+			when 
+					a.ulurp = 'Non-ULURP'	and
+					concat(a.project_name,a.project_description,a.project_brief) 			like '%FRESH%'					then 0
 								
 			/*Adding in conditions for non-ULURP subdivisions and school seat certs*/
 			when 	a.ulurp = 'Non-ULURP' and
@@ -345,7 +350,9 @@ as
 																													0
 			/*Adding in conditions for non-ULURP projects. Note that some non-ULURP FRESH projects are labeled
 				as ULURP*/																													 
-			when concat(a.project_name,a.project_description,a.project_brief) 			like '%FRESH%'					then 0
+			when 
+					a.ulurp = 'Non-ULURP'	and
+					concat(a.project_name,a.project_description,a.project_brief) 			like '%FRESH%'					then 0
 								
 			/*Adding in conditions for non-ULURP subdivisions and school seat certs*/
 			when 	a.ulurp = 'Non-ULURP' and

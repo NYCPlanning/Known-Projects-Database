@@ -88,10 +88,12 @@ from
 			WHEN upper(project_name)  like '%CONTINUING CARE%' THEN 1
 			WHEN upper(project_name)  like '%NURSING%' THEN 1
 			WHEN project_name  		  like '% SARA %' THEN 1
-			WHEN upper(project_name)  like '%S.A.R.A%' THEN 1 ELSE 0 end 					as Senior_Housing_Flag,
+			WHEN upper(project_name)  like '%S.A.R.A%' THEN 1 ELSE 0 end 			as Senior_Housing_Flag,
 		/*Identifying assisted living projects*/
 		CASE
 			WHEN upper(project_name)  like '%ASSISTED LIVING%' THEN 1 else 0 end 	as Assisted_Living_Flag,
+		CASE
+			when status_for_sca = 'Children Unlikely'		   then 1 else 0 end as HPD_Children_Unlikely_Flag,
 			Likely_to_be_Built_by_2025_Flag,
 			Excluded_Project_Flag,
 			rationale_for_exclusion,
@@ -115,6 +117,7 @@ from
 			a.max_of_projected_units,
 			(a.min_of_projected_units+a.max_of_projected_units)/2 		as total_units, /*We have been given a range for total units, and have chosen the avg of the high and low*/
 			concat(a.bbl) 												as bbl,
+			c.status_for_sca,
 			null as Likely_to_be_Built_by_2025_Flag,
 			null as Excluded_Project_Flag,
 			null as rationale_for_exclusion,
@@ -129,6 +132,10 @@ from
 		on
 			a.bbl 	= b.bbl or
 			(a.bbl 	= 2027380037 and b.bbl = 2027380035) /*Accounting for project at 720 Tiffany Street which will clearly be on lot with BBL 2027380035, but is listed as a nonexistent BBL 2027380037*/
+		left join
+			capitalplanning.table_2019_4_2_dcp_nc_pipeline_sca_status c
+		on
+			concat(a.project_id,'/',a.building_id) = concat(c.project_id,'/',c.building_id)
 		union
 		select
 			st_union(coalesce(b.the_geom,c.the_geom)) 						as the_geom,
@@ -151,6 +158,7 @@ from
 			null,
 			case when a.announced_unit_count = 0 then null else a.announced_unit_count end	as total_units,
 			array_to_string(array_agg(concat(coalesce(b.bbl,c.bbl))),', ') 					as bbl,
+			'' as status_for_sca,
 			case
 				when rfp_project_name = 'NYCHA Harborview Terrace' then 0 /*Project no longer in NYCHA pipeline*/
 				when estimated_build_year_by_2025 is true then 1 else 0 end as Likely_to_be_Built_by_2025_Flag,

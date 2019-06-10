@@ -143,8 +143,7 @@ from
 				-- b.confirmed_potential_residential,
 				coalesce(b.confirmed_potential_residential,c.confirmed_potential_residential) as confirmed_potential_residential,
 				-- b.total_units_from_description as potential_residential_total_units,
-				coalesce(b.total_units_from_description,c.units) as potential_residential_total_units,
-				b.need_manual_research as need_manual_research_flag
+				coalesce(b.total_units_from_description,c.units) as potential_residential_total_units
 	 	from 
 	 		relevant_dcp_projects a
 	 	left join
@@ -257,7 +256,6 @@ from
 			si_seat_cert,
 			dwelling_units as dwelling_units_flag,
 			confirmed_potential_residential as potential_residential_flag,
-			need_manual_research_flag,
 			initiation_flag,
 			pre_pas_flag,
 			Diff_Between_Total_and_New_Units,

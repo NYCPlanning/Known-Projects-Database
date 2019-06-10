@@ -25,9 +25,26 @@ from
 		a.boro 				as borough,
 		a.lead,
 		a.total_units,
-		a.portion_built_2025,
-		a.portion_built_2035,
-		a.portion_built_2055,
+		CASE
+			WHEN COALESCE(A.portion_built_2025,A.PORTION_BUILT_2035,A.PORTION_BUILT_2055,0) > 0 THEN 1 ELSE 0 END AS PLANNER_PROVIDED_PHASING,
+		CASE
+			WHEN COALESCE(A.portion_built_2025,A.PORTION_BUILT_2035,A.PORTION_BUILT_2055,0) = 0 AND
+				 A.nycha_flag = 1																THEN .5 /*PLACING NYCHA PROJECTS WITHOUT PROVIDED-PHASING*/
+			WHEN COALESCE(A.portion_built_2025,A.PORTION_BUILT_2035,A.PORTION_BUILT_2055,0) = 0 AND
+				 A.public_sites_id = 'Public Site Pipeline 23'										THEN 1  /*Placing specific HPD-owned project in 2025*/
+			ELSE A.PORTION_BUILT_2025 															END AS portion_built_2025,
+		CASE
+			WHEN COALESCE(A.portion_built_2025,A.PORTION_BUILT_2035,A.PORTION_BUILT_2055,0) = 0 AND
+				 A.nycha_flag = 1																THEN .5 /*PLACING NYCHA PROJECTS WITHOUT PROVIDED-PHASING*/
+			WHEN COALESCE(A.portion_built_2025,A.PORTION_BUILT_2035,A.PORTION_BUILT_2055,0) = 0 AND
+				 A.public_sites_id = 'Public Site Pipeline 23'										THEN 0  /*Placing specific HPD-owned project in 2025*/
+			ELSE A.PORTION_BUILT_2035 															END AS portion_built_2035,
+		CASE
+			WHEN COALESCE(A.portion_built_2025,A.PORTION_BUILT_2035,A.PORTION_BUILT_2055,0) = 0 AND
+				 A.nycha_flag = 1																THEN 0 /*PLACING NYCHA PROJECTS WITHOUT PROVIDED-PHASING*/
+			WHEN COALESCE(A.portion_built_2025,A.PORTION_BUILT_2035,A.PORTION_BUILT_2055,0) = 0 AND
+				 A.public_sites_id = 'Public Site Pipeline 23'										THEN 0  /*Placing specific HPD-owned project in 2025*/
+			ELSE A.PORTION_BUILT_2055 															END AS portion_built_2055,
 		a.planner_input,
 		a.nycha_flag,
 		a.gq_flag,

@@ -102,7 +102,8 @@ left join
 	mapped_planner_inputs_consolidated_inputs_ms b
 on
 	a.project_id = b.project_id or
-	(a.project_id = 'P2018R0276' and b.map_id = 94518) /*Matching Sea View in ZAP data with planner geometry for Sea View City Hall Public Sites project*/
+	(a.project_id = 'P2018R0276' and b.map_id = 94518) /*Matching Sea View in ZAP data with planner geometry for Sea View City Hall Public Sites project*/ or
+	(a.project_id = '2019K0177'	 and b.map_id = 85357) /*Matching Greenpoint Hospital in ZAP data with planner geometry for Greenpoint Hospital */
 ) x
 
 select
@@ -409,11 +410,13 @@ from
 				upper(planner_input) like '%EXISTING UNITS%' 	OR				/*Omitting projects where we have not identified materialization but the planner has noted that 
 																				the units identified are existing units*/ 
 				upper(planner_input) like '%DUPLICATE%' 						/*Omitting project IDs which planner suggest are duplicates of others. Only eliminates P2017Q0385*/
-				
-			)
-		)
-																AND
+			) 													
+		)														AND
 		not	(project_status is not null and upper(project_status) in('WITHDRAWN','RECORD CLOSED'))	/*Omitting one planner-added project with Record Closed*/
+		AND NOT	project_id in('P2012Q0313','P2012K0231')											/*Planner-noted in 2018 that these units are already existing 
+																									  for the former, and for the latter the planner has added
+																									  an overriding polygon in the planner-added projects section*/
+
 
 select cdb_cartodbfytable('capitalplanning', 'relevant_dcp_projects_housing_pipeline_ms_v5')
 
