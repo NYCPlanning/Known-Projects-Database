@@ -281,6 +281,9 @@ from
 		sum(HPD_Project_Incremental_Units) 																				as HPD_Project_Incremental_Units
 	from
 		zap_hpd_projected_closings_2
+	where
+		project_id <> 85321 /*Eliminating inaccurate matches to Chestnut Commons future site -- the matched project has been zeroed out by another DOB job
+								matching to DOB job 321384177, which does not match to Chestnut Commons.*/ 
 	group by
 		cartodb_id,
 		the_geom,

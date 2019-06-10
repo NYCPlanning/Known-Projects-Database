@@ -25,6 +25,7 @@ from
 select
 	the_geom,
 	the_geom_webmercator,
+	'DOB' as Source,
 	job_number,
 	job_type,
 	job_description,

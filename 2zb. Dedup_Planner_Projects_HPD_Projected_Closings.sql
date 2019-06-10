@@ -40,9 +40,9 @@ from
 ) planner_projects_hpd_projected_closings
 
 
-/*There are only two matches. Both are spatial and accurate based on a review of unit count, project name, and manual research.
-  MAP ID: 65321 -- Chestnut Commons, HPD Projected Closing: 58780/986454, 76 Dinsmore Place
-  MAP ID: 85408 -- T-Buildling, 	 HPD Projected Closing: 62299/985940, 72-41 Parsons Boulevard
+/*There are only two matches. One is spatial and accurate based on a review of unit count, project name, and manual research.
+  MAP ID: 65321 -- Chestnut Commons, HPD Projected Closing: 58780/986454, 76 Dinsmore Place -- INACCURATE
+  MAP ID: 85408 -- T-Buildling, 	 HPD Projected Closing: 62299/985940, 72-41 Parsons Boulevard -- ACCURATE
 */
 
 select
@@ -66,6 +66,9 @@ from
 		sum(HPD_Project_Incremental_Units) 																				as HPD_Project_Incremental_Units
 	from
 		planner_projects_hpd_projected_closings
+	where
+		map_id <> 85321 /*Eliminating inaccurate matches to Chestnut Commons future site -- the matched project has been zeroed out by another DOB job
+								matching to DOB job 321384177, which does not match to Chestnut Commons*/ 
 	group by
 		map_id,
 		project_name,

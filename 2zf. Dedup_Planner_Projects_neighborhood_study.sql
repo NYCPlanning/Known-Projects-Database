@@ -108,6 +108,9 @@ from
 		sum(nstudy_incremental_units)																								as nstudy_incremental_units
 	from
 		planner_projects_nstudy_1
+	where
+		map_id <> 85321 /*Eliminating inaccurate matches to Chestnut Commons future site -- the matched project has been zeroed out by another DOB job
+								matching to DOB job 321384177, which does not match to Chestnut Commons*/ 
 	group by
 		map_id,
 		project_name,

@@ -118,6 +118,9 @@ from
 		sum(HPD_RFP_Incremental_Units) 																				as HPD_RFP_Incremental_Units
 	from
 		planner_projects_hpd_rfps_1
+	where
+		map_id <> 85321 /*Eliminating inaccurate matches to Chestnut Commons future site -- the matched project has been zeroed out by another DOB job
+								matching to DOB job 321384177, which does not match to Chestnut Commons*/ 
 	group by
 		map_id,
 		project_name,

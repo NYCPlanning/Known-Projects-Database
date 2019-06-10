@@ -1,7 +1,7 @@
 /*Aggregating deduplicated data*/
 
 create table
-	known_projects_db_20190609_v3
+	known_projects_db_20190610_v4
 as
 (
 	select
@@ -47,6 +47,8 @@ as
 		null as hpd_children_unlikely_flag
 	from
 		dob_2018_sca_inputs_ms
+	where
+		status not in('Complete','Complete (demolition)')
 	union all
 	select
 		the_geom,
@@ -537,4 +539,4 @@ order by
 
 
 
-select cdb_cartodbfytable('capitalplanning','known_projects_db_20190609_v3') 
+select cdb_cartodbfytable('capitalplanning','known_projects_db_20190610_v4') 
