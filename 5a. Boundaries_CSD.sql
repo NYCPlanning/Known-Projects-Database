@@ -9,7 +9,7 @@ Sources:
 select
 	*
 into
-	aggregated_csd_test
+	aggregated_csd_test1
 from
 (
 	with aggregated_boundaries_csd as
@@ -25,10 +25,12 @@ from
 		nyc_school_districts b
 	on 
 	case
-		when st_area(a.the_geom::geography)>4000 then
+		when st_area(a.the_geom::geography)>4000 	then
 			st_intersects(a.the_geom,b.the_geom) and CAST(ST_Area(ST_Intersection(a.the_geom,b.the_geom))/ST_Area(a.the_geom) AS DECIMAL) >= .1
+		when st_area(a.the_geom) > 0 				then
+			st_intersects(st_centroid(a.the_geom),b.the_geom) 
 		else
-			st_intersects(st_centroid(a.the_geom),b.the_geom) end
+			st_intersects(a.the_geom,b.the_geom) 	end
 																									/*Only matching if at least 10% of the polygon
 		                           																	is in the boundary. Otherwise, the polygon will be
 		                           																	apportioned to its other boundaries only*/
@@ -103,7 +105,7 @@ from
 		coalesce(a.schooldist,b.schooldist) as school_dist1,
 		coalesce(a.csd_distance,st_distance(a.the_geom::geography,b.the_geom::geography)) as csd_distance1
 	from
-		aggregated_csd_1 a 
+		aggregated_csd_test1 a 
 	left join
 		nyc_school_districts b
 	on 
@@ -144,7 +146,7 @@ from
 		a.csd_distance1=b.min_distance
 )
 
-select * from all_projects_csd order by source, project_id, project_name
+select * from all_projects_csd order by source, project_id
 ) as _3
 
 
