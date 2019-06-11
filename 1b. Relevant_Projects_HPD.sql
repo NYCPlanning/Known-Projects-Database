@@ -60,40 +60,39 @@ from
 		bbl,
 		/*Identifying NYCHA*/
 		CASE 
-			WHEN lead_agency 		  like '%NYCHA%' then 1
-			WHEN upper(project_name)  like '%NYCHA%' THEN 1   		
-			WHEN upper(project_name)  like '%BTP%' THEN 1  		
-			WHEN upper(project_name)  like '%HOUSING AUTHORITY%' THEN 1  		
-			WHEN upper(project_name)  like '%NEXT GEN%' THEN 1  		
-			WHEN upper(project_name)  like '%NEXT-GEN%' THEN 1  		
-			WHEN upper(project_name)  like '%NEXTGEN%' THEN 1  		
-			WHEN upper(project_name)  like '%BUILD TO PRESERVE%' THEN 1 ELSE 0 END 	AS NYCHA_Flag,
+			WHEN lead_agency 		  like '%NYCHA%' 				then 1
+			WHEN upper(project_name)  like '%NYCHA%' 				THEN 1   		
+			WHEN upper(project_name)  like '%BTP%' 					THEN 1  		
+			WHEN upper(project_name)  like '%HOUSING AUTHORITY%' 	THEN 1  		
+			WHEN upper(project_name)  like '%NEXT GEN%' 			THEN 1  		
+			WHEN upper(project_name)  like '%NEXT-GEN%' 			THEN 1  		
+			WHEN upper(project_name)  like '%NEXTGEN%' 				THEN 1  		
+			WHEN upper(project_name)  like '%BUILD TO PRESERVE%' 	THEN 1 ELSE 0 END	AS NYCHA_Flag,
 
 		/*Identifying group quarters*/
 		CASE 
-			WHEN upper(project_name)  like '%CORRECTIONAL%' THEN 1   		
-			WHEN upper(project_name)  like '%NURSING%' THEN 1  		
-			WHEN upper(project_name)  like '% MENTAL%' THEN 1  		
-			WHEN upper(project_name)  like '%DORMITOR%' THEN 1  		
-			WHEN upper(project_name)  like '%MILITARY%' THEN 1  		
-			WHEN upper(project_name)  like '%GROUP HOME%' THEN 1  		
-			WHEN upper(project_name)  like '%BARRACK%' THEN 1 ELSE 0 END 			AS GQ_fLAG,
+			WHEN upper(project_name)  like '%CORRECTIONAL%' 		THEN 1   		
+			WHEN upper(project_name)  like '%NURSING%' 				THEN 1  		
+			WHEN upper(project_name)  like '% MENTAL%' 				THEN 1  		
+			WHEN upper(project_name)  like '%DORMITOR%' 			THEN 1  		
+			WHEN upper(project_name)  like '%MILITARY%' 			THEN 1  		
+			WHEN upper(project_name)  like '%GROUP HOME%' 			THEN 1  		
+			WHEN upper(project_name)  like '%BARRACK%' 				THEN 1 ELSE 0 END	AS GQ_fLAG,
 
 		/*Identifying definite senior housing projects*/
 		CASE 
-			WHEN upper(project_name)  like '%SENIOR%' THEN 1
-			WHEN upper(project_name)  like '%ELDERLY%' THEN 1 	
-			WHEN project_name  		  like '% AIRS %' THEN 1
-			WHEN upper(project_name)  like '%A.I.R.S%' THEN 1 
-			WHEN upper(project_name)  like '%CONTINUING CARE%' THEN 1
-			WHEN upper(project_name)  like '%NURSING%' THEN 1
-			WHEN project_name  		  like '% SARA %' THEN 1
-			WHEN upper(project_name)  like '%S.A.R.A%' THEN 1 ELSE 0 end 			as Senior_Housing_Flag,
+			WHEN status_for_sca = 'Children Unlikely'			   	then 1 
+			WHEN upper(project_name)  like '%SENIOR%' 				THEN 1
+			WHEN upper(project_name)  like '%ELDERLY%' 				THEN 1 	
+			WHEN project_name  		  like '% AIRS %' 				THEN 1
+			WHEN upper(project_name)  like '%A.I.R.S%' 				THEN 1 
+			WHEN upper(project_name)  like '%CONTINUING CARE%' 		THEN 1
+			WHEN upper(project_name)  like '%NURSING%' 				THEN 1
+			WHEN project_name  		  like '% SARA %' 				THEN 1
+			WHEN upper(project_name)  like '%S.A.R.A%' 				THEN 1 ELSE 0 end 	as Senior_Housing_Flag,
 		/*Identifying assisted living projects*/
 		CASE
-			WHEN upper(project_name)  like '%ASSISTED LIVING%' THEN 1 else 0 end 	as Assisted_Living_Flag,
-		CASE
-			when status_for_sca = 'Children Unlikely'		   then 1 else 0 end as HPD_Children_Unlikely_Flag,
+			WHEN upper(project_name)  like '%ASSISTED LIVING%' THEN 1 else 0 end 		as Assisted_Living_Flag,
 			Likely_to_be_Built_by_2025_Flag,
 			Excluded_Project_Flag,
 			rationale_for_exclusion,

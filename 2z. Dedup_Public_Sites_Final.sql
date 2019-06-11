@@ -20,6 +20,7 @@ from
 		a.cartodb_id,
 		a.the_geom,
 		a.the_geom_webmercator,
+		'Future City-Sponsored RFPs/RFEIs'							as source,
 		a.public_sites_id 	as project_id,
 		a.project 			as project_name,
 		a.boro 				as borough,
@@ -105,3 +106,10 @@ from
 
 /*RUN IN REGULAR CARTO*/
 select cdb_cartodbfytable('capitalplanning','public_sites_deduped')
+
+
+/**********************************
+SOURCE-SPECIFIC OUTPUT
+**********************************/
+
+select * from public_sites_deduped  order by PROJECT_ID asc

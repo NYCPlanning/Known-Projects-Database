@@ -18,7 +18,7 @@ from
 (
 	select
 		ROW_NUMBER() OVER() AS CARTODB_ID,
-		'Neighborhood Study Development Sites' as Source,
+		'Neighborhood Study Rezoning Commitments' as Source,
 		a.the_geom,
 		a.the_geom_webmercator,
 		a.project_id,
@@ -88,3 +88,10 @@ from
 
 /*RUN IN REGULAR CARTO*/
 select cdb_cartodbfytable('capitalplanning','nstudy_deduped')
+
+
+/**********************************
+SOURCE-SPECIFIC OUTPUT
+**********************************/
+
+select * from nstudy_deduped  order by PROJECT_ID asc

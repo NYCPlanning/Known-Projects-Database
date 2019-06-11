@@ -79,3 +79,10 @@ order by
 	
 /*RUN IN REGULAR CARTO*/	
 select cdb_cartodbfytable('capitalplanning','edc_deduped')
+
+
+/**********************************
+SOURCE-SPECIFIC OUTPUT
+**********************************/
+
+select * from edc_deduped order by PROJECT_ID::numeric asc

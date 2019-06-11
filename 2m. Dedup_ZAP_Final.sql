@@ -168,7 +168,7 @@ as
 					concat(a.project_name,a.project_description,a.project_brief) 			like '%SD%' or 								
 				 	concat(a.project_name,a.project_description,a.project_brief) 			like '%SS%' or								
 				 	(upper(concat(a.project_name,a.project_description,a.project_brief)) 	like '%SUBDIVISION%' and
-				  	a.project_id like '%R%')																			then 1
+				  	a.project_id like '%R%')																				then 1
 		
 			/*Adding in conditions for non-ULURP subway and MTA projects*/
 			when 	a.ulurp = 'Non-ULURP' 	and
@@ -181,54 +181,54 @@ as
 
 			when 
 				a.status in('Complete','Active, Certified')		and
-				(a.applicant_projected_build_year is null or a.applicant_projected_build_year <=2025)				then  
-																													1
+				(a.applicant_projected_build_year is null or a.applicant_projected_build_year <=2025)						then  
+																															1
 			when 
 				a.status in('Complete','Active, Certified')		and
-				a.applicant_projected_build_year between 2025 and 2035												then  
-																													0
+				a.applicant_projected_build_year between 2025 and 2035														then  
+																															0
 			when 
 				a.status in('Complete','Active, Certified')		and
-				a.applicant_projected_build_year > 2035																then  
-																													0
+				a.applicant_projected_build_year > 2035																		then  
+																															0
 
-			when a.status in ('Active, Initiation','Active, Pre-PAS')												then
-																													0
+			when a.status in ('Active, Initiation','Active, Pre-PAS')														then
+																															0
 			when 
 				a.status = 'Active, Pre-Cert'					and 
 				a.dcp_target_certification_date is not null 	and
-				(a.applicant_projected_build_year <=2025 or a.applicant_projected_build_year is null)				then
-																													1
+				(a.applicant_projected_build_year <=2025 or a.applicant_projected_build_year is null)						then
+																															1
 			when 
 				a.status = 'Active, Pre-Cert'					and 
 				a.dcp_target_certification_date is not null 	and
-				a.applicant_projected_build_year between 2025 and 2035												then
-																													0
+				a.applicant_projected_build_year between 2025 and 2035														then
+																															0
 			when 
 				a.status = 'Active, Pre-Cert'					and 
 				a.dcp_target_certification_date is not null 	and
-				a.applicant_projected_build_year > 2035																then
-																													0	
+				a.applicant_projected_build_year > 2035																		then
+																															0	
 			when 
 				a.status = 'Active, Pre-Cert'					and 	
 				a.dcp_target_certification_date is null 		and
-				(a.applicant_projected_build_year	<=2035 or a.applicant_projected_build_year is null)				then
-																													0
+				(a.applicant_projected_build_year	<=2035 or a.applicant_projected_build_year is null)						then
+																															0
 			when 
 				a.status = 'Active, Pre-Cert'					and 	
 				a.dcp_target_certification_date is null 		and
-				a.applicant_projected_build_year	>2035															then
-																													0
+				a.applicant_projected_build_year	>2035																	then
+																															0
 			when 
 				a.status like '%On-Hold%'						and
-				(a.applicant_projected_build_year is null or a.applicant_projected_build_year <=2035)				then  
-																													0
+				(a.applicant_projected_build_year is null or a.applicant_projected_build_year <=2035)						then  
+																															0
 			when 
 				a.status like '%On-Hold%'						and
-				a.applicant_projected_build_year > 2035																then  
-																													0
+				a.applicant_projected_build_year > 2035																		then  
+																															0
 			else
-																													null
+				null
 			END 																									as portion_built_2025,
 		case
 			when coalesce(a.portion_built_2025,0)+coalesce(a.portion_built_2035,0)+coalesce(a.portion_built_2055,0) > 0
@@ -467,9 +467,30 @@ as
 )
 
 
-/*RUN IN REGULAR CARTO*/
+select cdb_cartodbfytable('capitalplanning','zap_deduped_build_year')
 
-select cdb_cartodbfytable('capitalplanning','zap_deduped')
+/**********************************
+SOURCE-SPECIFIC OUTPUT
+**********************************/
+
+/*Non-State projects*/
+select * from zap_deduped_build_year where project_id not like '%ESD%' order by PROJECT_ID asc
+
+/*State projects*/
+select * from zap_deduped_build_year where project_id like '%ESD%' order by PROJECT_ID asc
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /*Talk to MQL! There are 8 projects, 6 of which have remaining units and 4 of which are complete, that planners in 2018 said would not materialize. Given their
@@ -478,15 +499,6 @@ select cdb_cartodbfytable('capitalplanning','zap_deduped')
   select * from zap_deduped_1_test where remaining_likely_to_be_built_2018 = 'No'
 
 
-/*
-	There are 23 incomplete non-materialized non-ULURP projects. Only 12 projects > 50 units, I recommend we focus on these.
-	3 of these projects are two bridges. THIS HELPED ME REALIZE THAT MAP ID 85339 IS THE BETTER POLYGON FOR ZAP PROJECT 2019K0219, which overlaps with
-	P2012K0231. MAKES SENSE TO INCLUDE THE PLANNER ADDED PROJECT WITH THE BETTER POLYGON, LIKE LIC WATERFRONT. DELETE THESE OTHER TWO ZAP PROJECTS. YOU COULD
-	RELABEL THEM TO 0 IN THE UNIDENTIFIED ZAP PROJECT LOOKUP, OR YOU COULD JUST MANUALLY DELETE. I'M INCLINED TO MANUALLY DELETE. I see no information on any other developments,
-	so I'm inclined to do 50-50 2035/2055.
-
-	WE ALSO NEED PHASING INFO FOR GREENPOINT LANDING.
-*/ 
 
 /*The rest of the projects > 50 units look appropriately assigned. Consider adding a criteria for FRESH in 2025 and MTA in 2035. MTA does not 
 seem like a big deal here*/

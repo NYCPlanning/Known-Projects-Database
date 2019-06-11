@@ -483,9 +483,12 @@ from
 		'1' as portion_built_2025,
 		'0' as portion_built_2035,
 		'0' as portion_built_2055,
-		a.hpd_children_unlikely_flag,
 		b.dob_job_numbers,
-		b.dob_units_net
+		b.dob_units_net,
+		a.nycha_flag,
+		a.gq_flag,
+		a.senior_housing_flag,
+		a.assisted_living_flag
 	from
 		(select * from hpd_2018_sca_inputs_ms where source = 'HPD Projected Closings') a
 	left join
@@ -499,6 +502,42 @@ order by
 		      
 /*Run in regular Carto to display table*/		      
 select cdb_cartodbfytable('capitalplanning','hpd_deduped')
+
+
+
+
+/**********************************
+SOURCE-SPECIFIC OUTPUT
+**********************************/
+
+select * from hpd_deduped order by PROJECT_ID asc
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /************************************************************************DIAGNOSTICS****************************************************************************************************/
 

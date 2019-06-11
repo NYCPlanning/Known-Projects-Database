@@ -179,6 +179,31 @@ select cdb_cartodbfytable('capitalplanning', 'dob_2018_sca_inputs_ms')
 
 
 
+
+
+
+/**********************************
+SOURCE-SPECIFIC OUTPUT
+**********************************/
+
+/*Complete jobs*/
+select * from dob_2018_sca_inputs_ms where status in('Complete','Complete (demolition)') order by job_number asc
+
+/*Incomplete jobs*/
+
+select * from dob_2018_sca_inputs_ms where status not in('Complete','Complete (demolition)') order by job_number asc
+
+
+
+
+
+
+
+
+
+
+/********************************SUPERSEDED**********************/
+
 SELECT
 	*
 into

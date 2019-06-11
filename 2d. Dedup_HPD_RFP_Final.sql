@@ -59,3 +59,10 @@ order by project_id::numeric asc
 
 /*Run in regular Carto to display table*/		      
 select cdb_cartodbfytable('capitalplanning','hpd_rfp_deduped')
+
+
+/**********************************
+SOURCE-SPECIFIC OUTPUT
+**********************************/
+
+select * from hpd_rfp_deduped order by PROJECT_ID::numeric asc

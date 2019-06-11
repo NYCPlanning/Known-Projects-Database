@@ -103,3 +103,10 @@ from(
 
 /*RUN IN REGULAR CARTO*/
 select cdb_cartodbfytable('capitalplanning','planner_projects_deduped')
+
+
+/**********************************
+SOURCE-SPECIFIC OUTPUT
+**********************************/
+
+select * from planner_projects_deduped  order by PROJECT_ID asc
