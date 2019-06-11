@@ -480,6 +480,10 @@ from
 		a.projected_fiscal_year_range,
 		a.total_units,
 		greatest(a.total_units - coalesce(b.dob_units_net,0),0) 	as hpd_incremental_units,
+		case
+			when total_units::float*.2>greatest(a.total_units - coalesce(b.dob_units_net,0),0) 	then 0
+			when greatest(a.total_units - coalesce(b.dob_units_net,0),0)<=2						then 0
+			else greatest(a.total_units - coalesce(b.dob_units_net,0),0) End					as counted_units,
 		'1' as portion_built_2025,
 		'0' as portion_built_2035,
 		'0' as portion_built_2055,

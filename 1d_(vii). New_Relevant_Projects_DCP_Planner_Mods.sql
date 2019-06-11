@@ -313,6 +313,7 @@ from
 		a.ZAP_Unit_Source,
 		a.applicant_type,
 		case
+			when a.project_id like '%ESD%'																							then 'Projected'
 			when a.project_status = 'Complete' or 		a.project_completed is not null or 		a.process_stage = 'Completed' 	 	then 'Complete'
 			when a.certified_referred is not null or 	a.process_stage = 'Public Review' 		then 'Active, Certified'
 			when a.project_status = 'Active' then

@@ -25,7 +25,9 @@ from
 		'DCP Applications' as Source,
 		a.project_id,
 		a.project_name,
-		a.dcp_edit_project_status as status,
+		case 
+			when a.project_id like '%ESD%' 				then 'Projected'
+			else a.dcp_edit_project_status 				end as status,
 		a.borough, 
 		a.project_description,
 		a.project_brief,
@@ -141,9 +143,9 @@ as
 			when a.project_id = 'P2016Q0306'																		then
 																													862::float/2200::float
 
-			when c.remaining_likely_to_be_built = 'No' and a.zap_incremental_units >= c.remaining_dcp_units
-																													then 
-																													0
+			-- when c.remaining_likely_to_be_built = 'No' and a.zap_incremental_units >= c.remaining_dcp_units
+			-- 																										then 
+			-- 																										0
 
 			when (a.total_units > 10 and a.total_units::float*.2 > a.zap_incremental_units::float)
 																													then 
@@ -179,6 +181,12 @@ as
 			when 	a.ulurp = 'Non-ULURP' 	and
 					upper(concat(a.project_name,a.project_description,a.project_brief)) 	like '%WATERFRONT%'				then 1
 
+			/*Adding in conditions to spread the phasing of development for massive developments*/
+			when
+				(a.status like '%Complete%' or a.status like '%Active%') 								and
+				(a.applicant_projected_build_year <=2035 or a.applicant_projected_build_year is null) 	and
+				a.zap_incremental_units >= 500 																				then .5
+
 			when 
 				a.status in('Complete','Active, Certified')		and
 				(a.applicant_projected_build_year is null or a.applicant_projected_build_year <=2025)						then  
@@ -195,18 +203,21 @@ as
 			when a.status in ('Active, Initiation','Active, Pre-PAS')														then
 																															0
 			when 
-				a.status = 'Active, Pre-Cert'					and 
-				a.dcp_target_certification_date is not null 	and
+				a.status = 'Active, Pre-Cert'										and
+				a.dcp_target_certification_date is not null							and
+				extract(year from a.dcp_target_certification_date::date) <=2019 	and
 				(a.applicant_projected_build_year <=2025 or a.applicant_projected_build_year is null)						then
 																															1
 			when 
 				a.status = 'Active, Pre-Cert'					and 
 				a.dcp_target_certification_date is not null 	and
+				extract(year from a.dcp_target_certification_date::date) <=2019 	and
 				a.applicant_projected_build_year between 2025 and 2035														then
 																															0
 			when 
 				a.status = 'Active, Pre-Cert'					and 
 				a.dcp_target_certification_date is not null 	and
+				extract(year from a.dcp_target_certification_date::date) <=2019 	and
 				a.applicant_projected_build_year > 2035																		then
 																															0	
 			when 
@@ -247,9 +258,9 @@ as
 			when a.project_id = 'P2016Q0306'																		then
 																													1338::float/2200::float
 			
-			when c.remaining_likely_to_be_built = 'No' and a.zap_incremental_units >= c.remaining_dcp_units
-																													then 
-																													0
+			-- when c.remaining_likely_to_be_built = 'No' and a.zap_incremental_units >= c.remaining_dcp_units
+			-- 																										then 
+			-- 																										0
 			when (a.total_units > 10 and a.total_units::float*.2 > a.zap_incremental_units::float)
 																													then 
 																													0
@@ -281,8 +292,13 @@ as
 			/*Adding in conditions for non-ULURP waterfront*/
 			when 	a.ulurp = 'Non-ULURP' and
 					upper(concat(a.project_name,a.project_description,a.project_brief)) 	like '%WATERFRONT%'				then 0
-																													
 	
+			/*Adding in conditions to spread the phasing of development for massive developments*/
+			when
+				(a.status like '%Complete%' or a.status like '%Active%') 								and
+				(a.applicant_projected_build_year <=2035 or a.applicant_projected_build_year is null) 	and
+				a.zap_incremental_units >= 500 																				then .5
+																													
 			when 
 				a.status in('Complete','Active, Certified')		and
 				(a.applicant_projected_build_year is null or a.applicant_projected_build_year <=2025)				then  
@@ -301,16 +317,19 @@ as
 			when 
 				a.status = 'Active, Pre-Cert'					and 
 				a.dcp_target_certification_date is not null 	and
+				extract(year from a.dcp_target_certification_date::date) <=2019 	and
 				(a.applicant_projected_build_year <=2025 or a.applicant_projected_build_year is null)				then
 																													0
 			when 
 				a.status = 'Active, Pre-Cert'					and 
 				a.dcp_target_certification_date is not null 	and
+				extract(year from a.dcp_target_certification_date::date) <=2019 	and
 				a.applicant_projected_build_year between 2025 and 2035												then
 																													1
 			when 
 				a.status = 'Active, Pre-Cert'					and 
 				a.dcp_target_certification_date is not null 	and
+				extract(year from a.dcp_target_certification_date::date) <=2019 	and
 				a.applicant_projected_build_year > 2035																then
 																													0	
 			when 
@@ -350,9 +369,9 @@ as
 			/*Adding in Peninsula phasing, taken from Peninsula EIS documents.*/			
 			when a.project_id = 'P2016Q0306'																		then
 																													0
-			when c.remaining_likely_to_be_built = 'No' and a.zap_incremental_units >= c.remaining_dcp_units
-																													then 
-																													1
+			-- when c.remaining_likely_to_be_built = 'No' and a.zap_incremental_units >= c.remaining_dcp_units
+			-- 																										then 
+			-- 																										1
 			when (a.total_units > 10 and a.total_units::float*.2 > a.zap_incremental_units::float)
 																													then 
 																													0
@@ -362,30 +381,36 @@ as
 				as ULURP*/																													 
 			when 
 					a.ulurp = 'Non-ULURP'	and
-					concat(a.project_name,a.project_description,a.project_brief) 			like '%FRESH%'					then 0
+					concat(a.project_name,a.project_description,a.project_brief) 			like '%FRESH%'			then 0
 								
 			/*Adding in conditions for Non-ULURP mods*/
 			when 
 					a.ulurp = 'Non-ULURP'	and
-					upper(a.project_name) 													like '%MOD%'					then 0
+					upper(a.project_name) 													like '%MOD%'			then 0
 
 			/*Adding in conditions for non-ULURP subdivisions and school seat certs*/
 			when 	a.ulurp = 'Non-ULURP' and
 					concat(a.project_name,a.project_description,a.project_brief) 			like '%SD%' or 								
 				 	concat(a.project_name,a.project_description,a.project_brief) 			like '%SS%' or								
 				 	(upper(concat(a.project_name,a.project_description,a.project_brief)) 	like '%SUBDIVISION%' and
-				  	a.project_id like '%R%')																			then 0
+				  	a.project_id like '%R%')																		then 0
 		
 			/*Adding in conditions for non-ULURP subway and MTA projects*/
 			when 	a.ulurp = 'Non-ULURP' and
 					upper(concat(a.project_name,a.project_description,a.project_brief)) 	like '%SUBWAY%' or
-				 	concat(a.project_name,a.project_description,a.project_brief) 			like '%MTA%'					then 0
+				 	concat(a.project_name,a.project_description,a.project_brief) 			like '%MTA%'			then 0
 
 			/*Adding in conditions for non-ULURP waterfront*/
 			when 	a.ulurp = 'Non-ULURP' and
-					upper(concat(a.project_name,a.project_description,a.project_brief)) 	like '%WATERFRONT%'				then 0
+					upper(concat(a.project_name,a.project_description,a.project_brief)) 	like '%WATERFRONT%'		then 0
+
+			/*Adding in conditions to spread the phasing of development for massive developments*/
+			when
+				(a.status like '%Complete%' or a.status like '%Active%') 								and
+				(a.applicant_projected_build_year <=2035 or a.applicant_projected_build_year is null) 	and
+				a.zap_incremental_units >= 500 																		then 0
 																													
-	
+
 			when 
 				a.status in('Complete','Active, Certified')		and
 				(a.applicant_projected_build_year is null or a.applicant_projected_build_year <=2025)				then  
@@ -404,16 +429,19 @@ as
 			when 
 				a.status = 'Active, Pre-Cert'					and 
 				a.dcp_target_certification_date is not null 	and
+				extract(year from a.dcp_target_certification_date::date) <=2019 	and
 				(a.applicant_projected_build_year <=2025 or a.applicant_projected_build_year is null)				then
 																													0
 			when 
 				a.status = 'Active, Pre-Cert'					and 
 				a.dcp_target_certification_date is not null 	and
+				extract(year from a.dcp_target_certification_date::date) <=2019 	and
 				a.applicant_projected_build_year between 2025 and 2035												then
 																													0
 			when 
 				a.status = 'Active, Pre-Cert'					and 
 				a.dcp_target_certification_date is not null 	and
+				extract(year from a.dcp_target_certification_date::date) <=2019 	and
 				a.applicant_projected_build_year > 2035																then
 																													1	
 			when 

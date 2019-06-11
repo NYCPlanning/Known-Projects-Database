@@ -23,8 +23,8 @@ into
 from
 (
 select
-	the_geom,
-	the_geom_webmercator,
+	A.the_geom,
+	A.the_geom_webmercator,
 	'DOB' as Source,
 	job_number,
 	job_type,
@@ -69,8 +69,8 @@ select
 	units_net,
 	units_incomplete,
 	co_latest_units 									as latest_cofo,
-	latitude,
-	longitude,
+	A.latitude,
+	A.longitude,
 	geo_bin												as bin,
 	geo_bbl												as bbl,
 
@@ -82,7 +82,7 @@ select
 		WHEN upper(job_description)  like '%NEXT GEN%' THEN 1  		
 		WHEN upper(job_description)  like '%NEXT-GEN%' THEN 1  		
 		WHEN upper(job_description)  like '%NEXTGEN%' THEN 1  		
-		WHEN upper(job_description)  like '%BUILD TO PRESERVE%' THEN 1 ELSE 0 END 		AS NYCHA_Flag,
+		WHEN upper(job_description)  like '%BUILD TO PRESERVE%' THEN 1 ELSE 0 END 				AS NYCHA_Flag,
 
 	CASE 
 		WHEN upper(job_description)  like '%CORRECTIONAL%' THEN 1   		
@@ -91,24 +91,33 @@ select
 		WHEN upper(job_description)  like '%DORMITOR%' THEN 1  		
 		WHEN upper(job_description)  like '%MILITARY%' THEN 1  		
 		WHEN upper(job_description)  like '%GROUP HOME%' THEN 1  		
-		WHEN upper(job_description)  like '%BARRACK%' THEN 1 ELSE 0 END 				AS GQ_fLAG,
+		WHEN upper(job_description)  like '%BARRACK%' THEN 1 ELSE 0 END 						AS GQ_fLAG,
 
 
 	/*Identifying definite senior housing projects*/
 	CASE 
-		WHEN upper(job_description)  like '%SENIOR%' THEN 1
-		WHEN upper(job_description)  like '%ELDERL%' THEN 1 	
-		WHEN job_description  like '% AIRS %' THEN 1
-		WHEN upper(job_description)  like '%A.I.R.S%' THEN 1 
-		WHEN upper(job_description)  like '%CONTINUING CARE%' THEN 1
-		WHEN upper(job_description)  like '%NURSING%' THEN 1
-		WHEN job_description  like '% SARA %' THEN 1
-		WHEN upper(job_description)  like '%S.A.R.A%' THEN 1  else 0 END 						as Senior_Housing_Flag,
+		WHEN B.PROJECT_ID IS NOT NULL 							THEN 1
+		WHEN upper(job_description)  like '%SENIOR%' 			THEN 1
+		WHEN upper(job_description)  like '%ELDERL%' 			THEN 1 	
+		WHEN job_description  like '% AIRS %' 					THEN 1
+		WHEN upper(job_description)  like '%A.I.R.S%' 			THEN 1 
+		WHEN upper(job_description)  like '%CONTINUING CARE%' 	THEN 1
+		WHEN upper(job_description)  like '%NURSING%' 			THEN 1
+		WHEN job_description  like '% SARA %' 					THEN 1
+		WHEN upper(job_description)  like '%S.A.R.A%' 			THEN 1  else 0 END				as Senior_Housing_Flag,
 	CASE
 		when UPPER(concat(occ_init,occ_prop)) like '%ASSISTED LIVING%' then 1
-		WHEN upper(job_description)  like '%ASSISTED LIVING%' THEN 1 else 0 end 		as Assisted_Living_Flag
+		WHEN upper(job_description)  like '%ASSISTED LIVING%' THEN 1 else 0 end 				as Assisted_Living_Flag
 from 
-	capitalplanning.devdb_housing_pts_20190215
+	capitalplanning.devdb_housing_pts_20190215 a
+left join
+	capitalplanning.hny_by_bldg_with_senior_20190429 b
+on
+	a.geo_bbl 	= b.bbl														and
+	(extract(year from a.status_q::DATE)>=2014 or status_q is null)			and
+	a.job_type 	= 'New Building'											and
+	b.reporting_construction_type = 'New Construction' 						and
+	b.contains_senior_units = 1
 where
 	status 		<>'Withdrawn' 							and 
 	x_inactive 	= 'false' 								and /*Non-permitted job w/o update since two years ago*/

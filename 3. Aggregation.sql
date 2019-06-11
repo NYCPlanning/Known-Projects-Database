@@ -203,7 +203,7 @@ as
 		case
 			when total_units::float*.2>zap_incremental_units 				then 0
 			when zap_incremental_units<=2									then 0
-			when remaining_likely_to_be_built_2018 = 'No units remaining'	then 0
+			-- when remaining_likely_to_be_built_2018 = 'No units remaining'	then 0
 			else zap_incremental_units end								as counted_units,
 		portion_built_2025::numeric								as portion_built_2025,
 		portion_built_2035::numeric								as portion_built_2035,
