@@ -13,6 +13,48 @@ Sources:
 
 SELECT * FROM capitalplanning.known_projects_db_20190610_v4 where st_area(the_geom::geography)<10000 and total_units > 500 and source in('DCP Applications','DCP Planner-Added Projects')
 
+
+/*This provides a list of ZAP projects with >=10 BBLs that are currently treated as points. After review,
+  it seems like most of these projects should still be points because they are individual buildings, except for "SD" 
+  subdivision projects, which should be treated as polygons.*/
+
+select 
+	* 
+into
+	zap_projects_many_bbls
+from 
+	zap_deduped_build_year 
+where 
+	st_area(the_geom::geography) < 10000 	and 
+	total_units < 500 						and
+	project_id in
+				( 
+  				SELECT
+  					project_id
+  				from
+  				(
+  					select 
+  						project as project_id, 
+  						bbl_number as bbl, 
+  						null as block, 
+  						null as lot 
+  					from dcp_project_bbls_zap_ms 
+  					union all  
+  					SELECT 
+  						project_id, 
+  							associated_bbl,
+  							block,
+  							lot 
+  					FROM zap_project_missing_geom_lookup
+  				) x 
+  				group by
+  					project_id
+  				having
+  					count(*)>=10
+  				)
+
+
+
 select
 	*
 into
@@ -32,10 +74,23 @@ from
 		capitalplanning.census_tract_2010_190412_ms b
 	on 
 	case
+		/*Treating large developments as polygons*/
 		when (st_area(a.the_geom::geography)>10000 or total_units > 500) and a.source in('DCP Applications','DCP Planner-Added Projects') 		then
 			st_intersects(a.the_geom,b.the_geom) and CAST(ST_Area(ST_Intersection(a.the_geom,b.the_geom))/ST_Area(a.the_geom) AS DECIMAL) >= .1
+
+		/*Treating subdivisions in SI across many lots as polygons*/
+		when a.project_id in(select project_id from zap_projects_many_bbls) and a.project_name_address like '%SD %'								then
+			st_intersects(a.the_geom,b.the_geom) and CAST(ST_Area(ST_Intersection(a.the_geom,b.the_geom))/ST_Area(a.the_geom) AS DECIMAL) >= .1
+
+		/*Treating Resilient Housing Sandy Recovery projects, across many distinct lots as polygons. These are three projects*/ 
+		when a.project_name_address like '%Resilient Housing%' and a.source in('DCP Applications','DCP Planner-Added Projects')					then
+			st_intersects(a.the_geom,b.the_geom) and CAST(ST_Area(ST_Intersection(a.the_geom,b.the_geom))/ST_Area(a.the_geom) AS DECIMAL) >= .1
+
+		/*Treating other polygons as points, using their centroid*/
 		when st_area(a.the_geom) > 0 																											then
 			st_intersects(st_centroid(a.the_geom),b.the_geom) 
+
+		/*Treating points as points*/
 		else
 			st_intersects(a.the_geom,b.the_geom) 																								end
 																									/*Only matching if at least 10% of the polygon
@@ -143,7 +198,7 @@ from
 select
 	*
 into
-	aggregated_ct_final
+	aggregated_ct_longform
 from
 (
 	with	min_distances as
@@ -186,6 +241,104 @@ from
 		source asc,
 		project_id asc,
 		project_name_address asc,
-		status asc
+		status asc,
+		b.boro_ct201_1 asc
 ) as _3
 
+
+select
+	*
+into
+	aggregated_ct_project_level
+from
+(
+	SELECT
+		the_geom,
+		the_geom_webmercator,
+		source,
+		project_id,
+		project_name_address,
+		dob_job_type,
+		status,
+		borough,
+		total_units,
+		deduplicated_units,
+		counted_units,
+		portion_built_2025,
+		portion_built_2035,
+		portion_built_2055,
+		planner_input,
+		dob_matches,
+		dob_matched_units,
+		hpd_projected_closing_matches,
+		hpd_projected_closing_matched_units,
+		hpd_rfp_matches,
+		hpd_rfp_matched_units,
+		edc_matches,
+		edc_matched_units,
+		dcp_application_matches,
+		dcp_application_matched_units,
+		state_project_matches,
+		state_project_matched_units,
+		neighborhood_study_matches,
+		neighborhood_study_units,
+		public_sites_matches,
+		public_sites_units,
+		planner_projects_matches,
+		planner_projects_units,
+		nycha_flag,
+		gq_flag,
+		senior_housing_flag,
+		assisted_living_flag,
+		array_to_string(
+			array_agg(
+				nullif(
+					concat_ws
+					(
+						': ',
+						nullif(ct,''),
+						concat(counted_units_in_ct,' units')
+					),
+				'')),
+		' | ') 	as Census_Tract 
+	from
+		aggregated_ct_longform
+	group by
+		the_geom,
+		the_geom_webmercator,
+		source,
+		project_id,
+		project_name_address,
+		dob_job_type,
+		status,
+		borough,
+		total_units,
+		deduplicated_units,
+		counted_units,
+		portion_built_2025,
+		portion_built_2035,
+		portion_built_2055,
+		planner_input,
+		dob_matches,
+		dob_matched_units,
+		hpd_projected_closing_matches,
+		hpd_projected_closing_matched_units,
+		hpd_rfp_matches,
+		hpd_rfp_matched_units,
+		edc_matches,
+		edc_matched_units,
+		dcp_application_matches,
+		dcp_application_matched_units,
+		state_project_matches,
+		state_project_matched_units,
+		neighborhood_study_matches,
+		neighborhood_study_units,
+		public_sites_matches,
+		public_sites_units,
+		planner_projects_matches,
+		planner_projects_units,
+		nycha_flag,
+		gq_flag,
+		senior_housing_flag,
+		assisted_living_flag
+) x

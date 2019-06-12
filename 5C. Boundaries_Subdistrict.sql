@@ -1,31 +1,30 @@
 /**********************************************************************************************************************************************************************************
 AUTHOR: Mark Shapiro
-SCRIPT: Adding CSD boundaries to aggregated pipeline
-START DATE: 6/10/2019
+SCRIPT: Adding Subdistrict boundaries to aggregated pipeline
+START DATE: 6/11/2019
 COMPLETION DATE: 
 Sources: 
 *************************************************************************************************************************************************************************************/
 
 
 
-
 SELECT
 	*
 into
-	aggregated_CSD
+	aggregated_subdistrict
 from
 (
-	with aggregated_boundaries_CSD as
+	with aggregated_boundaries_subdistrict as
 (
 	SELECT
 		a.*,
-		b.the_geom as CSD_geom,
-		b.SCHOOLDIST AS CSD,
-		st_distance(a.the_geom::geography,b.the_geom::geography) as CSD_Distance
+		b.the_geom as subdistrict_geom,
+		b.distzone AS subdistrict,
+		st_distance(a.the_geom::geography,b.the_geom::geography) as subdistrict_Distance
 	from
 		capitalplanning.known_PROJECTs_db_20190610_v4 a
 	left join
-		capitalplanning.nyc_school_districts b
+		dcpadmin.doe_schoolsubdistricts b
 	on 
 	case
 		/*Treating large developments as polygons*/
@@ -58,7 +57,7 @@ from
 		source,
 		PROJECT_id
 	from
-		aggregated_boundaries_CSD
+		aggregated_boundaries_subdistrict
 	group by
 		source,
 		PROJECT_id
@@ -66,63 +65,63 @@ from
 		count(*)>1
 ),
 
-	aggregated_boundaries_CSD_2 as
+	aggregated_boundaries_subdistrict_2 as
 (
 	SELECT
 		a.*,
 		case when 	concat(a.source,a.PROJECT_id) in(SELECT concat(source,PROJECT_id) from multi_geocoded_PROJECTs) and st_area(a.the_geom) > 0	then 
-					CAST(ST_Area(ST_INTERSECTion(a.the_geom,a.CSD_geom))/ST_Area(a.the_geom) AS DECIMAL) 										else
-					1 end																														as proportion_in_CSD
+					CAST(ST_Area(ST_INTERSECTion(a.the_geom,a.subdistrict_geom))/ST_Area(a.the_geom) AS DECIMAL) 										else
+					1 end																														as proportion_in_subdistrict
 	from
-		aggregated_boundaries_CSD a
+		aggregated_boundaries_subdistrict a
 ),
 
-	aggregated_boundaries_CSD_3 as
+	aggregated_boundaries_subdistrict_3 as
 (
 	SELECT
 		source,
 		PROJECT_id,
-		sum(proportion_in_CSD) as total_proportion
+		sum(proportion_in_subdistrict) as total_proportion
 	from
-		aggregated_boundaries_CSD_2
+		aggregated_boundaries_subdistrict_2
 	group by
 		source,
 		PROJECT_id
 ),
 
-	aggregated_boundaries_CSD_4 as
+	aggregated_boundaries_subdistrict_4 as
 (
 	SELECT
 		a.*,
-		case when b.total_proportion is not null then cast(a.proportion_in_CSD/b.total_proportion as decimal)
-			 else 1 			  end as proportion_in_CSD_1,
-		case when b.total_proportion is not null then round(a.counted_units * cast(a.proportion_in_CSD/b.total_proportion as decimal)) 
+		case when b.total_proportion is not null then cast(a.proportion_in_subdistrict/b.total_proportion as decimal)
+			 else 1 			  end as proportion_in_subdistrict_1,
+		case when b.total_proportion is not null then round(a.counted_units * cast(a.proportion_in_subdistrict/b.total_proportion as decimal)) 
 			 else a.counted_units end as counted_units_1
 	from
-		aggregated_boundaries_CSD_2 a
+		aggregated_boundaries_subdistrict_2 a
 	left join
-		aggregated_boundaries_CSD_3 b
+		aggregated_boundaries_subdistrict_3 b
 	on
 		a.PROJECT_id = b.PROJECT_id and a.source = b.source
 )
 
-	SELECT * from aggregated_boundaries_CSD_4
+	SELECT * from aggregated_boundaries_subdistrict_4
 
 ) as _1
 
 SELECT
 	*
 into
-	ungeocoded_PROJECTs_CSD
+	ungeocoded_PROJECTs_subdistrict
 from
 (
-	with ungeocoded_PROJECTs_CSD as
+	with ungeocoded_PROJECTs_subdistrict as
 (
 	SELECT
 		a.*,
-		coalesce(a.CSD,b.schooldist) as CSD_1,
+		coalesce(a.subdistrict,b.distzone) as subdistrict_1,
 		coalesce(
-					a.CSD_distance,
+					a.subdistrict_distance,
 					st_distance(
 								b.the_geom::geography,
 								case
@@ -130,13 +129,13 @@ from
 									when st_area(a.the_geom) > 0 																										then st_centroid(a.the_geom)::geography
 									else a.the_geom::geography 																											end
 								)
-				) as CSD_distance1
+				) as subdistrict_distance1
 	from
-		aggregated_CSD a 
+		aggregated_subdistrict a 
 	left join
-		capitalplanning.nyc_school_districts b
+		dcpadmin.doe_schoolsubdistricts b
 	on 
-		a.CSD_distance is null and
+		a.subdistrict_distance is null and
 		case
 			when (st_area(a.the_geom::geography)>10000 or total_units > 500) and a.source in('DCP Applications','DCP Planner-Added PROJECTs') 		then
 				st_dwithin(a.the_geom::geography,b.the_geom::geography,500)
@@ -145,49 +144,49 @@ from
 			else
 				st_dwithin(a.the_geom::geography,b.the_geom::geography,500)																			end
 )
-	SELECT * from ungeocoded_PROJECTs_CSD
+	SELECT * from ungeocoded_PROJECTs_subdistrict
 ) as _2
 
 
 SELECT
 	*
 into
-	aggregated_CSD_longform
+	aggregated_subdistrict_longform
 from
 (
 	with	min_distances as
 (
 	SELECT
 		PROJECT_id,
-		min(CSD_distance1) as min_distance
+		min(subdistrict_distance1) as min_distance
 	from
-		ungeocoded_PROJECTs_CSD
+		ungeocoded_PROJECTs_subdistrict
 	group by 
 		PROJECT_id
 ),
 
-	all_PROJECTs_CSD as
+	all_PROJECTs_subdistrict as
 (
 	SELECT
 		a.*
 	from
-		ungeocoded_PROJECTs_CSD a 
+		ungeocoded_PROJECTs_subdistrict a 
 	inner join
 		min_distances b
 	on
 		a.PROJECT_id = b.PROJECT_id and
-		a.CSD_distance1=b.min_distance
+		a.subdistrict_distance1=b.min_distance
 )
 
 	SELECT 
 		a.*, 
-		b.CSD_1 as CSD, 
-		b.proportion_in_CSD_1 as proportion_in_CSD,
-		round(a.counted_units * b.proportion_in_CSD_1) as counted_units_in_CSD 
+		b.subdistrict_1 as subdistrict, 
+		b.proportion_in_subdistrict_1 as proportion_in_subdistrict,
+		round(a.counted_units * b.proportion_in_subdistrict_1) as counted_units_in_subdistrict 
 	from 
 		known_PROJECTs_db_20190610_v4 a 
 	left join 
-		all_PROJECTs_CSD b 
+		all_PROJECTs_subdistrict b 
 	on 
 		a.source = b.source and 
 		a.PROJECT_id = b.PROJECT_id 
@@ -196,16 +195,14 @@ from
 		PROJECT_id asc,
 		PROJECT_name_address asc,
 		status asc,
-		b.CSD_1 asc
+		b.subdistrict_1 asc
 ) as _3
-	order by
-		csd asc
 
 
 SELECT
 	*
 into
-	aggregated_CSD_PROJECT_level
+	aggregated_subdistrict_PROJECT_level
 from
 (
 	SELECT
@@ -252,13 +249,13 @@ from
 					concat_ws
 					(
 						': ',
-						nullif(concat(CSD),''),
-						concat(counted_units_in_CSD,' units')
+						nullif(subdistrict,''),
+						concat(counted_units_in_subdistrict,' units')
 					),
 				'')),
-		' | ') 	as CSD 
+		' | ') 	as subdistrict 
 	from
-		(select * from aggregated_CSD_longform order by csd asc) a
+		aggregated_subdistrict_longform
 	group by
 		the_geom,
 		the_geom_webmercator,

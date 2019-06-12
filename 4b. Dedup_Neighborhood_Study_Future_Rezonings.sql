@@ -19,13 +19,15 @@ from
 	select
 		b.the_geom,
 		b.the_geom_webmercator,
-		'Future Neighborhood Study Development Sites' as Source,
-		concat(a.neighborhood,' ',a.status,' Development Sites') as Project_ID,
-		a.status,
-		a.certainty,
+		'Future Neighborhood Studies' as Source,
+		concat(a.neighborhood,' ',a.status,' Development') as Project_ID,
 		a.neighborhood,
 		a.borough,
+		a.status,
+		a.certainty,
+		a.certainty_factor,
 		a.incremental_units as total_units,
+		a.incremental_units_with_certainty_factor,
 		a.portion_built_2025,
 		a.portion_built_2035,
 		a.portion_built_2055
@@ -51,6 +53,44 @@ from
 		a.certainty
 ) nstudy_future
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/************************************************SUPERSEDED***********************************************/
 select
 	*
 into

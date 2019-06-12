@@ -141,13 +141,13 @@ set
 	match_impact_poly_latest = 	1
 from capitalplanning.Impact_Poly_Latest b
 where 
-	a.project_id 				= b.projectid 	and 
-	a.project_id 				is not null 	and
-	b.the_geom 				is not null 	and
-	match_heip_geom 			is null 	and
-	match_dcp_2018_sca_inputs_share_geom 	is null 	and
-	match_nyzma_geom 			is null 	and
-	match_pluto_geom 			is null;
+	a.project_id = b.projectid 								and 
+	a.project_id 							is not null 	and
+	b.the_geom 								is not null 	and
+	match_heip_geom 						is null 		and
+	match_dcp_2018_sca_inputs_share_geom 	is null 		and
+	match_nyzma_geom 						is null 		and
+	match_pluto_geom 						is null;
 
 /********************************************************************************************
 The following query should be run in Carto Batch. It does the following.

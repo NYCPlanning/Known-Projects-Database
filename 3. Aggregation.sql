@@ -60,10 +60,7 @@ as
 		borough,
 		total_units,
 		hpd_incremental_units 		as deduplicated_units,
-		case
-			when total_units::float*.2>hpd_incremental_units 	then 0
-			when hpd_incremental_units<=2						then 0
-			else hpd_incremental_units end				as counted_units,
+		counted_units,
 		null::numeric				as portion_built_2025,
 		null::numeric				as portion_built_2035,
 		null::numeric				as portion_built_2055,
@@ -108,10 +105,7 @@ as
 		borough,
 		total_units,
 		hpd_rfp_incremental_units								as deduplicated_units,
-		case
-			when total_units::float*.2>hpd_rfp_incremental_units 		then 0
-			when hpd_rfp_incremental_units<=2							then 0
-			else hpd_rfp_incremental_units end							as counted_units,
+		counted_units,
 		null::numeric											as portion_built_2025,
 		null::numeric											as portion_built_2035,
 		null::numeric											as portion_built_2055,
@@ -154,10 +148,7 @@ as
 		borough,
 		total_units,
 		edc_incremental_units									as deduplicated_units,
-		case
-			when total_units::float*.2>edc_incremental_units 			then 0
-			when edc_incremental_units<=2								then 0
-			else edc_incremental_units end								as counted_units,
+		counted_units,
 		null::numeric											as portion_built_2025,
 		null::numeric											as portion_built_2035,
 		null::numeric											as portion_built_2055,
@@ -200,11 +191,7 @@ as
 		borough,
 		total_units,
 		zap_incremental_units									as deduplicated_units,
-		case
-			when total_units::float*.2>zap_incremental_units 				then 0
-			when zap_incremental_units<=2									then 0
-			-- when remaining_likely_to_be_built_2018 = 'No units remaining'	then 0
-			else zap_incremental_units end								as counted_units,
+		counted_units,
 		portion_built_2025::numeric								as portion_built_2025,
 		portion_built_2035::numeric								as portion_built_2035,
 		portion_built_2055::numeric								as portion_built_2055,
@@ -249,11 +236,7 @@ as
 		borough,
 		total_units,
 		zap_incremental_units									as deduplicated_units,
-		case
-			when total_units::float*.2>zap_incremental_units 				then 0
-			when zap_incremental_units<=2									then 0
-			when remaining_likely_to_be_built_2018 = 'No units remaining'	then 0
-			else zap_incremental_units end								as counted_units,
+		counted_units,
 		portion_built_2025::numeric								as portion_built_2025,
 		portion_built_2035::numeric								as portion_built_2035,
 		portion_built_2055::numeric								as portion_built_2055,
@@ -298,10 +281,7 @@ as
 		borough,
 		total_units,
 		nstudy_incremental_units								as deduplicated_units,
-		case
-			when total_units::float*.2>nstudy_incremental_units 			then 0
-			when nstudy_incremental_units<=2							then 0
-			else nstudy_incremental_units end							as counted_units,
+		counted_units,
 		portion_built_2025::numeric								as portion_built_2025,
 		portion_built_2035::numeric								as portion_built_2035,
 		portion_built_2055::numeric								as portion_built_2055,
@@ -344,10 +324,7 @@ as
 		borough,
 		total_units,
 		public_sites_incremental_units								as deduplicated_units,
-		case
-			when total_units::float*.2>public_sites_incremental_units			then 0
-			when public_sites_incremental_units<=2								then 0
-			else public_sites_incremental_units end								as counted_units,
+		counted_units,
 		portion_built_2025::numeric									as portion_built_2025,
 		portion_built_2035::numeric									as portion_built_2035,
 		portion_built_2055::numeric									as portion_built_2055,
@@ -390,10 +367,7 @@ as
 		borough,
 		total_units,
 		planner_projects_incremental_units							as deduplicated_units,
-		case
-			when total_units::float*.2>planner_projects_incremental_units			then 0
-			when planner_projects_incremental_units<=2								then 0
-			else planner_projects_incremental_units end								as counted_units,
+		counted_units,
 		portion_built_2025::numeric									as portion_built_2025,
 		portion_built_2035::numeric									as portion_built_2035,
 		portion_built_2055::numeric									as portion_built_2055,

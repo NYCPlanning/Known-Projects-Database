@@ -111,6 +111,11 @@ as
 		a.project_brief,
 		a.total_units,
 		a.zap_incremental_units,
+		case
+			when total_units::float*.2>zap_incremental_units 				then 0
+			when zap_incremental_units<=2									then 0
+			-- when c.remaining_likely_to_be_built_2018 = 'No units remaining'	then 0
+			else zap_incremental_units end								as counted_units,
 		a.applicant_type,
 		a.dcp_target_certification_date,
 		a.certified_referred,

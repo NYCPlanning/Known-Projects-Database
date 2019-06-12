@@ -26,8 +26,8 @@ from
 	select
 		b.the_geom,
 		b.the_geom_webmercator,
-		concat(a.neighborhood,' ',a.status,' Development Sites') as Project_ID,
-		a.status,
+		concat(a.neighborhood,' Projected Development Sites') as Project_ID,
+		'Projected Development' as status,
 		a.neighborhood,
 		a.borough,
 		case
@@ -39,7 +39,7 @@ from
 			when a.neighborhood 	= 'Bay Street Corridor'		then '07-01-2019'::date 	end as effective_date,
 		ROUND(sum(a.units),0) as total_units 
 	from
-		(select * from dep_ndf_by_site where status <> 'Rezoning Commitment') a
+		(select * from dep_ndf_by_site where status = 'Projected') a
 	left join
 		(
 		select
@@ -57,8 +57,7 @@ from
 	group by 
 		b.the_geom,
 		b.the_geom_webmercator,
-		concat(a.neighborhood,' ',a.status,' Development Sites'),
-		a.status,
+		concat(a.neighborhood,' Projected Development Sites'),
 		a.neighborhood,
 		a.borough,
 		case
@@ -67,10 +66,10 @@ from
 			when a.neighborhood 	= 'Downtown Far Rockaway' 	then '09-07-2017'::date
 			when a.neighborhood 	= 'Inwood'					then '03-22-2018'::date
 			when a.neighborhood 	= 'Jerome'					then '01-16-2018'::date
-			when a.neighborhood 	= 'Bay Street Corridor'		then '07-01-2019'::date 	end	order by
+			when a.neighborhood 	= 'Bay Street Corridor'		then '07-01-2019'::date 	end	
+	order by
 		a.neighborhood,
-		a.borough,
-		a.status
+		a.borough
 ) nstudy_projected_potential_areawide
 
 
@@ -146,19 +145,19 @@ from
 		greatest(total_units-coalesce(sum(deduplicated_units),0),0) 	as nstudy_projected_potential_incremental_units,
 		case
 			when neighborhood 	= 'East New York' 			then 1
-			when neighborhood 	= 'East Harlem' 			then 1
-			when neighborhood 	= 'Downtown Far Rockaway' 	then 1
-			when neighborhood 	= 'Inwood'					then ((.8*total_units)-coalesce(sum(deduplicated_units),0))/(total_units-coalesce(sum(deduplicated_units),0))
-			when neighborhood 	= 'Jerome'					then ((.8*total_units)-coalesce(sum(deduplicated_units),0))/(total_units-coalesce(sum(deduplicated_units),0))
-			when neighborhood 	= 'Bay Street Corridor'		then ((.7*total_units)-coalesce(sum(deduplicated_units),0))/(total_units-coalesce(sum(deduplicated_units),0))
+			when neighborhood 	= 'East Harlem' 			then .8
+			when neighborhood 	= 'Downtown Far Rockaway' 	then .8
+			when neighborhood 	= 'Inwood'					then .8
+			when neighborhood 	= 'Jerome'					then .8
+			when neighborhood 	= 'Bay Street Corridor'		then .7
 															end																		as portion_built_2025,
 		case
 			when neighborhood 	= 'East New York' 			then 0
-			when neighborhood 	= 'East Harlem' 			then 0
-			when neighborhood 	= 'Downtown Far Rockaway' 	then 0
-			when neighborhood 	= 'Inwood'					then 1 - ((.8*total_units)-coalesce(sum(deduplicated_units),0))/(total_units-coalesce(sum(deduplicated_units),0))
-			when neighborhood 	= 'Jerome'					then 1 - ((.8*total_units)-coalesce(sum(deduplicated_units),0))/(total_units-coalesce(sum(deduplicated_units),0))
-			when neighborhood 	= 'Bay Street Corridor'		then 1 - ((.7*total_units)-coalesce(sum(deduplicated_units),0))/(total_units-coalesce(sum(deduplicated_units),0))
+			when neighborhood 	= 'East Harlem' 			then .2
+			when neighborhood 	= 'Downtown Far Rockaway' 	then .2
+			when neighborhood 	= 'Inwood'					then .2
+			when neighborhood 	= 'Jerome'					then .2
+			when neighborhood 	= 'Bay Street Corridor'		then .3
 															end																		as portion_built_2035,
 		case
 			when neighborhood 	= 'East New York' 			then 0
@@ -166,13 +165,12 @@ from
 			when neighborhood 	= 'Downtown Far Rockaway' 	then 0
 			when neighborhood 	= 'Inwood'					then 0
 			when neighborhood 	= 'Jerome'					then 0
-			when neighborhood 	= 'Bay Street Corridor'		then 0 	end																as portion_built_2055,						
+			when neighborhood 	= 'Bay Street Corridor'		then 0 	
+															end																		as portion_built_2055,						
 		array_to_string(array_agg(nullif(concat_ws(', ',source,match_project_id,nullif(project_name_address,'')),'')),' | ') 		as project_matches,
 		sum(deduplicated_units)																										as matched_incremental_units
 	from
 		nstudy_projected_potential_areawide_deduped
-	WHERE
-		status = 'Projected'
 	group by
 		the_geom,
 		the_geom_webmercator,
@@ -183,13 +181,29 @@ from
 		effective_date,
 		total_units,
 		case
+			when neighborhood 	= 'East New York' 			then 1
+			when neighborhood 	= 'East Harlem' 			then .8
+			when neighborhood 	= 'Downtown Far Rockaway' 	then .8
+			when neighborhood 	= 'Inwood'					then .8
+			when neighborhood 	= 'Jerome'					then .8
+			when neighborhood 	= 'Bay Street Corridor'		then .7
+															end,
+		case
+			when neighborhood 	= 'East New York' 			then 0
+			when neighborhood 	= 'East Harlem' 			then .2
+			when neighborhood 	= 'Downtown Far Rockaway' 	then .2
+			when neighborhood 	= 'Inwood'					then .2
+			when neighborhood 	= 'Jerome'					then .2
+			when neighborhood 	= 'Bay Street Corridor'		then .3
+															end,
+		case
 			when neighborhood 	= 'East New York' 			then 0
 			when neighborhood 	= 'East Harlem' 			then 0
 			when neighborhood 	= 'Downtown Far Rockaway' 	then 0
 			when neighborhood 	= 'Inwood'					then 0
 			when neighborhood 	= 'Jerome'					then 0
-			when neighborhood 	= 'Bay Street Corridor'		then 0 	end						
-
+			when neighborhood 	= 'Bay Street Corridor'		then 0
+															end						
 ) nstudy_projected_potential_areawide_deduped_final
 
 
