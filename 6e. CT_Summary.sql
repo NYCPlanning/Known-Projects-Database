@@ -4,8 +4,9 @@ SCRIPT: Summarizing 2025, 2035, and 2055 growth by Census Tract
 START DATE: 6/11/2019
 *************************************************************************************************************************************************************************************/
 
+drop table if exists ct_Growth_Summary_Known_Projects_20190611;
 
-select
+select distinct
 	row_number() over() as cartodb_id,
 	*
 into
@@ -16,9 +17,9 @@ from
 		b.the_geom,
 		b.the_geom_webmercator,
 		a.ct,
-		sum(a.portion_built_2025*a.counted_units) as Units_2025,
-		sum(a.portion_built_2035*a.counted_units) as Units_2025_2035,
-		sum(a.portion_built_2055*a.counted_units) as Units_2035_2055,
+		sum(a.portion_built_2025*a.counted_units_in_ct) as Units_2025,
+		sum(a.portion_built_2035*a.counted_units_in_ct) as Units_2025_2035,
+		sum(a.portion_built_2055*a.counted_units_in_ct) as Units_2035_2055,
 		array_to_string
 		(
 			array_agg
@@ -182,9 +183,9 @@ from
 		' | '
 		) 	as planner_added_projects_matches
 	from
-		aggregated_ct_longform a
-	left join
 		census_tract_2010_190412_ms b
+	left join
+		(select * from aggregated_ct_longform where not(source = 'DOB' and status in('Complete','Complete (demolition)'))) a
 	on
 		a.ct = b.boro_ct201
 	group by
@@ -195,4 +196,7 @@ from
 		a.ct asc 
 ) ct_Growth_Summary_Known_Projects_20190611
 order by
-	ct asc
+	ct asc;
+
+
+select cdb_cartodbfytable('capitalplanning','CT_Growth_Summary_Known_Projects_20190611') ;

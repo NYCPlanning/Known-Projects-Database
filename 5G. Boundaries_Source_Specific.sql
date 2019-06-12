@@ -26,11 +26,11 @@ from
 (
 	select
 		a.*,
-		replace(b.CSD,':  units','') 			as CSD,
-		replace(b.Subdistrict,':  units','') 	as subdistrict,
-		replace(b.ES_Zone,':  units','') 		as es_zone,
-		replace(b.MS_Zone,':  units','') 		as ms_zone,
-		replace(b.Census_Tract,':  units','')  	as ct
+		replace(b.CSD,':  units','') 								as CSD,
+		concat('"',replace(b.Subdistrict,':  units',''),'"')		as subdistrict,
+		replace(b.ES_Zone,':  units','') 							as es_zone,
+		replace(b.MS_Zone,':  units','') 							as ms_zone,
+		replace(b.Census_Tract,':  units','')  						as ct
 	from
 		(select * from dob_2018_sca_inputs_ms where status in('Complete','Complete (demolition)')) a
 	left join
@@ -113,7 +113,7 @@ from
 		concat(a.project_id) = b.project_id
 ) x
 	order by 
-		project_id asc;
+		project_id::numeric asc;
 select
 	*
 into
@@ -205,7 +205,7 @@ from
 		b.MS_Zone,
 		b.Census_Tract 
 	from
-		hpd_rfp_deduped a
+		nstudy_deduped a
 	left join
 		Known_Projects_DB_Project_Level_Boundaries b
 	on

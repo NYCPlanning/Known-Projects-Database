@@ -39,7 +39,6 @@ select
 			status = 'Complete' 			and 
 			co_latest_certtype = 'T- TCO' 	and
 
-			/*LOOK FOR DOCUMENTATION ON PARTIAL COMPLETE STATUS IN DOE DATA*/
 			(
 				(cast(co_latest_units as double precision)/cast(units_net as double precision) < .8  	and units_net >= 20) or
 				(units_net - co_latest_units >=5 														and units_net between 5 and 19)
@@ -73,9 +72,6 @@ select
 	A.longitude,
 	geo_bin												as bin,
 	geo_bbl												as bbl,
-	null 												as portion_built_2025,
-	null 												as portion_built_2035,
-	null 												as portion_built_2055,
 
 	/*Identifying NYCHA Projects*/
 	CASE 
@@ -121,6 +117,9 @@ on
 	a.job_type 	= 'New Building'											and
 	b.reporting_construction_type = 'New Construction' 						and
 	b.contains_senior_units = 1
+
+
+/*Filtering out jobs from pipeline*/	
 where
 	status 		<>'Withdrawn' 							and 
 	x_inactive 	= 'false' 								and /*Non-permitted job w/o update since two years ago*/
@@ -129,7 +128,7 @@ where
 	upper(job_description) not like '%ADMINISTRATIVE%'
 order by
 	job_number
-) as dob_2018_sca_inputs_ms_pre
+) as dob_2018_sca_inputs_ms_pre;
 
 
 
@@ -147,11 +146,12 @@ from
 		row_number() over(partition by job_type, geo_address order by status_date::date desc, job_number desc) as instance
 	from
 		qc_potentialdups
-) x
+) x;
 
 
 
 
+drop table if exists dob_2018_sca_inputs_ms;
 
 /*Omitting old dups from table*/
 SELECT
@@ -165,7 +165,7 @@ from
 		case
 			when a.status like 'Complete%' 			then a.units_net
 			when a.status like '%Partial Complete' 	then a.latest_cofo
-			else null end 																				 	as units_net_complete, 
+			else null end 																			 	as units_net_complete, 
 		case
 			when a.status like 'Complete%' 			then null
 			when a.status like '%Partial Complete' 	then a.units_net - a.latest_cofo
@@ -173,7 +173,22 @@ from
 		case
 			when a.status like 'Complete%' 			then null
 			when a.status like '%Partial Complete' 	then a.units_net - a.latest_cofo
-			else a.units_net end 																		as counted_units
+			else a.units_net end 																		as counted_units,
+		case
+			when a.status like 'Complete%' 			then null
+			when a.status = 'Partial Complete'		then 1
+			when c.job_number is not null 			then completion_rate_2025 		
+			when c.job_number is null 				then 1 							end					as portion_built_2025,
+		case
+			when a.status like 'Complete%' 			then null
+			when a.status = 'Partial Complete'		then 0
+			when c.job_number is not null 			then round((1 -completion_rate_2025)::numeric,2) 	
+			when c.job_number is null 				then 0 							end					as portion_built_2035,
+		case
+			when a.status like 'Complete%' 			then null
+			when a.status = 'Partial Complete'		then 0
+			when c.job_number is not null 			then 0
+			when c.job_number is null 				then 0 							end					as portion_built_2055
 	from
 		capitalplanning.dob_2018_sca_inputs_ms_pre a
 	left join
@@ -181,17 +196,19 @@ from
 	on
 		a.job_number = b.job_number and
 		b.instance > 1
+	/*Adding in HEIP-developed phasing for DOB jobs. 17 incomplete DOB jobs are not included in HEIP's list -- setting these to 2025.*/
+	left join
+		(select job_number, completion_rate_2025 from capitalplanning.housingdb_19v1_rl_test_0605) c
+	on
+		a.job_number = c.job_number
 	where
 		b.job_number is null
-
 ) x
 	order by
-		x.job_number asc
+		x.job_number asc;
 
 
-/************************************RUN IN REGULAR CARTO*****************************/
-
-select cdb_cartodbfytable('capitalplanning', 'dob_2018_sca_inputs_ms')
+select cdb_cartodbfytable('capitalplanning', 'dob_2018_sca_inputs_ms');
 
 
 

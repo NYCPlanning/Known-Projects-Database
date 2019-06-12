@@ -1,5 +1,7 @@
 /*Aggregating deduplicated data*/
 
+drop table if exists known_projects_db_20190610_v4;
+
 create table
 	known_projects_db_20190610_v4
 as
@@ -16,9 +18,9 @@ as
 		units_net_incomplete		as total_units,
 		units_net_incomplete		as deduplicated_units,
 		units_net_incomplete		as counted_units,
-		null::numeric				as portion_built_2025,
-		null::numeric				as portion_built_2035,
-		null::numeric				as portion_built_2055,
+		portion_built_2025,
+		portion_built_2035,
+		portion_built_2055,
 		''							as planner_input,
 		'' 							as dob_matches,
 		null::numeric				as dob_matched_units,
@@ -61,9 +63,9 @@ as
 		total_units,
 		hpd_incremental_units 		as deduplicated_units,
 		counted_units,
-		null::numeric				as portion_built_2025,
-		null::numeric				as portion_built_2035,
-		null::numeric				as portion_built_2055,
+		portion_built_2025,
+		portion_built_2035,
+		portion_built_2055,
 		''							as planner_input,
 		dob_job_numbers				as dob_matches,
 		dob_units_net				as dob_matched_units,
@@ -106,9 +108,9 @@ as
 		total_units,
 		hpd_rfp_incremental_units								as deduplicated_units,
 		counted_units,
-		null::numeric											as portion_built_2025,
-		null::numeric											as portion_built_2035,
-		null::numeric											as portion_built_2055,
+		portion_built_2025,
+		portion_built_2035,
+		portion_built_2055,
 		''														as planner_input,
 		dob_job_numbers											as dob_matches,
 		dob_units_net											as dob_matched_units,
@@ -149,9 +151,9 @@ as
 		total_units,
 		edc_incremental_units									as deduplicated_units,
 		counted_units,
-		null::numeric											as portion_built_2025,
-		null::numeric											as portion_built_2035,
-		null::numeric											as portion_built_2055,
+		portion_built_2025,
+		portion_built_2035,
+		portion_built_2055,
 		''														as planner_input,
 		dob_job_numbers											as dob_matches,
 		dob_units_net											as dob_matched_units,
@@ -497,7 +499,7 @@ order by
 	source asc,
 	project_id asc,
 	project_name_address asc,
-	status asc
+	status asc;
 
 
 

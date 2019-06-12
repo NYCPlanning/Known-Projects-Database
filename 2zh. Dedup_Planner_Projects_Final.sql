@@ -9,6 +9,7 @@ METHODOLOGY:
 2. Calculate Public Sites Increment
 ************************************************************************************************************************************************************************************/
 /*************************RUN IN CARTO BATCH********************/
+drop table if exists planner_projects_deduped;
 
 select
 	*
@@ -25,12 +26,21 @@ from(
 		total_units,
 		planner_projects_incremental_units,
 		case
-			when total_units::float*.2>planner_projects_incremental_units			then 0
-			when planner_projects_incremental_units<=2								then 0
-			else planner_projects_incremental_units end								as counted_units,
-		portion_built_2025,
-		portion_built_2035,
-		portion_built_2055,
+			when total_units::float*.2>planner_projects_incremental_units 											then 0
+			when planner_projects_incremental_units<=2 and planner_projects_incremental_units<>total_units			then 0
+			else planner_projects_incremental_units 																end							as counted_units,
+		case
+			when total_units::float*.2>planner_projects_incremental_units 											then null
+			when planner_projects_incremental_units<=2 and planner_projects_incremental_units<>total_units			then null
+			else 																									portion_built_2025 end		as portion_built_2025,
+		case
+			when total_units::float*.2>planner_projects_incremental_units 											then null
+			when planner_projects_incremental_units<=2 and planner_projects_incremental_units<>total_units			then null
+			else 																									portion_built_2035 end		as portion_built_2035,
+		case
+			when total_units::float*.2>planner_projects_incremental_units 											then null
+			when planner_projects_incremental_units<=2 and planner_projects_incremental_units<>total_units			then null
+			else 																									portion_built_2055 end		as portion_built_2055,
 		planner_input,
 		nycha_flag,
 		gq_flag,
@@ -136,11 +146,10 @@ from(
 		order by
 			a.map_id asc
 	) x
-) planner_projects_deduped
+) planner_projects_deduped;
 
 
-/*RUN IN REGULAR CARTO*/
-select cdb_cartodbfytable('capitalplanning','planner_projects_deduped')
+select cdb_cartodbfytable('capitalplanning','planner_projects_deduped');
 
 
 /**********************************

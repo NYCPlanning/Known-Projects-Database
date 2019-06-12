@@ -103,7 +103,7 @@ from
 		)
 	order by
 		a.project_id
-) as HPD_DOB_Merge
+) as HPD_DOB_Merge;
 
 
 
@@ -127,7 +127,7 @@ from
 	group by
 		dob_job_number
 	having count(*) > 1
-) multi_hpd_dob_matches
+) multi_hpd_dob_matches;
 
 /*Limiting matches of the DOB jobs identified in multi_hpd_dob_matches. There are no cases when a DOB job matches both by more than 1 of address, BBL, and spatial overlap to multiple
   HPD Projected Closings.*/
@@ -149,7 +149,7 @@ from
 			not(dob_job_number in(select dob_job_number from capitalplanning.multi_hpd_dob_matches where bbl>=1) 		and dob_match_type in('Spatial','Proximity')) 			and
 			not(dob_job_number in(select dob_job_number from capitalplanning.multi_hpd_dob_matches where spatial>=1) 	and dob_match_type ='Proximity') 			
 		)
-) hpd_dob_match_1
+) hpd_dob_match_1;
 
 /*Some DOB jobs are still matched to multiple HPD projects (primarily because HPD projects are geocoded to the lot-level, while DOB jobs are points). Preferencing the
   matches which are closest in unit count to the HPD projected closings*/
@@ -171,7 +171,7 @@ from
 	group by
 		dob_job_number		
 	having count(*) > 1
-) multi_hpd_dob_matches_1
+) multi_hpd_dob_matches_1;
 
 /*Limiting matches of the DOB jobs identified in multi_hpd_dob_matches_1 to their closest match by unit count*/
 
@@ -192,7 +192,7 @@ from
 		abs(a.units_net-a.total_units) <> b.min_unit_difference
 	where
 		b.dob_job_number is null
-) hpd_dob_match_2
+) hpd_dob_match_2;
 
 
 /*
@@ -228,7 +228,7 @@ from
 	order by
 		dob_job_number asc,
 		project_id asc
-) x
+) x;
 
 
 select
@@ -265,7 +265,7 @@ from
 		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_dob_one_to_one_matching_20190523_ms where accurate_match =0) then null else geom_distance 		end 	as geom_distance
 	from
 		hpd_dob_match_2
-) hpd_dob_match_3 
+) hpd_dob_match_3 ;
 
 
 
@@ -330,7 +330,7 @@ from
 		hpd_dob_match_3
 	order by
 		project_id
-) as HPD_DOB_Match_4
+) as HPD_DOB_Match_4;
 
 
 
@@ -386,7 +386,7 @@ from
 		assisted_living_flag
 	order by
 		project_id
-) as hpd_deduped_pre
+) as hpd_deduped_pre;
 
 
 /*
@@ -406,7 +406,7 @@ from
 		hpd_deduped_pre
 	where
 		project_id like '53680%'
-) x
+) x;
 
 
 /*Correcting matched for project_id 53680*/
@@ -456,7 +456,7 @@ from
 		c.job_number = b.corrected_dob_job_number_match
 	order by
 		a.project_id asc
-) hpd_deduped_pre_1
+) hpd_deduped_pre_1;
 
 
 /*Joining onto full list of HPD Projected Closings*/
@@ -479,14 +479,23 @@ from
 		'Projected' as Status,
 		a.projected_fiscal_year_range,
 		a.total_units,
-		greatest(a.total_units - coalesce(b.dob_units_net,0),0) 	as hpd_incremental_units,
+		greatest(a.total_units - coalesce(b.dob_units_net,0),0) 													as hpd_incremental_units,
 		case
-			when a.total_units::float*.2>greatest(a.total_units - coalesce(b.dob_units_net,0),0) 	then 0
-			when greatest(a.total_units - coalesce(b.dob_units_net,0),0)<=2						then 0
-			else greatest(a.total_units - coalesce(b.dob_units_net,0),0) End					as counted_units,
-		'1' as portion_built_2025,
-		'0' as portion_built_2035,
-		'0' as portion_built_2055,
+			when a.total_units::float*.2>greatest(a.total_units - coalesce(b.dob_units_net,0),0) 					then 0
+			when greatest(a.total_units - coalesce(b.dob_units_net,0),0)<=2 and coalesce(b.dob_units_net,0)<> 0		then 0
+			else greatest(a.total_units - coalesce(b.dob_units_net,0),0) End										as counted_units,
+		case
+			when a.total_units::float*.2>greatest(a.total_units - coalesce(b.dob_units_net,0),0) 					then null
+			when greatest(a.total_units - coalesce(b.dob_units_net,0),0)<=2 and coalesce(b.dob_units_net,0)<> 0		then null
+			else 																									1 End as portion_built_2025,							
+		case
+			when a.total_units::float*.2>greatest(a.total_units - coalesce(b.dob_units_net,0),0) 					then null
+			when greatest(a.total_units - coalesce(b.dob_units_net,0),0)<=2 and coalesce(b.dob_units_net,0)<> 0		then null
+			else 																									0 End as portion_built_2035,							
+		case
+			when a.total_units::float*.2>greatest(a.total_units - coalesce(b.dob_units_net,0),0) 					then null
+			when greatest(a.total_units - coalesce(b.dob_units_net,0),0)<=2 and coalesce(b.dob_units_net,0)<> 0		then null
+			else 																									0 End as portion_built_2055,							
 		b.dob_job_numbers,
 		b.dob_units_net,
 		a.nycha_flag,
@@ -501,7 +510,7 @@ from
 		a.project_id = b.project_id
 ) hpd_deduped
 order by
-	project_id asc
+	project_id asc;
 
 		      
 /*Run in regular Carto to display table*/		      

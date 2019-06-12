@@ -4,6 +4,7 @@ SCRIPT: Summarizing 2025, 2035, and 2055 growth by ms_zone
 START DATE: 6/11/2019
 *************************************************************************************************************************************************************************************/
 
+drop table if exists ms_zone_Growth_Summary_Known_Projects_20190611;
 
 select
 	row_number() over() as cartodb_id,
@@ -182,9 +183,9 @@ from
 		' | '
 		) 	as planner_added_projects_matches
 	from
-		aggregated_ms_zone_longform a
-	left join
 		doe_school_zones_ms_2019 b
+	left join
+		(select * from aggregated_mS_zone_longform where not(source = 'DOB' and status in('Complete','Complete (demolition)'))) a
 	on
 		a.ms_zone = 
 								coalesce(

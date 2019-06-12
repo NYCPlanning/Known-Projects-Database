@@ -8,6 +8,7 @@ Sources:
 		RUN THE FOLLOWING QUERY IN
 		CARTO BATCH
 *********************************************/
+drop table if exists hpd_rfp_deduped;
 
 select
 	*
@@ -28,12 +29,21 @@ from
 		total_units,
 		HPD_RFP_Incremental_Units,
 		case
-			when total_units::float*.2>hpd_rfp_incremental_units 		then 0
-			when hpd_rfp_incremental_units<=2							then 0
-			else hpd_rfp_incremental_units end							as counted_units,
-		portion_built_2025,
-		portion_built_2035,
-		portion_built_2055,
+			when total_units::float*.2>hpd_rfp_incremental_units 								then 0
+			when hpd_rfp_incremental_units<=2 and hpd_rfp_incremental_units<>total_units		then 0
+			else hpd_rfp_incremental_units 														end							as counted_units,
+		case
+			when total_units::float*.2>hpd_rfp_incremental_units 								then null
+			when hpd_rfp_incremental_units<=2 and hpd_rfp_incremental_units<>total_units		then null
+			else 																				portion_built_2025 end		as portion_built_2025,
+		case
+			when total_units::float*.2>hpd_rfp_incremental_units 								then null
+			when hpd_rfp_incremental_units<=2 and hpd_rfp_incremental_units<>total_units		then null
+			else 																				portion_built_2035 end		as portion_built_2035,
+		case
+			when total_units::float*.2>hpd_rfp_incremental_units 								then null
+			when hpd_rfp_incremental_units<=2 and hpd_rfp_incremental_units<>total_units		then null
+			else 																				portion_built_2055 end		as portion_built_2055,
 		excluded_project_flag,
 		rationale_for_exclusion,
 		nycha_flag,
@@ -90,10 +100,9 @@ from
 				a.project_id = b.project_id
 		) x
 ) as x
-order by project_id::numeric asc
+order by project_id::numeric asc;
 
-/*Run in regular Carto to display table*/		      
-select cdb_cartodbfytable('capitalplanning','hpd_rfp_deduped')
+select cdb_cartodbfytable('capitalplanning','hpd_rfp_deduped');
 
 
 /**********************************

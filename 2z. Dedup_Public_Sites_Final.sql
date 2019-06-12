@@ -10,6 +10,8 @@ METHODOLOGY:
 ************************************************************************************************************************************************************************************/
 /*************************RUN IN CARTO BATCH********************/
 
+drop table if exists public_sites_deduped;
+
 select
 	*
 into
@@ -26,20 +28,29 @@ from
 		borough,
 		lead,
 		total_units,
+		public_sites_incremental_units,
+		case
+			when total_units::float*.2>public_sites_incremental_units 									then 0
+			when public_sites_incremental_units<=2 and public_sites_incremental_units<>total_units		then 0
+			else public_sites_incremental_units 														end							as counted_units,
 		PLANNER_PROVIDED_PHASING,
-		portion_built_2025,
-		portion_built_2035,
-		portion_built_2055,
+		case
+			when total_units::float*.2>public_sites_incremental_units 									then null
+			when public_sites_incremental_units<=2 and public_sites_incremental_units<>total_units		then null
+			else 																						portion_built_2025 end		as portion_built_2025,
+		case
+			when total_units::float*.2>public_sites_incremental_units 									then null
+			when public_sites_incremental_units<=2 and public_sites_incremental_units<>total_units		then null
+			else 																						portion_built_2035 end		as portion_built_2035,
+		case
+			when total_units::float*.2>public_sites_incremental_units 									then null
+			when public_sites_incremental_units<=2 and public_sites_incremental_units<>total_units		then null
+			else 																						portion_built_2055 end		as portion_built_2055,
 		planner_input,
 		nycha_flag,
 		gq_flag,
 		assisted_living_flag,
 		senior_housing_flag,
-		public_sites_incremental_units,
-		case
-			when total_units::float*.2>public_sites_incremental_units			then 0
-			when public_sites_incremental_units<=2								then 0
-			else public_sites_incremental_units end								as counted_units,
 		dob_job_numbers,
 		dob_units_net,
 		hpd_projected_closings_ids,
@@ -70,19 +81,19 @@ from
 				WHEN COALESCE(A.portion_built_2025,A.PORTION_BUILT_2035,A.PORTION_BUILT_2055,0) = 0 AND
 					 A.nycha_flag = 1																THEN .5 /*PLACING NYCHA PROJECTS WITHOUT PROVIDED-PHASING*/
 				WHEN COALESCE(A.portion_built_2025,A.PORTION_BUILT_2035,A.PORTION_BUILT_2055,0) = 0 AND
-					 A.public_sites_id = 'Public Site Pipeline 23'										THEN 1  /*Placing specific HPD-owned project in 2025*/
+					 A.public_sites_id = 'Public Site Pipeline 23'										THEN 1  /*Placing specific HPD-owned project in 2025 -- HPD flags already on property*/
 				ELSE A.PORTION_BUILT_2025 															END AS portion_built_2025,
 			CASE
 				WHEN COALESCE(A.portion_built_2025,A.PORTION_BUILT_2035,A.PORTION_BUILT_2055,0) = 0 AND
 					 A.nycha_flag = 1																THEN .5 /*PLACING NYCHA PROJECTS WITHOUT PROVIDED-PHASING*/
 				WHEN COALESCE(A.portion_built_2025,A.PORTION_BUILT_2035,A.PORTION_BUILT_2055,0) = 0 AND
-					 A.public_sites_id = 'Public Site Pipeline 23'										THEN 0  /*Placing specific HPD-owned project in 2025*/
+					 A.public_sites_id = 'Public Site Pipeline 23'										THEN 0  /*Placing specific HPD-owned project in 2025 -- HPD flags already on property*/
 				ELSE A.PORTION_BUILT_2035 															END AS portion_built_2035,
 			CASE
 				WHEN COALESCE(A.portion_built_2025,A.PORTION_BUILT_2035,A.PORTION_BUILT_2055,0) = 0 AND
 					 A.nycha_flag = 1																THEN 0 /*PLACING NYCHA PROJECTS WITHOUT PROVIDED-PHASING*/
 				WHEN COALESCE(A.portion_built_2025,A.PORTION_BUILT_2035,A.PORTION_BUILT_2055,0) = 0 AND
-					 A.public_sites_id = 'Public Site Pipeline 23'										THEN 0  /*Placing specific HPD-owned project in 2025*/
+					 A.public_sites_id = 'Public Site Pipeline 23'										THEN 0  /*Placing specific HPD-owned project in 2025 -- HPD flags already on property*/
 				ELSE A.PORTION_BUILT_2055 															END AS portion_built_2055,
 			a.planner_input,
 			a.nycha_flag,
@@ -141,10 +152,9 @@ from
 		order by
 			a.public_sites_id asc
 	) x
-) public_sites_deduped
+) public_sites_deduped;
 
-/*RUN IN REGULAR CARTO*/
-select cdb_cartodbfytable('capitalplanning','public_sites_deduped')
+select cdb_cartodbfytable('capitalplanning','public_sites_deduped');
 
 
 /**********************************

@@ -96,6 +96,8 @@ from
 
 /********************************RUN IN REGULAR CARTO************************************************/
 
+drop table if exists zap_deduped_build_year;
+
 create table
 	zap_deduped_build_year
 as
@@ -114,10 +116,9 @@ as
 		a.total_units,
 		a.zap_incremental_units,
 		case
-			when total_units::float*.2>zap_incremental_units 				then 0
-			when zap_incremental_units<=2									then 0
-			-- when c.remaining_likely_to_be_built_2018 = 'No units remaining'	then 0
-			else zap_incremental_units end								as counted_units,
+			when a.total_units::float*.2>a.zap_incremental_units 								then 0
+			when a.zap_incremental_units<=2 and a.zap_incremental_units<>a.total_units			then 0
+			else a.zap_incremental_units 														end							as counted_units,
 		a.applicant_type,
 		a.dcp_target_certification_date,
 		a.certified_referred,
@@ -134,6 +135,8 @@ as
 			else 																									0 end as Planner_Provided_Phasing,
 		/*Assigning 2025 Portion Built*/
 		case
+			when a.total_units::float*.2>a.zap_incremental_units 													then null
+			when a.zap_incremental_units<=2 and a.zap_incremental_units<>a.total_units								then null
 			when coalesce(a.portion_built_2025,0)+coalesce(a.portion_built_2035,0)+coalesce(a.portion_built_2055,0) > 0
 																												 	then
 																													coalesce(a.portion_built_2025,0)
@@ -249,6 +252,8 @@ as
 				null
 			END 																									as portion_built_2025,
 		case
+			when a.total_units::float*.2>a.zap_incremental_units 													then null
+			when a.zap_incremental_units<=2 and a.zap_incremental_units<>a.total_units								then null
 			when coalesce(a.portion_built_2025,0)+coalesce(a.portion_built_2035,0)+coalesce(a.portion_built_2055,0) > 0
 																												 	then
 																													coalesce(a.portion_built_2035,0)
@@ -361,6 +366,8 @@ as
 																													null
 			END 																									as portion_built_2035,
 		case
+			when a.total_units::float*.2>a.zap_incremental_units 													then null
+			when a.zap_incremental_units<=2 and a.zap_incremental_units<>a.total_units								then null
 			when coalesce(a.portion_built_2025,0)+coalesce(a.portion_built_2035,0)+coalesce(a.portion_built_2055,0) > 0
 																												 	then
 																													coalesce(a.portion_built_2055,0)
@@ -499,10 +506,10 @@ as
 		a.project_id = b.project_id
 	order by 
 		a.project_id asc
-)
+);
 
 
-select cdb_cartodbfytable('capitalplanning','zap_deduped_build_year')
+select cdb_cartodbfytable('capitalplanning','zap_deduped_build_year');
 
 /**********************************
 SOURCE-SPECIFIC OUTPUT

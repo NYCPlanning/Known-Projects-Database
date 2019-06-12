@@ -4,6 +4,7 @@ SCRIPT: Summarizing 2025, 2035, and 2055 growth by CSD
 START DATE: 6/11/2019
 *************************************************************************************************************************************************************************************/
 
+drop table if exists CSD_Growth_Summary_Known_Projects_20190611;
 
 select
 	row_number() over() as cartodb_id,
@@ -16,9 +17,9 @@ from
 		b.the_geom,
 		b.the_geom_webmercator,
 		a.csd,
-		sum(a.portion_built_2025*a.counted_units) as Units_2025,
-		sum(a.portion_built_2035*a.counted_units) as Units_2025_2035,
-		sum(a.portion_built_2055*a.counted_units) as Units_2035_2055,
+		sum(a.portion_built_2025*a.counted_units_in_csd) as Units_2025,
+		sum(a.portion_built_2035*a.counted_units_in_csd) as Units_2025_2035,
+		sum(a.portion_built_2055*a.counted_units_in_csd) as Units_2035_2055,
 		array_to_string
 		(
 			array_agg
@@ -182,9 +183,9 @@ from
 		' | '
 		) 	as planner_added_projects_matches
 	from
-		aggregated_CSD_longform a
+		(select st_union(the_geom) as the_Geom ,st_union(the_geom_webmercator) as the_geom_webmercator, schooldist from nyc_school_districts group by schooldist) b
 	left join
-		nyc_school_districts b
+		(select * from aggregated_CSD_longform where not(source = 'DOB' and status in('Complete','Complete (demolition)'))) a
 	on
 		a.csd = b.schooldist
 	group by
@@ -195,4 +196,7 @@ from
 		a.csd asc 
 ) CSD_Growth_Summary_Known_Projects_20190611
 order by
-	csd asc
+	csd asc;
+
+
+select cdb_cartodbfytable('capitalplanning','CSD_Growth_Summary_Known_Projects_20190611') 

@@ -11,6 +11,8 @@ METHODOLOGY:
 ************************************************************************************************************************************************************************************/
 /*************************RUN IN CARTO BATCH********************/
 
+drop table if exists edc_deduped;
+
 select
 	*
 into
@@ -32,12 +34,21 @@ from
 		total_units,
 		EDC_Incremental_Units,
 		case
-			when total_units::float*.2>edc_incremental_units 			then 0
-			when edc_incremental_units<=2								then 0
-			else edc_incremental_units end								as counted_units,
-		portion_built_2025,
-		portion_built_2035,
-		portion_built_2055,
+			when total_units::float*.2>edc_incremental_units 								then 0
+			when edc_incremental_units<=2 and edc_incremental_units<>total_units			then 0
+			else edc_incremental_units 														end							as counted_units,
+		case
+			when total_units::float*.2>edc_incremental_units 								then null
+			when edc_incremental_units<=2 and edc_incremental_units<>total_units			then null
+			else 																				portion_built_2025 end		as portion_built_2025,
+		case
+			when total_units::float*.2>edc_incremental_units 								then null
+			when edc_incremental_units<=2 and edc_incremental_units<>total_units			then null
+			else 																				portion_built_2035 end		as portion_built_2035,
+		case
+			when total_units::float*.2>edc_incremental_units 								then null
+			when edc_incremental_units<=2 and edc_incremental_units<>total_units			then null
+			else 																				portion_built_2055 end		as portion_built_2055,
 		NYCHA_Flag,
 		gq_flag,
 		Assisted_Living_Flag,
@@ -109,10 +120,9 @@ from
 	) x
 ) as edc_deduped
 order by
-	project_id asc
-	
-/*RUN IN REGULAR CARTO*/	
-select cdb_cartodbfytable('capitalplanning','edc_deduped')
+	project_id asc;
+		
+select cdb_cartodbfytable('capitalplanning','edc_deduped');
 
 
 /**********************************

@@ -10,6 +10,8 @@ METHODOLOGY:
 ************************************************************************************************************************************************************************************/
 /*************************RUN IN CARTO BATCH********************/
 
+drop table if exists nstudy_deduped;
+
 select
 	*
 into
@@ -29,12 +31,21 @@ from
 		total_units,
 		nstudy_incremental_units,
 		case
-			when total_units::float*.2>nstudy_incremental_units 			then 0
-			when nstudy_incremental_units<=2							then 0
-			else nstudy_incremental_units end							as counted_units,	
-		portion_built_2025,
-		portion_built_2035,
-		portion_built_2055,
+			when total_units::float*.2>nstudy_incremental_units 								then 0
+			when nstudy_incremental_units<=2 and nstudy_incremental_units<>total_units			then 0
+			else nstudy_incremental_units 														end							as counted_units,
+		case
+			when total_units::float*.2>nstudy_incremental_units 								then null
+			when nstudy_incremental_units<=2 and nstudy_incremental_units<>total_units			then null
+			else 																				portion_built_2025 end		as portion_built_2025,
+		case
+			when total_units::float*.2>nstudy_incremental_units 								then null
+			when nstudy_incremental_units<=2 and nstudy_incremental_units<>total_units			then null
+			else 																				portion_built_2035 end		as portion_built_2035,
+		case
+			when total_units::float*.2>nstudy_incremental_units 								then null
+			when nstudy_incremental_units<=2 and nstudy_incremental_units<>total_units			then null
+			else 																				portion_built_2055 end		as portion_built_2055,
 		planner_input,
 		nycha_flag,
 		gq_flag,
@@ -102,29 +113,28 @@ from
 	left join
 		capitalplanning.nstudy_dob_final b
 	on 
-		a.project_id = b.project_id 
+		a.project_name = b.project_name 
 	left join
 		capitalplanning.nstudy_hpd_projected_closings_final c 
 	on
-		a.project_id = c.project_id 
+		a.project_name = c.project_name 
 	left join
 		capitalplanning.nstudy_hpd_rfp_final d
 	on
-		a.project_id = d.project_id 
+		a.project_name = d.project_name 
 	left join
 		capitalplanning.nstudy_edc_final e
 	on
-		a.project_id = e.project_id
+		a.project_name = e.project_name
 	left join
 		capitalplanning.nstudy_zap_final f
 	on
-		a.project_id = f.project_id
+		a.project_name = f.project_name
 	) x
 ) nstudy_deduped
+;
 
-
-/*RUN IN REGULAR CARTO*/
-select cdb_cartodbfytable('capitalplanning','nstudy_deduped')
+select cdb_cartodbfytable('capitalplanning','nstudy_deduped');
 
 
 /**********************************

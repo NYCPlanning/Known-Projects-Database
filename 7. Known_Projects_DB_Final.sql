@@ -24,3 +24,5 @@ from
 	order by
 		source asc,
 		project_id asc;
+
+select cdb_cartodbfytable('capitalplanning','Known_Projects_DB_Project_Level_Final') ;
