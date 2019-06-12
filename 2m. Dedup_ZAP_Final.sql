@@ -22,7 +22,9 @@ from
 		a.cartodb_id,
 		a.the_geom,
 		a.the_geom_webmercator,
-		'DCP Applications' as Source,
+		case
+			when a.project_id not like '%ESD%' then 'DCP Applications'
+			else 'Empire State Development Projected Projects' end as Source,
 		a.project_id,
 		a.project_name,
 		case 

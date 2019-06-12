@@ -55,6 +55,11 @@ where
 
 
 
+drop table if exists aggregated_ct;
+drop table if exists ungeocoded_PROJECTs_ct;
+drop table if exists aggregated_ct_longform;
+drop table if exists aggregated_ct_PROJECT_level;
+
 select
 	*
 into
@@ -154,7 +159,7 @@ from
 
 	select * from aggregated_boundaries_ct_4
 
-) as _1
+) as _1;
 
 select
 	*
@@ -192,7 +197,7 @@ from
 				st_dwithin(a.the_geom::geography,b.the_geom::geography,500)																			end
 )
 	select * from ungeocoded_projects_ct
-) as _2
+) as _2;
 
 
 select
@@ -244,7 +249,7 @@ from
 		status asc,
 		b.boro_ct201_1 asc
 ) as _3
-
+;
 
 select
 	*
@@ -342,3 +347,4 @@ from
 		senior_housing_flag,
 		assisted_living_flag
 ) x
+;

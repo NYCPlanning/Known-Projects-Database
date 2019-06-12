@@ -6,6 +6,10 @@ COMPLETION DATE:
 Sources: 
 *************************************************************************************************************************************************************************************/
 
+drop table if exists aggregated_ms_zone;
+drop table if exists ungeocoded_projects_ms_zone;
+drop table if exists aggregated_ms_zone_longform;
+drop table if exists aggregated_ms_zone_PROJEct_level;
 
 
 SELECT
@@ -108,7 +112,7 @@ from
 
 	SELECT * from aggregated_boundaries_ms_zone_4
 
-) as _1
+) as _1;
 
 SELECT
 	*
@@ -147,7 +151,7 @@ from
 				st_dwithin(a.the_geom::geography,b.the_geom::geography,500)																			end
 )
 	SELECT * from ungeocoded_PROJECTs_ms_zone
-) as _2
+) as _2;
 
 
 SELECT
@@ -199,7 +203,7 @@ from
 		PROJECT_name_address asc,
 		status asc,
 		b.ms_zone_1 asc
-) as _3
+) as _3;
 
 
 SELECT
@@ -305,3 +309,4 @@ from
 		senior_housing_flag,
 		assisted_living_flag
 ) x
+;

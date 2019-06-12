@@ -6,7 +6,10 @@ COMPLETION DATE:
 Sources: 
 *************************************************************************************************************************************************************************************/
 
-
+drop table if exists aggregated_csd;
+drop table if exists ungeocoded_PROJECTs_CSD;
+drop table if exists aggregated_CSD_longform;
+drop table if exists aggregated_CSD_PROJECT_level;
 
 
 SELECT
@@ -108,7 +111,7 @@ from
 
 	SELECT * from aggregated_boundaries_CSD_4
 
-) as _1
+) as _1;
 
 SELECT
 	*
@@ -146,7 +149,7 @@ from
 				st_dwithin(a.the_geom::geography,b.the_geom::geography,500)																			end
 )
 	SELECT * from ungeocoded_PROJECTs_CSD
-) as _2
+) as _2;
 
 
 SELECT
@@ -199,7 +202,7 @@ from
 		b.CSD_1 asc
 ) as _3
 	order by
-		csd asc
+		csd asc;
 
 
 SELECT
@@ -298,3 +301,4 @@ from
 		senior_housing_flag,
 		assisted_living_flag
 ) x
+;

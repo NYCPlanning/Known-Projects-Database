@@ -73,6 +73,9 @@ select
 	A.longitude,
 	geo_bin												as bin,
 	geo_bbl												as bbl,
+	null 												as portion_built_2025,
+	null 												as portion_built_2035,
+	null 												as portion_built_2055,
 
 	/*Identifying NYCHA Projects*/
 	CASE 
@@ -166,7 +169,11 @@ from
 		case
 			when a.status like 'Complete%' 			then null
 			when a.status like '%Partial Complete' 	then a.units_net - a.latest_cofo
-			else a.units_net end 																		as units_net_incomplete
+			else a.units_net end 																		as units_net_incomplete,
+		case
+			when a.status like 'Complete%' 			then null
+			when a.status like '%Partial Complete' 	then a.units_net - a.latest_cofo
+			else a.units_net end 																		as counted_units
 	from
 		capitalplanning.dob_2018_sca_inputs_ms_pre a
 	left join

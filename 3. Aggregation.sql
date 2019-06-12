@@ -46,8 +46,8 @@ as
 		assisted_living_flag
 	from
 		dob_2018_sca_inputs_ms
-	where
-		status not in('Complete','Complete (demolition)')
+	-- where
+	-- 	status not in('Complete','Complete (demolition)')
 	union all
 	select
 		the_geom,

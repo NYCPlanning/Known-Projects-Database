@@ -6,6 +6,10 @@ COMPLETION DATE:
 Sources: 
 *************************************************************************************************************************************************************************************/
 
+drop table if exists aggregated_subdistrict;
+drop table if exists ungeocoded_PROJEcts_subdistrict;
+drop table if exists aggregated_subdistrict_longform;
+drop table if exists aggregated_subdistrict_PROJEct_level;
 
 
 SELECT
@@ -107,7 +111,7 @@ from
 
 	SELECT * from aggregated_boundaries_subdistrict_4
 
-) as _1
+) as _1;
 
 SELECT
 	*
@@ -145,7 +149,7 @@ from
 				st_dwithin(a.the_geom::geography,b.the_geom::geography,500)																			end
 )
 	SELECT * from ungeocoded_PROJECTs_subdistrict
-) as _2
+) as _2;
 
 
 SELECT
@@ -196,7 +200,7 @@ from
 		PROJECT_name_address asc,
 		status asc,
 		b.subdistrict_1 asc
-) as _3
+) as _3;
 
 
 SELECT
@@ -294,4 +298,4 @@ from
 		gq_flag,
 		senior_housing_flag,
 		assisted_living_flag
-) x
+) x;

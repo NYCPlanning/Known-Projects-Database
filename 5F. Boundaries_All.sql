@@ -6,10 +6,12 @@ COMPLETION DATE:
 Sources: 
 *************************************************************************************************************************************************************************************/
 
+drop table if exists Known_Projects_DB_Project_Level_Boundaries;
+
 select
 	*
 into
-	Known_Projects_DB_Project_Level_Final
+	Known_Projects_DB_Project_Level_Boundaries
 from
 (
 	select
@@ -49,4 +51,4 @@ from
 ) x
 order by
 	source,
-	project_id asc
+	project_id asc;
