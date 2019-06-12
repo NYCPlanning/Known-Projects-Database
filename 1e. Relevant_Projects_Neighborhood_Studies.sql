@@ -263,6 +263,8 @@ FROM
 	
 
 /*Integrating planner input on unit count and KS assumed unit calculations for where no unit count exists*/
+
+drop table if exists dep_ndf_by_site_pre_1;
 select
 	*
 INTO
@@ -310,7 +312,8 @@ from
 					*/
 					case when a.project_id = '54 Central Avenue BAY STREET CORRIDOR REZONING COMMITMENT' then .5 end,
 					c.portion_built_2025,
-					b.portion_built_2025
+					b.portion_built_2025,
+					case when a.status = 'Rezoning Commitment' then 1 end
 				) as portion_built_2025,
 		coalesce(
 					/*Inserting information from planner Joseph Helferty. See email at the following link:
@@ -322,9 +325,15 @@ from
 					*/
 					case when a.project_id = '(Projected RFP) DSNY 123rd Street Parking Lot (Site 3) EAST HARLEM REZONING COMMITMENT' 	then 1 end,
 					c.portion_built_2035,
-					b.portion_built_2035
+					b.portion_built_2035,
+					case when a.status = 'Rezoning Commitment' then 0 end
 				) as portion_built_2035,
-		coalesce(c.portion_built_2055,b.portion_built_2055) as portion_built_2055,
+		coalesce(
+				c.portion_built_2055,
+				b.portion_built_2055,
+				0
+				) 
+		as portion_built_2055,
 
 
 		/*Identifying NYCHA Projects*/
@@ -376,7 +385,7 @@ from
 
 ) x 
 
-
+drop table if exists dep_ndf_by_site;
 select
 	*
 INTO

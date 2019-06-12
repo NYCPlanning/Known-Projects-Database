@@ -193,7 +193,7 @@ as
 
 			/*Adding in conditions to spread the phasing of development for massive developments*/
 			when
-				(a.status like '%Complete%' or a.status like '%Active%') 								and
+				(a.status like '%Complete%' or a.status in ('Active, Certified','Active, Pre-Cert'))						and
 				(a.applicant_projected_build_year <=2035 or a.applicant_projected_build_year is null) 	and
 				a.zap_incremental_units >= 500 																				then .5
 
@@ -307,7 +307,7 @@ as
 	
 			/*Adding in conditions to spread the phasing of development for massive developments*/
 			when
-				(a.status like '%Complete%' or a.status like '%Active%') 								and
+				(a.status like '%Complete%' or a.status in ('Active, Certified','Active, Pre-Cert'))	and
 				(a.applicant_projected_build_year <=2035 or a.applicant_projected_build_year is null) 	and
 				a.zap_incremental_units >= 500 																				then .5
 																													
@@ -420,7 +420,7 @@ as
 
 			/*Adding in conditions to spread the phasing of development for massive developments*/
 			when
-				(a.status like '%Complete%' or a.status like '%Active%') 								and
+				(a.status like '%Complete%' or a.status in ('Active, Certified','Active, Pre-Cert'))	and
 				(a.applicant_projected_build_year <=2035 or a.applicant_projected_build_year is null) 	and
 				a.zap_incremental_units >= 500 																		then 0
 																													
