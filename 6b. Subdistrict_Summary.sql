@@ -16,7 +16,13 @@ from
 	select
 		b.the_geom,
 		b.the_geom_webmercator,
-		a.subdistrict,
+		concat('"',a.subdistrict,'"') as subdistrict,
+		case
+			when b.boro = 'M' then 'Manhattan'
+			when b.boro = 'K' then 'Brooklyn'
+			when b.boro = 'X' then 'Bronx'
+			when b.boro = 'Q' then 'Queens'
+			when b.boro = 'R' then 'Staten Island' end			 as borough,
 		sum(a.portion_built_2025*a.counted_units_in_subdistrict) as Units_2025,
 		sum(a.portion_built_2035*a.counted_units_in_subdistrict) as Units_2025_2035,
 		sum(a.portion_built_2055*a.counted_units_in_subdistrict) as Units_2035_2055,
@@ -30,7 +36,7 @@ from
 											(
 												concat_ws
 												(
-													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units,' units')
+													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units_in_subdistrict,' units')
 												)
 												,''
 											)
@@ -48,7 +54,7 @@ from
 											(
 												concat_ws
 												(
-													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units,' units')
+													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units_in_subdistrict,' units')
 												)
 												,''
 											)
@@ -66,7 +72,7 @@ from
 											(
 												concat_ws
 												(
-													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units,' units')
+													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units_in_subdistrict,' units')
 												)
 												,''
 											)
@@ -84,7 +90,7 @@ from
 											(
 												concat_ws
 												(
-													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units,' units')
+													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units_in_subdistrict,' units')
 												)
 												,''
 											)
@@ -102,7 +108,7 @@ from
 											(
 												concat_ws
 												(
-													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units,' units')
+													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units_in_subdistrict,' units')
 												)
 												,''
 											)
@@ -120,7 +126,7 @@ from
 											(
 												concat_ws
 												(
-													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units,' units')
+													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units_in_subdistrict,' units')
 												)
 												,''
 											)
@@ -138,7 +144,7 @@ from
 											(
 												concat_ws
 												(
-													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units,' units')
+													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units_in_subdistrict,' units')
 												)
 												,''
 											)
@@ -156,7 +162,7 @@ from
 											(
 												concat_ws
 												(
-													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units,' units')
+													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units_in_subdistrict,' units')
 												)
 												,''
 											)
@@ -174,14 +180,50 @@ from
 											(
 												concat_ws
 												(
-													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units,' units')
+													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units_in_subdistrict,' units')
 												)
 												,''
 											)
 				else null end
 			),
 		' | '
-		) 	as planner_added_projects_matches
+		) 	as planner_added_projects_matches,
+		array_to_string
+		(
+			array_agg
+			(
+				case
+					when a.source = 'Neighborhood Study Projected Development Sites' then
+											nullif
+											(
+												concat_ws
+												(
+													': ',a.project_id,concat(a.counted_units_in_subdistrict,' units')
+												)
+												,''
+											)
+				else null end
+			),
+		' | '
+		) 	as nstudy_projected_development_matches,
+		array_to_string
+		(
+			array_agg
+			(
+				case
+					when a.source = 'Future Neighborhood Studies' then
+											nullif
+											(
+												concat_ws
+												(
+													': ',a.project_id,concat(a.counted_units_in_subdistrict,' units')
+												)
+												,''
+											)
+				else null end
+			),
+		' | '
+		) 	as future_nstudy_matches
 	from
 		dcpadmin.doe_schoolsubdistricts b
 	left join
@@ -191,10 +233,12 @@ from
 	group by
 		b.the_geom,
 		b.the_geom_webmercator,
-		a.subdistrict
+		a.subdistrict,
+		b.boro
 	order by 
-		a.subdistrict asc 
-) subdistrict_Growth_Summary_Known_Projects_20190611
-order by
-	substring(subdistrict,1,position('/' in subdistrict) -1)::numeric asc,
-	substring(subdistrict,position('/' in subdistrict) +1,2)::numeric asc
+	substring(a.subdistrict,1,position('/' in a.subdistrict) -1)::numeric asc,
+	substring(a.subdistrict,position('/' in a.subdistrict) +1,2)::numeric asc
+) subdistrict_Growth_Summary_Known_Projects_20190611;
+
+
+select cdb_cartodbfytable('capitalplanning','subdistrict_Growth_Summary_Known_Projects_20190611') ;	

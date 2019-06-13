@@ -30,7 +30,7 @@ from
 											(
 												concat_ws
 												(
-													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units,' units')
+													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units_in_csd,' units')
 												)
 												,''
 											)
@@ -48,7 +48,7 @@ from
 											(
 												concat_ws
 												(
-													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units,' units')
+													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units_in_csd,' units')
 												)
 												,''
 											)
@@ -66,7 +66,7 @@ from
 											(
 												concat_ws
 												(
-													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units,' units')
+													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units_in_csd,' units')
 												)
 												,''
 											)
@@ -84,7 +84,7 @@ from
 											(
 												concat_ws
 												(
-													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units,' units')
+													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units_in_csd,' units')
 												)
 												,''
 											)
@@ -102,7 +102,7 @@ from
 											(
 												concat_ws
 												(
-													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units,' units')
+													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units_in_csd,' units')
 												)
 												,''
 											)
@@ -120,7 +120,7 @@ from
 											(
 												concat_ws
 												(
-													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units,' units')
+													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units_in_csd,' units')
 												)
 												,''
 											)
@@ -138,7 +138,7 @@ from
 											(
 												concat_ws
 												(
-													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units,' units')
+													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units_in_csd,' units')
 												)
 												,''
 											)
@@ -156,7 +156,7 @@ from
 											(
 												concat_ws
 												(
-													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units,' units')
+													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units_in_csd,' units')
 												)
 												,''
 											)
@@ -174,14 +174,50 @@ from
 											(
 												concat_ws
 												(
-													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units,' units')
+													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units_in_csd,' units')
 												)
 												,''
 											)
 				else null end
 			),
 		' | '
-		) 	as planner_added_projects_matches
+		) 	as planner_added_projects_matches,
+		array_to_string
+		(
+			array_agg
+			(
+				case
+					when a.source = 'Neighborhood Study Projected Development Sites' then
+											nullif
+											(
+												concat_ws
+												(
+													': ',a.project_id,concat(a.counted_units_in_csd,' units')
+												)
+												,''
+											)
+				else null end
+			),
+		' | '
+		) 	as nstudy_projected_development_matches,
+		array_to_string
+		(
+			array_agg
+			(
+				case
+					when a.source = 'Future Neighborhood Studies' then
+											nullif
+											(
+												concat_ws
+												(
+													': ',a.project_id,concat(a.counted_units_in_csd,' units')
+												)
+												,''
+											)
+				else null end
+			),
+		' | '
+		) 	as future_nstudy_matches
 	from
 		(select st_union(the_geom) as the_Geom ,st_union(the_geom_webmercator) as the_geom_webmercator, schooldist from nyc_school_districts group by schooldist) b
 	left join

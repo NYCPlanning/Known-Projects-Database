@@ -41,8 +41,17 @@ from
 			st_INTERSECTs(a.the_geom,b.the_geom) and CAST(ST_Area(ST_INTERSECTion(a.the_geom,b.the_geom))/ST_Area(a.the_geom) AS DECIMAL) >= .1
 
 		/*Treating Resilient Housing Sandy Recovery PROJECTs, across many DISTINCT lots as polygons. These are three PROJECTs*/ 
-		when a.PROJECT_name_address like '%Resilient Housing%' and a.source in('DCP Applications','DCP Planner-Added PROJECTs')					then
+		when a.PROJECT_name_address like '%Resilient Housing%' and a.source in('DCP Applications','DCP Planner-Added PROJECTs')									then
 			st_INTERSECTs(a.the_geom,b.the_geom) and CAST(ST_Area(ST_INTERSECTion(a.the_geom,b.the_geom))/ST_Area(a.the_geom) AS DECIMAL) >= .1
+
+		/*Treating NCP and NIHOP projects, which are usually noncontiguous clusters, as polygons*/ 
+		when (a.PROJECT_name_address like '%NIHOP%' or a.PROJECT_name_address like '%NCP%' )and a.source in('DCP Applications','DCP Planner-Added PROJECTs')	then
+			st_INTERSECTs(a.the_geom,b.the_geom) and CAST(ST_Area(ST_INTERSECTion(a.the_geom,b.the_geom))/ST_Area(a.the_geom) AS DECIMAL) >= .1
+
+			/*Treating neighborhood study projected sites, and future neighborhood studies as polygons*/
+		when a.source in('Future Neighborhood Studies','Neighborhood Study Projected Development Sites') 														then
+			st_INTERSECTs(a.the_geom,b.the_geom) and CAST(ST_Area(ST_INTERSECTion(a.the_geom,b.the_geom))/ST_Area(a.the_geom) AS DECIMAL) >= .1
+	
 
 		/*Treating other polygons as points, using their centroid*/
 		when st_area(a.the_geom) > 0 																											then
@@ -264,7 +273,7 @@ from
 											else es_remarks end
 										)
 							,''),
-						concat(counted_units_in_es_zone,' units')
+						concat(round(100*proportion_in_es_zone,0),'%')
 					),
 				'')),
 		' | ') 	as es_zone 

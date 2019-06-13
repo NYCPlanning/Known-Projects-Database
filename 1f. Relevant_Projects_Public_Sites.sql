@@ -13,7 +13,7 @@ METHODOLOGY:
 *************************************************************************************************************************************************************************************/
 
 /***********************************RUN IN CARTO BATCH*****************************/
-
+drop table if exists public_sites_2018_sca_inputs_ms;
 select
 	*
 into
@@ -51,10 +51,52 @@ from
 		a.developer,
 		a.program,
 		a.current_agency,
+		CASE
+			WHEN COALESCE(b.portion_built_2025,b.PORTION_BUILT_2035,b.PORTION_BUILT_2055,0) > 0 THEN 1 ELSE 0 END AS PLANNER_PROVIDED_PHASING,
+		CASE
+			WHEN COALESCE(b.portion_built_2025,b.PORTION_BUILT_2035,b.PORTION_BUILT_2055,0) = 0 AND
+				(
+				upper(concat(a.project,b.planner_input))  like '%NYCHA%'  					OR 		
+				upper(concat(a.project,b.planner_input))  like '%BTP%'						OR
+				upper(concat(a.project,b.planner_input))  like '%HOUSING AUTHORITY%'  		OR
+				upper(concat(a.project,b.planner_input))  like '%NEXT GEN%'  				OR
+				upper(concat(a.project,b.planner_input))  like '%NEXT-GEN%'  				OR
+				upper(concat(a.project,b.planner_input))  like '%NEXTGEN%'   				OR
+				upper(concat(a.project,b.planner_input))  like '%BUILD TO PRESERVE%'
+				)																				THEN .5 /*PLACING NYCHA PROJECTS WITHOUT PROVIDED-PHASING*/
+			WHEN COALESCE(b.portion_built_2025,b.PORTION_BUILT_2035,b.PORTION_BUILT_2055,0) = 0 	
+																								THEN 1  /*Placing Public Sites w/o Planner inputs into 2025*/
+			ELSE B.PORTION_BUILT_2025 															END AS portion_built_2025,
+		CASE
+			WHEN COALESCE(b.portion_built_2025,b.PORTION_BUILT_2035,b.PORTION_BUILT_2055,0) = 0 AND
+				(
+				upper(concat(a.project,b.planner_input))  like '%NYCHA%'  					OR 		
+				upper(concat(a.project,b.planner_input))  like '%BTP%'						OR
+				upper(concat(a.project,b.planner_input))  like '%HOUSING AUTHORITY%'  		OR
+				upper(concat(a.project,b.planner_input))  like '%NEXT GEN%'  				OR
+				upper(concat(a.project,b.planner_input))  like '%NEXT-GEN%'  				OR
+				upper(concat(a.project,b.planner_input))  like '%NEXTGEN%'   				OR
+				upper(concat(a.project,b.planner_input))  like '%BUILD TO PRESERVE%'
+				)																				THEN .5 /*PLACING NYCHA PROJECTS WITHOUT PROVIDED-PHASING*/
+			WHEN COALESCE(b.portion_built_2025,b.PORTION_BUILT_2035,b.PORTION_BUILT_2055,0) = 0 	
+																								THEN 0  /*Placing Public Sites w/o Planner inputs into 2025*/
+			ELSE B.PORTION_BUILT_2035 															END AS portion_built_2035,
+		CASE
+			WHEN COALESCE(b.portion_built_2025,b.PORTION_BUILT_2035,b.PORTION_BUILT_2055,0) = 0 AND
+				(
+				upper(concat(a.project,b.planner_input))  like '%NYCHA%'  					OR 		
+				upper(concat(a.project,b.planner_input))  like '%BTP%'						OR
+				upper(concat(a.project,b.planner_input))  like '%HOUSING AUTHORITY%'  		OR
+				upper(concat(a.project,b.planner_input))  like '%NEXT GEN%'  				OR
+				upper(concat(a.project,b.planner_input))  like '%NEXT-GEN%'  				OR
+				upper(concat(a.project,b.planner_input))  like '%NEXTGEN%'   				OR
+				upper(concat(a.project,b.planner_input))  like '%BUILD TO PRESERVE%'
+				)																				THEN 0 /*PLACING NYCHA PROJECTS WITHOUT PROVIDED-PHASING*/
+			WHEN COALESCE(b.portion_built_2025,b.PORTION_BUILT_2035,b.PORTION_BUILT_2055,0) = 0 	
+																								THEN 0  /*Placing Public Sites w/o Planner inputs into 2025*/
+			ELSE B.PORTION_BUILT_2055 															END AS portion_built_2055,
+
 		b.planner_input,
-		b.portion_built_2025,
-		b.portion_built_2035,
-		b.portion_built_2055,
 		/*Identifying NYCHA Projects*/
 		CASE 
 			WHEN upper(concat(a.project,b.planner_input))  like '%NYCHA%' THEN 1   		
@@ -98,11 +140,11 @@ from
 		capitalplanning.mappluto_v_18v1_1 c
 	on
 		a.bbls_if_not_in_pipeline_or_planner_inputs =  c.bbl and c.bbl is not null
-) x
+) x;
 
 /***********************************RUN IN REGULAR CARTO*****************************/
 
-select cdb_cartodbfytable('capitalplanning', 'public_sites_2018_sca_inputs_ms')
+select cdb_cartodbfytable('capitalplanning', 'public_sites_2018_sca_inputs_ms');
 		
 
 select

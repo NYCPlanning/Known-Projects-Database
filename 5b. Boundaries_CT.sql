@@ -11,47 +11,47 @@ Sources:
   There are 94 projects > 200 units and <10K square meters. These projects are mostly distinct buildings and can be based on 
   centroid. Choosing polygons for projects <10K square meters if they are >600 units (18 projects)*/
 
-SELECT * FROM capitalplanning.known_projects_db_20190610_v4 where st_area(the_geom::geography)<10000 and total_units > 500 and source in('DCP Applications','DCP Planner-Added Projects')
+-- SELECT * FROM capitalplanning.known_projects_db_20190610_v4 where st_area(the_geom::geography)<10000 and total_units > 500 and source in('DCP Applications','DCP Planner-Added Projects')
 
 
 /*This provides a list of ZAP projects with >=10 BBLs that are currently treated as points. After review,
   it seems like most of these projects should still be points because they are individual buildings, except for "SD" 
   subdivision projects, which should be treated as polygons.*/
 
-select 
-	* 
-into
-	zap_projects_many_bbls
-from 
-	zap_deduped_build_year 
-where 
-	st_area(the_geom::geography) < 10000 	and 
-	total_units < 500 						and
-	project_id in
-				( 
-  				SELECT
-  					project_id
-  				from
-  				(
-  					select 
-  						project as project_id, 
-  						bbl_number as bbl, 
-  						null as block, 
-  						null as lot 
-  					from dcp_project_bbls_zap_ms 
-  					union all  
-  					SELECT 
-  						project_id, 
-  							associated_bbl,
-  							block,
-  							lot 
-  					FROM zap_project_missing_geom_lookup
-  				) x 
-  				group by
-  					project_id
-  				having
-  					count(*)>=10
-  				)
+-- select 
+-- 	* 
+-- into
+-- 	zap_projects_many_bbls
+-- from 
+-- 	zap_deduped_build_year 
+-- where 
+-- 	st_area(the_geom::geography) < 10000 	and 
+-- 	total_units < 500 						and
+-- 	project_id in
+-- 				( 
+--   				SELECT
+--   					project_id
+--   				from
+--   				(
+--   					select 
+--   						project as project_id, 
+--   						bbl_number as bbl, 
+--   						null as block, 
+--   						null as lot 
+--   					from dcp_project_bbls_zap_ms 
+--   					union all  
+--   					SELECT 
+--   						project_id, 
+--   							associated_bbl,
+--   							block,
+--   							lot 
+--   					FROM zap_project_missing_geom_lookup
+--   				) x 
+--   				group by
+--   					project_id
+--   				having
+--   					count(*)>=10
+--   				)
 
 
 
@@ -87,13 +87,17 @@ from
 		when a.project_id in(select project_id from zap_projects_many_bbls) and a.project_name_address like '%SD %'								then
 			st_intersects(a.the_geom,b.the_geom) and CAST(ST_Area(ST_Intersection(a.the_geom,b.the_geom))/ST_Area(a.the_geom) AS DECIMAL) >= .1
 
-		/*Treating Resilient Housing Sandy Recovery projects, across many distinct lots as polygons. These are three projects*/ 
-		when a.project_name_address like '%Resilient Housing%' and a.source in('DCP Applications','DCP Planner-Added Projects')					then
-			st_intersects(a.the_geom,b.the_geom) and CAST(ST_Area(ST_Intersection(a.the_geom,b.the_geom))/ST_Area(a.the_geom) AS DECIMAL) >= .1
+		/*Treating Resilient Housing Sandy Recovery PROJECTs, across many DISTINCT lots as polygons. These are three PROJECTs*/ 
+		when a.PROJECT_name_address like '%Resilient Housing%' and a.source in('DCP Applications','DCP Planner-Added PROJECTs')									then
+			st_INTERSECTs(a.the_geom,b.the_geom) and CAST(ST_Area(ST_INTERSECTion(a.the_geom,b.the_geom))/ST_Area(a.the_geom) AS DECIMAL) >= .1
 
-		/*Treating other polygons as points, using their centroid*/
-		when st_area(a.the_geom) > 0 																											then
-			st_intersects(st_centroid(a.the_geom),b.the_geom) 
+		/*Treating NCP and NIHOP projects, which are usually noncontiguous clusters, as polygons*/ 
+		when (a.PROJECT_name_address like '%NIHOP%' or a.PROJECT_name_address like '%NCP%' )and a.source in('DCP Applications','DCP Planner-Added PROJECTs')	then
+			st_INTERSECTs(a.the_geom,b.the_geom) and CAST(ST_Area(ST_INTERSECTion(a.the_geom,b.the_geom))/ST_Area(a.the_geom) AS DECIMAL) >= .1
+
+	/*Treating neighborhood study projected sites, and future neighborhood studies as polygons*/
+		when a.source in('Future Neighborhood Studies','Neighborhood Study Projected Development Sites') 														then
+			st_INTERSECTs(a.the_geom,b.the_geom) and CAST(ST_Area(ST_INTERSECTion(a.the_geom,b.the_geom))/ST_Area(a.the_geom) AS DECIMAL) >= .1
 
 		/*Treating points as points*/
 		else
@@ -302,7 +306,7 @@ from
 					(
 						': ',
 						nullif(ct,''),
-						concat(counted_units_in_ct,' units')
+						concat(round(100*proportion_in_ct,0),'%')
 					),
 				'')),
 		' | ') 	as Census_Tract 

@@ -10,6 +10,8 @@ METHODOLOGY:
 2. Deduplicate from aggregated dataset
 *********************************************************/
 
+drop table if exists nstudy_future;
+
 select
 	*
 into 
@@ -24,6 +26,8 @@ from
 		a.neighborhood,
 		a.borough,
 		a.status,
+		a.effective_year,
+		a.build_period,
 		a.certainty,
 		a.certainty_factor,
 		a.incremental_units as total_units,

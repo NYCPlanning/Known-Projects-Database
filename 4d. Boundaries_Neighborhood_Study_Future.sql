@@ -4,10 +4,8 @@ SCRIPT: Geocode projected and sites from adopted neighborhood rezonings for SCA
 START DATE: 6/12/2019
 ************************************************************/
 
-drop table if exists nstudy_projected_csd;
-drop table if exists nstudy_projected_csd_final;
-drop table if exists nstudy_projected_subdistrict;
-drop table if exists nstudy_projected_subdistrict_final;
+drop table if exists nstudy_future_csd;
+drop table if exists nstudy_future_csd_final;
 
 
 /*CSD*/
@@ -15,16 +13,16 @@ drop table if exists nstudy_projected_subdistrict_final;
 select
 	*
 into 
-	nstudy_projected_csd
+	nstudy_future_csd
 from
 (
 	select
 		a.*,
 		b.schooldist as csd,
 		st_area(st_intersection(a.the_geom,b.the_geom))/st_area(a.the_geom) as proportion_in_csd,
-		round((st_area(st_intersection(a.the_geom,b.the_geom))/st_area(a.the_geom) * nstudy_projected_potential_incremental_units)::numeric,0) as units_in_csd
+		round((st_area(st_intersection(a.the_geom,b.the_geom))/st_area(a.the_geom) * incremental_units_with_certainty_factor)::numeric,0) as units_in_csd
 	from
-		nstudy_projected_potential_areawide_deduped_final a
+		nstudy_future a
 	left join
 		nyc_school_districts b
 	on
@@ -48,11 +46,6 @@ from
 		status,
 		total_units,
 		nstudy_projected_potential_incremental_units,
-		portion_built_2025,
-		portion_built_2035,
-		portion_built_2055,
-		project_matches,
-		matched_incremental_units,
 		array_to_string(
 			array_agg(
 				nullif(
@@ -60,10 +53,10 @@ from
 					(
 						': ',
 						nullif(concat(CSD),''),
-						concat(round(100*proportion_in_csd::numeric,0),'%')
+						concat(units_in_csd,' units')
 					),
 				'')),
-		' | ') 	as CSD
+		' | ') 	as CSD 
 	from
 		nstudy_projected_csd
 	group by
@@ -74,12 +67,7 @@ from
 		effective_date,
 		status,
 		total_units,
-		nstudy_projected_potential_incremental_units,
-		portion_built_2025,
-		portion_built_2035,
-		portion_built_2055,
-		project_matches,
-		matched_incremental_units
+		nstudy_projected_potential_incremental_units
 	order by
 		effective_date::date asc
 ) nstudy_projected_csd_final;
@@ -130,7 +118,7 @@ from
 					(
 						': ',
 						nullif(concat(subdistrict),''),
-						concat(round(100*proportion_in_subdistrict::numeric,0),'%')
+						concat(round(100*proportion_in_subdistrict,0),'%')
 					),
 				'')),
 		' | ') 	as Subdistrict
@@ -144,10 +132,7 @@ from
 		effective_date,
 		status,
 		total_units,
-		nstudy_projected_potential_incremental_units,
-		portion_built_2025,
-		portion_built_2035,
-		portion_built_2055
+		nstudy_projected_potential_incremental_units
 	order by
 		effective_date::date asc
 ) nstudy_projected_subdistrict_final;

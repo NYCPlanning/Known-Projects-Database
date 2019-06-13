@@ -16,6 +16,9 @@ drop table if exists state_deduped_geo;
 drop table if exists nstudy_deduped_geo;
 drop table if exists public_sites_deduped_geo;
 drop table if exists planner_added_projects_deduped_geo;
+drop table if exists nstudy_projected_areawide_deduped_geo;
+drop table if exists future_nstudy_geo;
+
 
 
 select
@@ -261,4 +264,54 @@ from
 		concat(a.project_id) = b.project_id
 ) x
 	order by 
+		project_id asc;
+
+
+select
+	*
+into
+	nstudy_projected_areawide_deduped_geo
+from
+(
+	select
+		a.*,
+		b.CSD,
+		b.Subdistrict,
+		b.ES_Zone,
+		b.MS_Zone,
+		b.Census_Tract 
+	from	
+		nstudy_projected_potential_areawide_deduped_final a
+	left join
+		Known_Projects_DB_Project_Level_Boundaries b
+	on
+		b.source = 'Neighborhood Study Projected Development Sites' and
+		a.project_id = b.project_id
+) x
+	order by
+		project_id asc;
+
+
+select
+	*
+into
+	future_nstudy_geo
+from
+(
+	select
+		a.*,
+		b.CSD,
+		b.Subdistrict,
+		b.ES_Zone,
+		b.MS_Zone,
+		b.Census_Tract 
+	from	
+		nstudy_future a
+	left join
+		Known_Projects_DB_Project_Level_Boundaries b
+	on
+		b.source = 'Future Neighborhood Studies' and
+		a.project_id = b.project_id
+) x
+	order by
 		project_id asc;

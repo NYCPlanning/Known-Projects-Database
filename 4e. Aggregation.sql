@@ -400,100 +400,92 @@ as
 		assisted_living_flag
 	from
 		planner_projects_deduped
-	-- union all
-	-- select
-	-- 	the_geom,
-	-- 	the_geom_webmercator,
-	-- 	source,
-	-- 	project_id,
-	-- 	'' 															as project_name_address,
-	-- 	''															as dob_job_type,
-	-- 	status,
-	-- 	borough,
-	-- 	total_units,
-	-- 	nstudy_projected_potential_incremental_units				as deduplicated_units,
-	-- 	case
-	-- 		when total_units::float*.2>nstudy_projected_potential_incremental_units				then 0
-	-- 		when nstudy_projected_potential_incremental_units<=2								then 0
-	-- 		else nstudy_projected_potential_incremental_units end								as counted_units,
-	-- 	portion_built_2025,
-	-- 	portion_built_2035,
-	-- 	portion_built_2055,
-	-- 	''															as planner_input,
-	-- 	''															as dob_matches,
-	-- 	null::numeric												as dob_matched_units,
-	-- 	''															as hpd_projected_closing_matches,
-	-- 	null::numeric												as hpd_projected_closing_matched_units,
-	-- 	''															as hpd_rfp_matches,
-	-- 	null::numeric												as hpd_rfp_matched_units,
-	-- 	''															as edc_matches,
-	-- 	null::numeric												as edc_matched_units,
-	-- 	''				 											as dcp_application_matches,
-	-- 	null::numeric												as dcp_application_matched_units,
-	-- 	''															as state_project_matches,
-	-- 	null::numeric												as state_project_matched_units,
-	-- 	''															as neighborhood_study_matches,
-	-- 	null::numeric 												as neighborhood_study_units,
-	-- 	''															as public_sites_matches,
-	-- 	null::numeric												as public_sites_units,
-	-- 	''															as planner_projects_matches,
-	-- 	null::numeric												as planner_projects_units,
-	-- 	project_matches 											as matches_to_nstudy_projected,
-	-- 	matched_incremental_units									as units_matched_to_nstudy_projected,
-	-- 	null as nycha_flag,
-	-- 	null as gq_flag,
-	-- 	null as senior_housing_flag,
-	-- 	null as assisted_living_flag
-	-- from
-	-- 	nstudy_projected_potential_deduped_final
-	-- where
-	-- 	status = 'Projected'
-	-- union all
-	-- select
-	-- 	the_geom,
-	-- 	the_geom_webmercator,
-	-- 	source,
-	-- 	project_id,
-	-- 	'' 															as project_name_address,
-	-- 	''															as dob_job_type,
-	-- 	status,
-	-- 	borough,
-	-- 	total_units,
-	-- 	total_units 												as deduplicated_units,
-	-- 	case
-	-- 		when total_units::float*.2>total_units					then 0
-	-- 		when total_units<=2										then 0
-	-- 		else total_units end									as counted_units,
-	-- 	portion_built_2025,
-	-- 	portion_built_2035,
-	-- 	portion_built_2055,
-	-- 	''															as planner_input,
-	-- 	''															as dob_matches,
-	-- 	null::numeric												as dob_matched_units,
-	-- 	''															as hpd_projected_closing_matches,
-	-- 	null::numeric												as hpd_projected_closing_matched_units,
-	-- 	''															as hpd_rfp_matches,
-	-- 	null::numeric												as hpd_rfp_matched_units,
-	-- 	''															as edc_matches,
-	-- 	null::numeric												as edc_matched_units,
-	-- 	''				 											as dcp_application_matches,
-	-- 	null::numeric												as dcp_application_matched_units,
-	-- 	''															as state_project_matches,
-	-- 	null::numeric												as state_project_matched_units,
-	-- 	''															as neighborhood_study_matches,
-	-- 	null::numeric 												as neighborhood_study_units,
-	-- 	''															as public_sites_matches,
-	-- 	null::numeric												as public_sites_units,
-	-- 	''															as planner_projects_matches,
-	-- 	null::numeric												as planner_projects_units,
-	-- 	'' 															as matches_to_nstudy_projected,
-	-- 	null::numeric												as units_matched_to_nstudy_projected,
-	-- 	null as nycha_flag,
-	-- 	null as gq_flag,
-	-- 	null as senior_housing_flag,
-	-- 	null as assisted_living_flag
-	-- from
-	-- 	nstudy_future
+	union all
+	select
+		the_geom,
+		the_geom_webmercator,
+		source,
+		project_id,
+		neighborhood 												as project_name_address,
+		''															as dob_job_type,
+		status,
+		borough,
+		total_units,
+		nstudy_projected_potential_incremental_units 				as deduplicated_units,
+		nstudy_projected_potential_incremental_units 				as counted_units,
+		portion_built_2025,
+		portion_built_2035,
+		portion_built_2055,
+		''															as planner_input,
+		''															as dob_matches,
+		null														as dob_matched_units,
+		''															as hpd_projected_closing_matches,
+		null														as hpd_projected_closing_matched_units,
+		''															as hpd_rfp_matches,
+		null														as hpd_rfp_matched_units,
+		''															as edc_matches,
+		null														as edc_matched_units,
+		''				 											as dcp_application_matches,
+		null														as dcp_application_matched_units,
+		''															as state_project_matches,
+		null::numeric												as state_project_matched_units,
+		''															as neighborhood_study_matches,
+		null														as neighborhood_study_units,
+		''															as public_sites_matches,
+		null														as public_sites_units,
+		''															as planner_projects_matches,
+		null::numeric												as planner_projects_units,
+		'' 															as matches_to_nstudy_projected,
+		null::numeric												as units_matched_to_nstudy_projected,
+		null	 													as nycha_flag,
+		null	 													as gq_flag,
+		null	 													as senior_housing_flag,
+		null	 													as assisted_living_flag
+	from
+		nstudy_projected_potential_areawide_deduped_final
+	union all
+	select
+		the_geom,
+		the_geom_webmercator,
+		source,
+		project_id,
+		neighborhood 												as project_name_address,
+		''															as dob_job_type,
+		status,
+		borough,
+		incremental_units_with_certainty_factor,
+		incremental_units_with_certainty_factor 					as deduplicated_units,
+		incremental_units_with_certainty_factor 					as counted_units,
+		portion_built_2025,
+		portion_built_2035,
+		portion_built_2055,
+		''															as planner_input,
+		''															as dob_matches,
+		null														as dob_matched_units,
+		''															as hpd_projected_closing_matches,
+		null														as hpd_projected_closing_matched_units,
+		''															as hpd_rfp_matches,
+		null														as hpd_rfp_matched_units,
+		''															as edc_matches,
+		null														as edc_matched_units,
+		''				 											as dcp_application_matches,
+		null														as dcp_application_matched_units,
+		''															as state_project_matches,
+		null::numeric												as state_project_matched_units,
+		''															as neighborhood_study_matches,
+		null														as neighborhood_study_units,
+		''															as public_sites_matches,
+		null														as public_sites_units,
+		''															as planner_projects_matches,
+		null::numeric												as planner_projects_units,
+		'' 															as matches_to_nstudy_projected,
+		null::numeric												as units_matched_to_nstudy_projected,
+		null	 													as nycha_flag,
+		null	 													as gq_flag,
+		null	 													as senior_housing_flag,
+		null	 													as assisted_living_flag
+	from
+		nstudy_future
 )
 order by 
 	source asc,
@@ -502,6 +494,4 @@ order by
 	status asc;
 
 
-
-
-select cdb_cartodbfytable('capitalplanning','known_projects_db_20190610_v4') 
+select cdb_cartodbfytable('capitalplanning','known_projects_db_20190610_v4') ;

@@ -311,6 +311,7 @@ from
 					"G:\03. Schools Planning\01_Inputs to SCA CP\Housing pipeline\00_Data\Jan 2019 SCA Housing Pipeline\Working Data\DEP NDF\RE BSC housing commitment sites.msg"
 					*/
 					case when a.project_id = '54 Central Avenue BAY STREET CORRIDOR REZONING COMMITMENT' then .5 end,
+					case when a.project_id = '(Projected RFP) DSNY 123rd Street Parking Lot (Site 3) EAST HARLEM REZONING COMMITMENT' 	then 0 end,
 					c.portion_built_2025,
 					b.portion_built_2025,
 					case when a.status = 'Rezoning Commitment' then 1 end
@@ -331,7 +332,7 @@ from
 		coalesce(
 				c.portion_built_2055,
 				b.portion_built_2055,
-				0
+				case when a.status = 'Rezoning Commitment' then 0 end
 				) 
 		as portion_built_2055,
 
@@ -383,7 +384,7 @@ from
 	on
 		POSITION(UPPER(C.COMMITMENT_SITE) IN UPPER(A.PROJECT_ID)) > 0
 
-) x 
+) x ;
 
 drop table if exists dep_ndf_by_site;
 select
@@ -422,12 +423,12 @@ from
 	where
 		not(status = 'Rezoning Commitment' and units is null) /*Omitting one rezoning cmomitment, 130 West 182nd St, which is unidentifiable*/
 ) x
-
+;
 
 /************************RUN IN REGULAR CARTO*********************/
 
 select cdb_cartodbfytable('capitalplanning', 'dep_ndf_by_site')
-
+;
 
 /*******************************CHECKING QUERY**************************************************************************************************************************** 
 15/1,047 sites are not geocoded after joining MAPPLUTO. They are then geocoded using a random polygon from other another BBL in their site.
