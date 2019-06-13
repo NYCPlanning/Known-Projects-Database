@@ -49,7 +49,7 @@ from
 			st_INTERSECTs(a.the_geom,b.the_geom) and CAST(ST_Area(ST_INTERSECTion(a.the_geom,b.the_geom))/ST_Area(a.the_geom) AS DECIMAL) >= .1
 
 			/*Treating neighborhood study projected sites, and future neighborhood studies as polygons*/
-		when a.source in('Future Neighborhood Studies','Neighborhood Study Projected Development Sites') 														then
+		when a.source in('Future Neighborhood Studies','Neighborhood Study Projected Development Sites', 'EDC Projected Projects') 														then
 			st_INTERSECTs(a.the_geom,b.the_geom) and CAST(ST_Area(ST_INTERSECTion(a.the_geom,b.the_geom))/ST_Area(a.the_geom) AS DECIMAL) >= .1
 	
 

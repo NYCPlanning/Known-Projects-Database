@@ -36,7 +36,7 @@ from
 											(
 												concat_ws
 												(
-													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units_in_subdistrict,' units')
+													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units,' units')
 												)
 												,''
 											)
@@ -54,7 +54,7 @@ from
 											(
 												concat_ws
 												(
-													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units_in_subdistrict,' units')
+													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units,' units')
 												)
 												,''
 											)
@@ -72,7 +72,7 @@ from
 											(
 												concat_ws
 												(
-													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units_in_subdistrict,' units')
+													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units,' units')
 												)
 												,''
 											)
@@ -90,7 +90,7 @@ from
 											(
 												concat_ws
 												(
-													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units_in_subdistrict,' units')
+													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units,' units')
 												)
 												,''
 											)
@@ -108,7 +108,7 @@ from
 											(
 												concat_ws
 												(
-													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units_in_subdistrict,' units')
+													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units,' units')
 												)
 												,''
 											)
@@ -126,7 +126,7 @@ from
 											(
 												concat_ws
 												(
-													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units_in_subdistrict,' units')
+													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units,' units')
 												)
 												,''
 											)
@@ -144,7 +144,7 @@ from
 											(
 												concat_ws
 												(
-													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units_in_subdistrict,' units')
+													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units,' units')
 												)
 												,''
 											)
@@ -162,7 +162,7 @@ from
 											(
 												concat_ws
 												(
-													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units_in_subdistrict,' units')
+													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units,' units')
 												)
 												,''
 											)
@@ -180,7 +180,7 @@ from
 											(
 												concat_ws
 												(
-													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units_in_subdistrict,' units')
+													': ',concat(a.project_id,', ',a.project_name_address),concat(a.counted_units,' units')
 												)
 												,''
 											)
@@ -198,7 +198,7 @@ from
 											(
 												concat_ws
 												(
-													': ',a.project_id,concat(a.counted_units_in_subdistrict,' units')
+													': ',a.project_id,concat(a.counted_units,' units')
 												)
 												,''
 											)
@@ -216,7 +216,7 @@ from
 											(
 												concat_ws
 												(
-													': ',a.project_id,concat(a.counted_units_in_subdistrict,' units')
+													': ',a.project_id,concat(a.counted_units,' units')
 												)
 												,''
 											)
