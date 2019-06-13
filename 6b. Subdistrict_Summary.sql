@@ -227,7 +227,16 @@ from
 	from
 		dcpadmin.doe_schoolsubdistricts b
 	left join
-		(select * from aggregated_subdistrict_longform where not(source = 'DOB' and status in('Complete','Complete (demolition)'))) a
+		(
+			select 
+				* 
+			from 
+				aggregated_subdistrict_longform 
+			where 
+				not(source = 'DOB' and status in('Complete','Complete (demolition)')) 	and
+				(assisted_living_flag 	= 0 or assisted_living_flag is null)		 	and
+				(senior_housing_flag 	= 0 or senior_housing_flag is null)
+		) a
 	on
 		a.subdistrict = b.distzone
 	group by

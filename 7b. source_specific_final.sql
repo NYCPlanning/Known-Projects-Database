@@ -29,11 +29,11 @@ from
 (
 	select
 		a.*,
-		replace(b.CSD,':  units','') 								as CSD,
-		concat('"',replace(b.Subdistrict,':  units',''),'"')		as subdistrict,
-		replace(b.ES_Zone,':  units','') 							as es_zone,
-		replace(b.MS_Zone,':  units','') 							as ms_zone,
-		replace(b.Census_Tract,':  units','')  						as ct
+		b.CSD 														as CSD,
+		b.subdistrict 												as subdistrict,
+		b.ES_Zone 													as es_zone,
+		b.ms_zone 													as ms_zone,
+		b.Census_Tract  											as ct
 	from
 		(select * from dob_2018_sca_inputs_ms where status in('Complete','Complete (demolition)')) a
 	left join

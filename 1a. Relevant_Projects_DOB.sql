@@ -177,18 +177,15 @@ from
 		case
 			when a.status like 'Complete%' 			then null
 			when a.status = 'Partial Complete'		then 1
-			when c.job_number is not null 			then completion_rate_2025 		
-			when c.job_number is null 				then 1 							end					as portion_built_2025,
+			when c.job_number is not null 			then completion_rate_2025 							end as portion_built_2025,
 		case
 			when a.status like 'Complete%' 			then null
 			when a.status = 'Partial Complete'		then 0
-			when c.job_number is not null 			then round((1 -completion_rate_2025)::numeric,2) 	
-			when c.job_number is null 				then 0 							end					as portion_built_2035,
+			when c.job_number is not null 			then round((1 -completion_rate_2025)::numeric,2) 	end as portion_built_2035,
 		case
 			when a.status like 'Complete%' 			then null
 			when a.status = 'Partial Complete'		then 0
-			when c.job_number is not null 			then 0
-			when c.job_number is null 				then 0 							end					as portion_built_2055
+			when c.job_number is not null 			then 0												end	as portion_built_2055
 	from
 		capitalplanning.dob_2018_sca_inputs_ms_pre a
 	left join
@@ -198,7 +195,7 @@ from
 		b.instance > 1
 	/*Adding in HEIP-developed phasing for DOB jobs. 17 incomplete DOB jobs are not included in HEIP's list -- setting these to 2025.*/
 	left join
-		(select job_number, completion_rate_2025 from capitalplanning.housingdb_19v1_rl_test_0605) c
+		(select job_number, completion_rate_2025 from capitalplanning.housingdb_19v1_rl_test_0612) c
 	on
 		a.job_number = c.job_number
 	where
