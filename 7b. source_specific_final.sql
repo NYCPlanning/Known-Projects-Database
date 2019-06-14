@@ -70,6 +70,32 @@ from
 	order by 
 		job_number asc;
 
+
+select
+	*
+into
+	dob_2018_sca_inputs_ms_incomplete_geo_cp_assumptions
+from
+(
+	select
+		a.*,
+		b.CSD,
+		b.Subdistrict,
+		b.ES_Zone,
+		b.MS_Zone,
+		b.Census_Tract 
+	from
+		(select * from dob_2018_sca_inputs_ms_cp_build_year where status not in('Complete','Complete (demolition)')) a
+	left join
+		Known_Projects_DB_Project_Level_Boundaries_cp_assumptions b
+	on
+		b.source = 'DOB' and
+		concat(a.job_number) = b.project_id
+) x
+	order by 
+		job_number asc;
+
+
 select
 	*
 into

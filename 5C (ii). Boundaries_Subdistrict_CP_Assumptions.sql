@@ -6,16 +6,16 @@ COMPLETION DATE:
 Sources: 
 *************************************************************************************************************************************************************************************/
 
-drop table if exists aggregated_subdistrict;
-drop table if exists ungeocoded_PROJEcts_subdistrict;
-drop table if exists aggregated_subdistrict_longform;
-drop table if exists aggregated_subdistrict_PROJEct_level;
+drop table if exists aggregated_subdistrict_cp_assumptions;
+drop table if exists ungeocoded_PROJEcts_subdistrict_cp_assumptions;
+drop table if exists aggregated_subdistrict_longform_cp_assumptions;
+drop table if exists aggregated_subdistrict_PROJEct_level_cp_assumptions;
 
 
 SELECT
 	*
 into
-	aggregated_subdistrict
+	aggregated_subdistrict_cp_assumptions
 from
 (
 	with aggregated_boundaries_subdistrict as
@@ -26,7 +26,7 @@ from
 		b.distzone AS subdistrict,
 		st_distance(a.the_geom::geography,b.the_geom::geography) as subdistrict_Distance
 	from
-		capitalplanning.known_PROJECTs_db_20190610_v4 a
+		capitalplanning.known_PROJECTs_db_20190610_v4_cp_assumptions a
 	left join
 		dcpadmin.doe_schoolsubdistricts b
 	on 
@@ -125,7 +125,7 @@ from
 SELECT
 	*
 into
-	ungeocoded_PROJECTs_subdistrict
+	ungeocoded_PROJECTs_subdistrict_cp_assumptions
 from
 (
 	with ungeocoded_PROJECTs_subdistrict as
@@ -144,7 +144,7 @@ from
 								)
 				) as subdistrict_distance1
 	from
-		aggregated_subdistrict a 
+		aggregated_subdistrict_cp_assumptions a 
 	left join
 		dcpadmin.doe_schoolsubdistricts b
 	on 
@@ -164,7 +164,7 @@ from
 SELECT
 	*
 into
-	aggregated_subdistrict_longform
+	aggregated_subdistrict_longform_cp_assumptions
 from
 (
 	with	min_distances as
@@ -173,7 +173,7 @@ from
 		PROJECT_id,
 		min(subdistrict_distance1) as min_distance
 	from
-		ungeocoded_PROJECTs_subdistrict
+		ungeocoded_PROJECTs_subdistrict_cp_assumptions
 	group by 
 		PROJECT_id
 ),
@@ -183,7 +183,7 @@ from
 	SELECT
 		a.*
 	from
-		ungeocoded_PROJECTs_subdistrict a 
+		ungeocoded_PROJECTs_subdistrict_cp_assumptions a 
 	inner join
 		min_distances b
 	on
@@ -197,7 +197,7 @@ from
 		b.proportion_in_subdistrict_1 as proportion_in_subdistrict,
 		round(a.counted_units * b.proportion_in_subdistrict_1) as counted_units_in_subdistrict 
 	from 
-		known_PROJECTs_db_20190610_v4 a 
+		known_PROJECTs_db_20190610_v4_cp_assumptions a 
 	left join 
 		all_PROJECTs_subdistrict b 
 	on 
@@ -215,7 +215,7 @@ from
 SELECT
 	*
 into
-	aggregated_subdistrict_PROJECT_level
+	aggregated_subdistrict_PROJECT_level_cp_assumptions
 from
 (
 	SELECT
@@ -268,7 +268,7 @@ from
 				'')),
 		' | ') 	as subdistrict 
 	from
-		aggregated_subdistrict_longform
+		aggregated_subdistrict_longform_cp_assumptions
 	group by
 		the_geom,
 		the_geom_webmercator,
@@ -308,16 +308,3 @@ from
 		senior_housing_flag,
 		assisted_living_flag
 ) x;
-
-
-
-/*Output longform sheet*/
-
-SELECT
-	*
-into
-	longform_subdist_output
-from
-(
-SELECT *,concat('"',subdistrict,'"') as subdist_concat FROM capitalplanning.aggregated_subdistrict_longform where not (source = 'DOB' and status in('Complete','Complete (demolition)'))
-) x

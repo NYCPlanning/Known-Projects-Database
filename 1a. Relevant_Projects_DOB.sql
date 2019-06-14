@@ -212,6 +212,74 @@ select cdb_cartodbfytable('capitalplanning', 'dob_2018_sca_inputs_ms');
 
 
 
+
+
+
+drop table if exists dob_2018_sca_inputs_ms_cp_build_year;
+
+/*Omitting old dups from table*/
+SELECT
+	*
+into
+	dob_2018_sca_inputs_ms_cp_build_year
+from
+(
+	SELECT
+		a.*,
+		case
+			when a.status like 'Complete%' 			then a.units_net
+			when a.status like '%Partial Complete' 	then a.latest_cofo
+			else null end 																			 	as units_net_complete, 
+		case
+			when a.status like 'Complete%' 			then null
+			when a.status like '%Partial Complete' 	then a.units_net - a.latest_cofo
+			else a.units_net end 																		as units_net_incomplete,
+		case
+			when a.status like 'Complete%' 			then null
+			when a.status like '%Partial Complete' 	then a.units_net - a.latest_cofo
+			else a.units_net end 																		as counted_units,
+		case
+			when a.status in('Complete','Complete (demolition)') 	then null 
+			when a.status like '%In progress%' 						then .5
+			else 1 end 																					as portion_built_2025,
+		case
+			when a.status in('Complete','Complete (demolition)') 	then null 
+			when a.status like '%In progress%' 						then .5
+			else 0 end 																					as portion_built_2035,
+		case
+			when a.status in('Complete','Complete (demolition)') 	then null 
+			when a.status like '%In progress%' 						then 0
+			else 0 end 																					as portion_built_2055
+	from
+		capitalplanning.dob_2018_sca_inputs_ms_pre a
+	left join
+		capitalplanning.qc_potentialdups_1 b
+	on
+		a.job_number = b.job_number and
+		b.instance > 1
+	/*Adding in HEIP-developed phasing for DOB jobs. 17 incomplete DOB jobs are not included in HEIP's list -- setting these to 2025.*/
+	left join
+		(select job_number, completion_rate_2025 from capitalplanning.housingdb_19v1_rl_test_0612) c
+	on
+		a.job_number = c.job_number
+	where
+		b.job_number is null
+) x
+	order by
+		x.job_number asc;
+
+
+select cdb_cartodbfytable('capitalplanning', 'dob_2018_sca_inputs_ms_cp_build_year');
+
+
+
+
+
+
+
+
+
+
 /**********************************
 SOURCE-SPECIFIC OUTPUT
 **********************************/
