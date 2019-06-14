@@ -160,7 +160,7 @@ from
 	SELECT * from ungeocoded_PROJECTs_subdistrict
 ) as _2;
 
-
+drop table if exists aggregated_subdistrict_longform;
 SELECT
 	*
 into
@@ -195,7 +195,8 @@ from
 		a.*, 
 		b.subdistrict_1 as subdistrict, 
 		b.proportion_in_subdistrict_1 as proportion_in_subdistrict,
-		round(a.counted_units * b.proportion_in_subdistrict_1) as counted_units_in_subdistrict 
+		round(a.counted_units * b.proportion_in_subdistrict_1) as counted_units_in_subdistrict,
+		concat('"',subdistrict,'"') as subdist_concat
 	from 
 		known_PROJECTs_db_20190610_v4 a 
 	left join 
@@ -312,12 +313,12 @@ from
 
 
 /*Output longform sheet*/
-
+drop table if exists longform_subdist_output;
 SELECT
 	*
 into
 	longform_subdist_output
 from
 (
-SELECT *,concat('"',subdistrict,'"') as subdist_concat FROM capitalplanning.aggregated_subdistrict_longform where not (source = 'DOB' and status in('Complete','Complete (demolition)'))
+SELECT *  FROM capitalplanning.aggregated_subdistrict_longform where not (source = 'DOB' and status in('Complete','Complete (demolition)'))
 ) x

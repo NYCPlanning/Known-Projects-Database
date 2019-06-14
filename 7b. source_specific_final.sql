@@ -8,6 +8,7 @@ Sources:
 
 drop table if exists dob_2018_sca_inputs_ms_complete_geo;
 drop table if exists dob_2018_sca_inputs_ms_incomplete_geo;
+drop table if exists dob_2018_sca_inputs_ms_incomplete_geo_cp_assumptions;
 drop table if exists hpd_deduped_geo;
 drop table if exists hpd_rfp_deduped_geo;
 drop table if exists edc_deduped_geo;
@@ -35,7 +36,7 @@ from
 		b.ms_zone 													as ms_zone,
 		b.Census_Tract  											as ct
 	from
-		(select * from dob_2018_sca_inputs_ms where status in('Complete','Complete (demolition)')) a
+		(select * from dob_2018_sca_inputs_ms_cp_build_year_2 where status in('Complete','Complete (demolition)')) a
 	left join
 		Known_Projects_DB_Project_Level_Boundaries b
 	on
@@ -60,7 +61,7 @@ from
 		b.MS_Zone,
 		b.Census_Tract 
 	from
-		(select * from dob_2018_sca_inputs_ms where status not in('Complete','Complete (demolition)')) a
+		(select * from dob_2018_sca_inputs_ms_2 where status not in('Complete','Complete (demolition)')) a
 	left join
 		Known_Projects_DB_Project_Level_Boundaries b
 	on
@@ -85,7 +86,7 @@ from
 		b.MS_Zone,
 		b.Census_Tract 
 	from
-		(select * from dob_2018_sca_inputs_ms_cp_build_year where status not in('Complete','Complete (demolition)')) a
+		(select * from dob_2018_sca_inputs_ms_cp_build_year_2 where status not in('Complete','Complete (demolition)')) a
 	left join
 		Known_Projects_DB_Project_Level_Boundaries_cp_assumptions b
 	on
@@ -167,6 +168,7 @@ from
 	order by 
 		project_id asc;
 
+drop table if exists zap_deduped_geo;
 select
 	*
 into

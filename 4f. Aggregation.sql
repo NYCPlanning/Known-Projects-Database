@@ -1,9 +1,9 @@
 /*Aggregating deduplicated data*/
 
-drop table if exists known_projects_db_20190610_v4_cp_assumptions;
+drop table if exists known_projects_db_20190610_v4;
 
 create table
-	known_projects_db_20190610_v4_cp_assumptions
+	known_projects_db_20190610_v4
 as
 (
 	select
@@ -47,7 +47,7 @@ as
 		senior_housing_flag,
 		assisted_living_flag
 	from
-		dob_2018_sca_inputs_ms_cp_build_year
+		dob_2018_sca_inputs_ms_2
 	-- where
 	-- 	status not in('Complete','Complete (demolition)')
 	union all
@@ -494,4 +494,4 @@ order by
 	status asc;
 
 
-select cdb_cartodbfytable('capitalplanning','known_projects_db_20190610_v4_cp_assumptions') ;
+select cdb_cartodbfytable('capitalplanning','known_projects_db_20190610_v4') ;

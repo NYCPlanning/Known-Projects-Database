@@ -161,6 +161,9 @@ from
 ) as _2;
 
 
+
+drop table if exists aggregated_subdistrict_longform_cp_assumptions;
+
 SELECT
 	*
 into
@@ -309,3 +312,7 @@ from
 		senior_housing_flag,
 		assisted_living_flag
 ) x;
+
+
+/*Subdistrict longform output*/
+SELECT * FROM capitalplanning.aggregated_subdistrict_longform_cp_assumptions where not (source = 'DOB' and status in('Complete','Complete (demolition)')) 

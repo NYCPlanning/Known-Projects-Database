@@ -176,6 +176,14 @@ as
 			when a.status in ('Active, Initiation','Active, Pre-PAS')												then
 																													'Early-Stage Project'
 			when 
+				a.status = 'Active, Pre-Cert'										and 
+				a.dcp_target_certification_date is not null 						and
+				extract(year from a.dcp_target_certification_date::date) <=2019 	and
+				(a.applicant_projected_build_year <=2025 or a.applicant_projected_build_year is null)	and			
+				a.zap_incremental_units	>=500																		then
+																													'Pre-Cert, Target Cert <= 2019, >500 units remaining pre-2025'
+
+			when 
 				a.status = 'Active, Pre-Cert'					and 
 				a.dcp_target_certification_date is not null 	and
 				extract(year from a.dcp_target_certification_date::date) <=2019 	and
@@ -292,6 +300,7 @@ as
 			when a.phasing_rationale = 'Certified, 2025-2035'														then 0
 			when a.phasing_rationale = 'Certified, post-2035'														then 0
 			when a.phasing_rationale = 'Early-Stage Project'														then 0
+			when a.phasing_rationale = 'Pre-Cert, Target Cert <= 2019, >500 units remaining pre-2025'				then .5
 			when a.phasing_rationale = 'Pre-Cert, Target Cert <= 2019, no build year/pre-2025 build year' 			then 1
 			when a.phasing_rationale = 'Pre-Cert, Target Cert <= 2019, 2025-2035 build year'			 			then 0
 			when a.phasing_rationale = 'Pre-Cert, Target Cert <= 2019, post-2035 build year'			 			then 0
@@ -314,6 +323,7 @@ as
 			when a.phasing_rationale = 'Certified, 2025-2035'														then 1
 			when a.phasing_rationale = 'Certified, post-2035'														then 0
 			when a.phasing_rationale = 'Early-Stage Project'														then 1
+			when a.phasing_rationale = 'Pre-Cert, Target Cert <= 2019, >500 units remaining pre-2025'				then .5
 			when a.phasing_rationale = 'Pre-Cert, Target Cert <= 2019, no build year/pre-2025 build year' 			then 0
 			when a.phasing_rationale = 'Pre-Cert, Target Cert <= 2019, 2025-2035 build year'			 			then 1
 			when a.phasing_rationale = 'Pre-Cert, Target Cert <= 2019, post-2035 build year'			 			then 0
@@ -336,6 +346,7 @@ as
 			when a.phasing_rationale = 'Certified, 2025-2035'														then 0
 			when a.phasing_rationale = 'Certified, post-2035'														then 1
 			when a.phasing_rationale = 'Early-Stage Project'														then 0
+			when a.phasing_rationale = 'Pre-Cert, Target Cert <= 2019, >500 units remaining pre-2025'				then 0
 			when a.phasing_rationale = 'Pre-Cert, Target Cert <= 2019, no build year/pre-2025 build year' 			then 0
 			when a.phasing_rationale = 'Pre-Cert, Target Cert <= 2019, 2025-2035 build year'			 			then 0
 			when a.phasing_rationale = 'Pre-Cert, Target Cert <= 2019, post-2035 build year'			 			then 1
