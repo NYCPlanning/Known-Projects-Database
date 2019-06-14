@@ -193,9 +193,10 @@ from
 
 	SELECT 
 		a.*, 
-		b.subdistrict_1 as subdistrict, 
+		b.subdistrict_1 as subdistrict,
+		concat('"',b.subdistrict_1,'"') as subdist_concat,
 		b.proportion_in_subdistrict_1 as proportion_in_subdistrict,
-		round(a.counted_units * b.proportion_in_subdistrict_1) as counted_units_in_subdistrict 
+		round(a.counted_units * b.proportion_in_subdistrict_1) as counted_units_in_subdistrict
 	from 
 		known_PROJECTs_db_20190610_v4_cp_assumptions a 
 	left join 
