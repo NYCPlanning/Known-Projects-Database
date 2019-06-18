@@ -107,7 +107,9 @@ select
 		WHEN upper(job_description)  like '%S.A.R.A%' 			THEN 1  else 0 END				as Senior_Housing_Flag,
 	CASE
 		when UPPER(concat(occ_init,occ_prop)) like '%ASSISTED LIVING%' then 1
-		WHEN upper(job_description)  like '%ASSISTED LIVING%' THEN 1 else 0 end 				as Assisted_Living_Flag
+		WHEN upper(job_description)  like '%ASSISTED LIVING%' THEN 1 else 0 end 				as Assisted_Living_Flag,
+	row_number() over(partition by job_number order by status_date::date desc, a.cartodb_id)	as job_number_instance /*Creating a flag to omit < 5 job numbers which appear more than once.
+																														These jobs are all 0-1 units_net*/
 from 
 	capitalplanning.devdb_housing_pts_20190215 a
 left join
@@ -164,7 +166,7 @@ into
 	dob_2018_sca_inputs_ms
 from
 (
-	SELECT
+	SELECT DISTINCT
 		a.*,
 		case
 			when a.status like 'Complete%' 			then a.units_net
@@ -191,17 +193,18 @@ from
 			when a.status = 'Partial Complete'		then 0
 			when c.job_number is not null 			then 0												end	as portion_built_2055
 	from
-		capitalplanning.dob_2018_sca_inputs_ms_pre a
+		(select * from capitalplanning.dob_2018_sca_inputs_ms_pre where job_number_instance = 1) a
 	-- left join
 	-- 	capitalplanning.qc_potentialdups_1 b
 	-- on
 	-- 	a.job_number = b.job_number and
 	-- 	b.instance > 1
-	/*Adding in HEIP-developed phasing for DOB jobs. 17 incomplete DOB jobs are not included in HEIP's list -- setting these to 2025.*/
+	/*Adding in HEIP-developed phasing for DOB jobs.*/
 	left join
-		(select job_number, completion_rate_2025 from capitalplanning.housingdb_19v1_rl_test_0612) c
+		(select job_number, completion_rate_2025, row_number() over(partition by job_number order by cartodb_id) as job_number_instance from capitalplanning.housingdb_19v1_rl_test_0612) c
 	on
-		a.job_number = c.job_number
+		a.job_number = c.job_number and
+		c.job_number_instance = 1 /*Using a created job_number_instance field to deduplicate housing-phasing data. Only omits one match.*/
 	-- where
 	-- 	b.job_number is null
 ) x
@@ -210,10 +213,6 @@ from
 
 
 select cdb_cartodbfytable('capitalplanning', 'dob_2018_sca_inputs_ms');
-
-
-
-
 
 
 
@@ -228,7 +227,7 @@ into
 	dob_2018_sca_inputs_ms_cp_build_year
 from
 (
-	SELECT
+	SELECT DISTINCT
 		a.*,
 		case
 			when a.status like 'Complete%' 			then a.units_net
@@ -255,7 +254,7 @@ from
 			when a.status like '%In progress%' 						then 0
 			else 0 end 																					as portion_built_2055
 	from
-		capitalplanning.dob_2018_sca_inputs_ms_pre a
+		(select * from capitalplanning.dob_2018_sca_inputs_ms_pre where job_number_instance = 1) a
 	-- left join
 	-- 	capitalplanning.qc_potentialdups_1 b
 	-- on

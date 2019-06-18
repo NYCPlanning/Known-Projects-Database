@@ -11,6 +11,7 @@ to provide DOB-provided addresses for context, if Geosupport was unable to retur
 /*************************RUN IN CARTO BATCH********************/
 
 drop table if exists dob_2018_sca_inputs_ms_2;
+
 create table
 		dob_2018_sca_inputs_ms_2
 as
@@ -26,8 +27,8 @@ select cdb_cartodbfytable('capitalplanning','dob_2018_sca_inputs_ms_2') ;
 
 
 update dob_2018_sca_inputs_ms_2 a
-set a.address = b.address,
-	a.DOB_Provided_Address_Flag = 1
+set address = b.address,
+	DOB_Provided_Address_Flag = 1
 from capitalplanning.devdb_housing_pts_20190215 b
 where
 	a.address = '' and
