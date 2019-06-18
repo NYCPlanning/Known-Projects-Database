@@ -13,6 +13,12 @@ METHODOLOGY:
 NOTE: ALL NOTES PERTAIN TO RSEULTS FROM MATCHING TO NEIGHBORHOOD STUDY REZONING COMMITMENTS, NOT PROJECTED/POTENTIAL SITES
 ************************************************************************************************************************************************************************************/
 /*************************RUN IN CARTO BATCH********************/
+drop table if exists nstudy_dob;
+drop table if exists multi_nstudy_dob_matches;
+drop table if exists nstudy_dob_1_pre;
+drop table if exists nstudy_dob_1;
+drop table if exists nstudy_dob_final;
+
 
 select
 	*
@@ -44,7 +50,7 @@ from
 			when a.status <> 	'Rezoning Commitment' then st_intersects(a.the_geom,b.the_geom)
 			else a.status = 	'Rezoning Commitment' end
 
-) nstudy_dob
+) nstudy_dob;
 
 
 /*Assessing whether any DOB jobs match with multiple projects. Preferencing spatial matches over proximity matches. 
@@ -72,7 +78,7 @@ from
 		dob_job_number
 	having
 		count(*)>1
-) multi_nstudy_dob_matches
+) multi_nstudy_dob_matches;
 
 
 /*Checking proximity matches. There are 5 matches by proximity. 
@@ -80,14 +86,14 @@ from
   lookup nstudy_dob_proximate_matches_190529_v2 with manual
   checks on the accuracy of each proximity match. */
 
-  select
-  	*
-  from
-   	nstudy_dob
-  where
-   	dob_Match_Type = 'Proximity' and units <> dob_units_net
-  order by
-  	dob_distance asc
+  -- select
+  -- 	*
+  -- from
+  --  	nstudy_dob
+  -- where
+  --  	dob_Match_Type = 'Proximity' and units <> dob_units_net
+  -- order by
+  -- 	dob_distance asc
 
 
 /*Removing the inaccurate proximate matches by selecting the subset of all NStudy projects which are not inaccurately proximity-matched,
@@ -118,7 +124,7 @@ from
 		b.accurate_match = 0
 	where
 		b.neighborhood_study_id is null
-) nstudy_dob_1_pre
+) nstudy_dob_1_pre;
 
 select
 	*
@@ -135,7 +141,7 @@ from
 		nstudy_dob_1_pre b
 	on
 		a.project_id = b.nstudy_project_id_temp
-) nstudy_dob_1
+) nstudy_dob_1;
 
 
 /*Aggregating the matches by neighborhood study project*/
@@ -188,7 +194,7 @@ from
 		planner_input
 	order by
 		project_id asc
-) nstudy_dob_final
+) nstudy_dob_final;
 
 /******************************************************************DIAGNOSTICS***********************************************************/
 

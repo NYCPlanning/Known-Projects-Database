@@ -16,6 +16,7 @@ METHODOLOGY:
 5. Rearrange fields.
 *************************************************************************************************************************************************************************************/
 /***********************************RUN IN CARTO BATCH*****************************/
+drop table if exists dob_2018_sca_inputs_ms_pre;
 select
 	*
 into
@@ -125,7 +126,10 @@ where
 	x_inactive 	= 'false' 								and /*Non-permitted job w/o update since two years ago*/
 	units_net 	<> 0									and /*Removing administrative and no work jobs which do not create units*/
 	upper(job_description) not like '%NO WORK%' 		and
-	upper(job_description) not like '%ADMINISTRATIVE%'
+	upper(job_description) not like '%ADMINISTRATIVE%'  and
+	job_number not in(220453168,220600446) 					/*Omitting two jobs at 29 Featherbed Lane which are duplicates of a third job, 220673162. All other significant duplicates
+																have been already removed by HEIP and EDM prior to Housing DB publication*/
+
 order by
 	job_number
 ) as dob_2018_sca_inputs_ms_pre;
@@ -135,18 +139,18 @@ order by
 /*Limiting to the duplicates to delete (will delete anything with an instance > 1)*/
 
 
-select
-	*
-into
-	qc_potentialdups_1
-from
-(
-	select
-		*,
-		row_number() over(partition by job_type, geo_address order by status_date::date desc, job_number desc) as instance
-	from
-		qc_potentialdups
-) x;
+-- select
+-- 	*
+-- into
+-- 	qc_potentialdups_1
+-- from
+-- (
+-- 	select
+-- 		*,
+-- 		row_number() over(partition by job_type, geo_address order by status_date::date desc, job_number desc) as instance
+-- 	from
+-- 		qc_potentialdups
+-- ) x;
 
 
 
@@ -188,18 +192,18 @@ from
 			when c.job_number is not null 			then 0												end	as portion_built_2055
 	from
 		capitalplanning.dob_2018_sca_inputs_ms_pre a
-	left join
-		capitalplanning.qc_potentialdups_1 b
-	on
-		a.job_number = b.job_number and
-		b.instance > 1
+	-- left join
+	-- 	capitalplanning.qc_potentialdups_1 b
+	-- on
+	-- 	a.job_number = b.job_number and
+	-- 	b.instance > 1
 	/*Adding in HEIP-developed phasing for DOB jobs. 17 incomplete DOB jobs are not included in HEIP's list -- setting these to 2025.*/
 	left join
 		(select job_number, completion_rate_2025 from capitalplanning.housingdb_19v1_rl_test_0612) c
 	on
 		a.job_number = c.job_number
-	where
-		b.job_number is null
+	-- where
+	-- 	b.job_number is null
 ) x
 	order by
 		x.job_number asc;
@@ -252,18 +256,18 @@ from
 			else 0 end 																					as portion_built_2055
 	from
 		capitalplanning.dob_2018_sca_inputs_ms_pre a
-	left join
-		capitalplanning.qc_potentialdups_1 b
-	on
-		a.job_number = b.job_number and
-		b.instance > 1
+	-- left join
+	-- 	capitalplanning.qc_potentialdups_1 b
+	-- on
+	-- 	a.job_number = b.job_number and
+	-- 	b.instance > 1
 	/*Adding in HEIP-developed phasing for DOB jobs. 17 incomplete DOB jobs are not included in HEIP's list -- setting these to 2025.*/
 	left join
 		(select job_number, completion_rate_2025 from capitalplanning.housingdb_19v1_rl_test_0612) c
 	on
 		a.job_number = c.job_number
-	where
-		b.job_number is null
+	-- where
+	-- 	b.job_number is null
 ) x
 	order by
 		x.job_number asc;

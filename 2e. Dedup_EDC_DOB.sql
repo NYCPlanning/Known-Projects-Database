@@ -12,7 +12,8 @@ METHODOLOGY:
 3. Calculate incremental units.
 ************************************************************************************************************************************************************************************/
 /*************************RUN IN CARTO BATCH********************/
-
+drop table if exists edc_dob;
+drop table if exists edc_dob_final;
 
 select
 	*
@@ -53,7 +54,7 @@ from
 		st_dwithin(cast(a.the_geom as geography),cast(b.the_geom as geography),20) 	and
 		b.job_type = 'New Building'													and 
 		b.status <> 'Complete' /*Omitting completed matches for Stapleton Phase I, given that the unit count for Stapleton Phase I is only what is remaining/unbuilt*/
-) as edc_dob
+) as edc_dob;
 
 
 /*CREATE LOOKUP CALLED edc_dob_proximate_matches_190524_v2
@@ -117,6 +118,6 @@ from
 		a.Senior_Housing_Flag
 	order by
 		a.edc_project_id asc
-) as edc_dob_1
+) as edc_dob_1;
 
 

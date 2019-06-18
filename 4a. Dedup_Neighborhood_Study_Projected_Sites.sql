@@ -13,7 +13,9 @@ METHODOLOGY:
    rezoning's polygon
 3. Compare impact
 *********************************************************/
-
+drop table if exists nstudy_projected_potential_areawide;
+drop table if exists nstudy_projected_potential_areawide_deduped;
+drop table if exists nstudy_projected_potential_areawide_deduped_final;
 
 
 /*Create aggregated dataset using neighborhood-wide identified geometries*/
@@ -102,7 +104,7 @@ from
 			select 
 				* 
 			from 
-				known_projects_db_20190609_v2 
+				known_projects_db_20190610_v4 
 			where 
 				dob_job_type in('','New Building')  
 				and total_units>0 and
@@ -121,7 +123,7 @@ from
 ) nstudy_projected_potential_areawide_deduped
 where
 	dob_zap_date is null or
-	dob_zap_date >= effective_date
+	dob_zap_date >= effective_date;
 
 /*Aggregating matches to calculate incremental units*/
 
@@ -205,7 +207,7 @@ from
 			when neighborhood 	= 'Bay Street Corridor'		then 0
 															end						
 ) nstudy_projected_potential_areawide_deduped_final
-
+;
 
 
 

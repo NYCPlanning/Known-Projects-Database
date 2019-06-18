@@ -11,6 +11,11 @@ METHODOLOGY:
 2. If a DOB job maps to multiple ZAP projects, create a preference methodology to make 1-1 matches
 ************************************************************************************************************************************************************************************/
 /*************************RUN IN CARTO BATCH********************/
+drop table if exists zap_dob;
+drop table if exists multi_dcp_dob_matches;
+drop table if exists zap_dob_1;
+drop table if exists zap_dob_final;
+
 
 select distinct
 	* 
@@ -84,7 +89,7 @@ from
 			(a.project_id = 'P2013K0179' and b.job_number in(320917503,320916407)) or
 			(a.project_id =  '1 [ESD Project]' and b.job_number = 320626710)
 		)
-	) as Raw_Merge
+	) as Raw_Merge;
 
 
 
@@ -116,7 +121,7 @@ from
 		dob_match_type
 	having
 		count(*)>1
-) multi_dcp_dob_matches
+) multi_dcp_dob_matches;
 
 Select
 	*
@@ -177,7 +182,7 @@ from
 	)
 	where
 		b.dob_job_number is null
-) zap_dob_1
+) zap_dob_1;
 
 
 select
@@ -252,7 +257,7 @@ from
 		si_seat_cert
 	order by
 		project_id asc
-) zap_dob_final
+) zap_dob_final;
 
 
 /***************************************************************************DIAGNOSTICS********************************************************************/

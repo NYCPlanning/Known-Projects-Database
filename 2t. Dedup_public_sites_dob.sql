@@ -11,6 +11,8 @@ METHODOLOGY:
 4. Calculate incremental units.
 ************************************************************************************************************************************************************************************/
 /*************************RUN IN CARTO BATCH********************/
+drop table if exists public_sites_dob;
+drop table if exists public_sites_dob_final;
 
 select
 	*
@@ -37,12 +39,10 @@ from
 	on 
 		st_dwithin(a.the_geom::geography,b.the_geom::geography,20) 	and
 		b.job_type = 'New Building' /*3 alterations matched and all are inaccurate -- only matching with NBs*/													 
-) public_sites_dob
+) public_sites_dob;
 
 
-/*There is 1 match and it is spatial. Seaview Healthy Community (500 units) and DOB Job # 520136040 (198 units, filed application). 
-  Surprising, given that Public Sites does not list a timeline for this project. As expected, other projects do not match with DOB data.
-  All the included Pipeline Public Sites are at most in RFP issuance stage, if there is a listed timeline at all. */ 
+/*0 matches*/
 
 /*Aggregating projects*/
 
@@ -86,4 +86,4 @@ from
 		planner_input
 	order by
 		public_sites_id asc
-) public_sites_dob_final
+) public_sites_dob_final;

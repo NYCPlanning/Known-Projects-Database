@@ -14,6 +14,18 @@ METHODOLOGY:
 3. Import the lookup from step 2 and modify dataset from step 1 accordingly.
 *************************************************************************************************************************************************************************************/
 /**********************RUN THE FOLLOWING QUERY IN CARTO BATCH******************************/
+drop table if exists hpd_dob_match;
+drop table if exists multi_hpd_dob_matches;
+drop table if exists hpd_dob_match_1;
+drop table if exists multi_hpd_dob_matches_1;
+drop table if exists hpd_dob_match_2;
+drop table if exists multi_hpd_dob_matches_2;
+drop table if exists hpd_dob_match_3;
+drop table if exists hpd_dob_match_4;
+drop table if exists HPD_Deduped_pre;
+drop table if exists hpd_deduped_pre_1;
+drop table if exists hpd_deduped;
+
 select
 	*
 into
@@ -394,19 +406,19 @@ from
   to correct these matches.
 */
 
-SELECT
-	*
-into
-	hpd_project_53680_lookup
-from
-(
-	SELECT
-		*
-	from
-		hpd_deduped_pre
-	where
-		project_id like '53680%'
-) x;
+-- SELECT
+-- 	*
+-- into
+-- 	hpd_project_53680_lookup
+-- from
+-- (
+-- 	SELECT
+-- 		*
+-- 	from
+-- 		hpd_deduped_pre
+-- 	where
+-- 		project_id like '53680%'
+-- ) x;
 
 
 /*Correcting matched for project_id 53680*/

@@ -7,6 +7,10 @@ Sources:
 /*******************************************************
 		RUN IN CARTO BATCH
 *******************************************************/
+drop table if exists hpd_rfp_dob;
+drop table if exists hpd_rfp_dob_1;
+drop table if exists hpd_rfp_dob_final;
+
 
 /*Matching HPD RFPs to DOB jobs by address, BBL, and spatially*/
 select
@@ -70,7 +74,7 @@ from
 		)
 	where
 		a.source = 'HPD RFPs' 
-) as hpd_rfp_dob
+) as hpd_rfp_dob;
 
 
 
@@ -94,7 +98,7 @@ from
 	hpd_rfp_dob
 where
 	DOB_Match_Type = 'Proximity' and
-	dob_total_units <> total_units
+	dob_units_net <> total_units
 
 
 /*******************************************************
@@ -134,7 +138,7 @@ from
 		case when concat(project_id,dob_job_number) in(select concat(project_id,dob_job_number) from hpd_rfp_dob_proximate_matches_190523_v2 where accurate_match = 0) then null else dob_distance   end as dob_distance
 	from
 		hpd_rfp_dob
-) x
+) x;
 
 select
 	*
@@ -180,7 +184,7 @@ from
 		likely_to_be_built_by_2025_flag,
 		excluded_project_flag,
 		rationale_for_exclusion
-) x
+) x;
 
 
 /*

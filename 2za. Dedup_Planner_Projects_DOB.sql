@@ -11,6 +11,10 @@ METHODOLOGY:
 4. Omit inaccurate proximity-based matches within 20 meters.
 ************************************************************************************************************************************************************************************/
 /*************************RUN IN CARTO BATCH********************/
+drop table if exists planner_projects_dob;
+drop table if exists planner_projects_dob_1;
+drop table if exists planner_projects_dob_final;
+
 
 select
 	*
@@ -38,7 +42,7 @@ from
 		b.job_type <> 'Demolition'
 	order by
 		a.map_id asc 													 
-) planner_projects_dob
+) planner_projects_dob;
 
 /*******************************DIAGNOSTICS******************************************************/
 
@@ -97,7 +101,7 @@ from
 																			and future developments*/ 
 	order by
 		a.map_id asc 													 
-) planner_projects_dob_1
+) planner_projects_dob_1;
 
 
 /*There is only one match, between map_id 85408 and DOB Job Number 420664310. This is a spatial overlap and both share a unit count of 202, so deeming this accurate*/
@@ -134,5 +138,5 @@ from
 		planner_input
 	order by 
 		map_id asc
-)	planner_projects_dob_final	
+)	planner_projects_dob_final;	
 

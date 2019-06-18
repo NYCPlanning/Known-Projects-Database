@@ -87,7 +87,7 @@ from
 		capitalplanning.zap_edc_final e
 	on
 		a.project_id = e.project_id
-) zap_deduped
+) zap_deduped;
 
 
 

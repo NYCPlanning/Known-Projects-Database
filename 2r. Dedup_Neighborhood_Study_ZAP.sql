@@ -11,6 +11,12 @@ METHODOLOGY:
 4. Calculate incremental units.
 ************************************************************************************************************************************************************************************/
 /*************************RUN IN CARTO BATCH********************/
+drop table if exists nstudy_zap;
+drop table if exists multi_nstudy_zap_matches;
+drop table if exists nstudy_zap_1_pre;
+drop table if exists nstudy_zap_1;
+drop table if exists nstudy_zap_final;
+
 
 select
 	*
@@ -43,7 +49,7 @@ from
 		case
 			when a.status = 'Rezoning Commitment' then 	st_dwithin(a.the_geom::geography,b.the_geom::geography,20) 
 			else 										st_intersects(a.the_geom,b.the_geom) end
-) nstudy_zap		
+) nstudy_zap;	
 
 /*Assessing whether any ZAP projects match with multiple rezoning commitments. Preferencing spatial matches over proximity matches. 
   THERE ARE NO ZAP PROJECTS MATCHING WITH MULTIPLE REZONING COMMITMENTS, but there are zap projects matching multiple times with various
@@ -72,7 +78,7 @@ from
 		zap_project_id
 	having
 		count(*)>1
-) multi_nstudy_zap_matches
+) multi_nstudy_zap_matches;
 
 
 /*Checking proximity matches. There are 2 matches by proximity. 
@@ -121,7 +127,7 @@ from
 		b.accurate_match = 0
 	where
 		b.neighborhood_study_project_id is null
-) nstudy_zap_1_pre
+) nstudy_zap_1_pre;
 
 select
 	*
@@ -140,7 +146,7 @@ from
 		a.project_id = b.nstudy_project_id_temp
 	order by
 		a.project_id asc
-) nstudy_zap_1
+) nstudy_zap_1;
 
 
 /*Aggregating the matches by neighborhood study project*/
@@ -192,7 +198,7 @@ from
 		planner_input
 	order by
 		project_id asc
-) nstudy_zap_final
+) nstudy_zap_final;
 
 
 /********************************************************************************DIAGNOSTICS***************************************************************************************/
