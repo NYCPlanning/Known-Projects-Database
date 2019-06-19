@@ -30,10 +30,14 @@ from
 		the_geom,
 		the_geom_webmercator,
 		job_number,
+		address,
 		units_net,
-		units_net_incomplete
+		units_net_incomplete,
+		portion_built_2025,
+		portion_built_2035,
+		portion_built_2055
 	from
-		(select * from dob_2018_sca_inputs_ms where status in('Complete','Complete (demolition)')) a
+		(select * from dob_2018_sca_inputs_ms_cp_build_year_2 where status in('Complete','Complete (demolition)')) a
 ) x
 	order by 
 		job_number asc;
@@ -50,10 +54,14 @@ from
 		the_geom_webmercator,
 		source,
 		job_number,
+		address,
 		units_net,
-		units_net_incomplete
+		units_net_incomplete,
+		portion_built_2025,
+		portion_built_2035,
+		portion_built_2055
 	from
-		(select * from dob_2018_sca_inputs_ms where status not in('Complete','Complete (demolition)')) a 
+		(select * from dob_2018_sca_inputs_ms_cp_build_year_2 where status not in('Complete','Complete (demolition)')) a 
 ) x
 	order by 
 		job_number asc;
@@ -69,8 +77,12 @@ from
 		the_geom_webmercator,
 		source,
 		project_id,
+		address,
 		total_units,
-		counted_units as deduplicated_units
+		counted_units as deduplicated_units,
+		portion_built_2025,
+		portion_built_2035,
+		portion_built_2055
 	from
 		hpd_deduped
 ) x
@@ -88,8 +100,12 @@ from
 		the_geom_webmercator,
 		source,
 		project_id,
+		project_name,
 		total_units,
-		counted_units as deduplicated_units
+		counted_units as deduplicated_units,
+		portion_built_2025,
+		portion_built_2035,
+		portion_built_2055
 	from
 		hpd_rfp_deduped
 ) x
@@ -107,8 +123,12 @@ from
 		the_geom_webmercator,
 		source,
 		project_id,
+		project_name,
 		total_units,
-		counted_units as deduplicated_units
+		counted_units as deduplicated_units,
+		portion_built_2025,
+		portion_built_2035,
+		portion_built_2055
 	from
 		edc_deduped
 ) x
@@ -126,8 +146,12 @@ from
 		the_geom_webmercator,
 		source,
 		project_id,
+		project_name,
 		total_units,
-		counted_units as deduplicated_units
+		counted_units as deduplicated_units,
+		portion_built_2025,
+		portion_built_2035,
+		portion_built_2055
 	from
 		zap_deduped_build_year
 	where
@@ -145,11 +169,15 @@ from
 (
 	select
 		the_geom,
-		the_geom_webmercator,
+		ST_Transform(the_geom,3857) as the_geom_webmercator,
 		source,
 		project_id,
+		project_name,
 		total_units,
-		counted_units as deduplicated_units
+		counted_units as deduplicated_units,
+		portion_built_2025,
+		portion_built_2035,
+		portion_built_2055
 	from
 		zap_deduped_build_year
 	where
@@ -170,8 +198,12 @@ from
 		the_geom_webmercator,
 		source,
 		project_id,
+		project_name,
 		total_units,
-		counted_units as deduplicated_units
+		counted_units as deduplicated_units,
+		portion_built_2025,
+		portion_built_2035,
+		portion_built_2055
 	from
 		nstudy_deduped
 ) x
@@ -189,8 +221,12 @@ from
 		the_geom_webmercator,
 		source,
 		project_id,
+		project_name,
 		total_units,
-		counted_units as deduplicated_units
+		counted_units as deduplicated_units,
+		portion_built_2025,
+		portion_built_2035,
+		portion_built_2055
 	from
 		public_sites_deduped
 ) x
@@ -208,8 +244,12 @@ from
 		the_geom_webmercator,
 		source,
 		project_id,
+		project_name,
 		total_units,
-		counted_units as deduplicated_units
+		counted_units as deduplicated_units,
+		portion_built_2025,
+		portion_built_2035,
+		portion_built_2055
 	from
 		planner_projects_deduped
 ) x
@@ -229,7 +269,10 @@ from
 		source,
 		project_id,
 		total_units,
-		nstudy_projected_potential_incremental_units as deduplicated_units
+		nstudy_projected_potential_incremental_units as deduplicated_units,
+		portion_built_2025,
+		portion_built_2035,
+		portion_built_2055
 	from	
 		nstudy_projected_potential_areawide_deduped_final
 ) x
@@ -249,7 +292,10 @@ from
 		source,
 		project_id,
 		total_units,
-		incremental_units_with_certainty_factor
+		incremental_units_with_certainty_factor,
+		portion_built_2025,
+		portion_built_2035,
+		portion_built_2055
 	from	
 		nstudy_future
 ) x
