@@ -108,7 +108,7 @@ from
 			where 
 				dob_job_type in('','New Building')  
 				and total_units>0 and
-				source <> 'Neighborhood Study Development Sites'
+				source not in('Neighborhood Study Projected Development Sites','Neighborhood Study Rezoning Commitments','Future Neighborhood Studies')
 		) b
 	on
 		st_intersects(a.the_geom,b.the_geom)

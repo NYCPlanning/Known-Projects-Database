@@ -314,5 +314,12 @@ from
 ) x;
 
 
-/*Subdistrict longform output*/
-SELECT * FROM capitalplanning.aggregated_subdistrict_longform_cp_assumptions where not (source = 'DOB' and status in('Complete','Complete (demolition)')) 
+drop table if exists longform_subdist_output_cp_assumptions;
+SELECT
+	*
+into
+	longform_subdist_output_cp_assumptions
+from
+(
+SELECT *  FROM capitalplanning.aggregated_subdistrict_longform_cp_assumptions where not (source = 'DOB' and status in('Complete','Complete (demolition)'))
+) x
