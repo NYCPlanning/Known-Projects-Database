@@ -123,7 +123,7 @@ from
 	left join
 		nstudy_zap_proximate_matches_190529_v2 b
 	on
-		concat(a.project_id,a.zap_project_id) = concat(b.neighborhood_study_project_id,b.zap_project_id) and
+		concat(a.project_name,a.zap_project_id) = concat(b.neighborhood_study_project_name,b.zap_project_id) and
 		b.accurate_match = 0
 	where
 		b.neighborhood_study_project_id is null
