@@ -71,7 +71,7 @@ FROM
 	coalesce(
 		/* +1 for text which indicates a potential residence*/
 		CASE
-			when upper(concat(a.project_description,' ',a.project_brief)) 	like '%AFFORDABLE%' 	then 1 
+			when upper(concat(a.project_description,' ',a.project_brief)) 	like '%AFFORDABLE%' then 1 
 			when upper(concat(a.project_description,' ',a.project_brief)) 	like '%RESID%' 		then 1 
 			when upper(concat(a.project_description,' ',a.project_brief)) 	like '%RESIDENCE%' 	then 1 
 			when upper(concat(a.project_description,' ',a.project_brief)) 	like '%APARTM%'		then 1 
@@ -81,36 +81,36 @@ FROM
 			when upper(concat(a.project_description,' ',a.project_brief)) 	like '%HOUSI%' 		then 1 
 			when upper(concat(a.project_description,' ',a.project_brief)) 	like '%MIH%' 		then 1 
 			when upper(concat(a.project_description,' ',a.project_brief)) 	like '%HOMES%' 		then 1  
-			when (concat(a.project_description,' ',a.project_brief)) 	like '%DUs%'		then 1 
+			when (concat(a.project_description,' ',a.project_brief)) 	like '%DUs%'			then 1 
 														END  - 
 		/* -1 for text which indicates that the project is not residential, or simply a modification of a single-homes.*/
 		CASE 	 
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%RESIDENTIAL TO COMMERCIAL%' 	THEN 1
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%SINGLE-FAMILY%' 			THEN 1 
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%SINGLE FAMILY%' 			THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%1-FAMILY%' 			THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%ONE FAMILY%' 			THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%ONE-FAMILY%' 			THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%1 FAMILY%' 			THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%FLOATING%' 			THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%1-FAMILY%' 				THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%ONE FAMILY%' 				THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%ONE-FAMILY%' 				THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%1 FAMILY%' 				THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%FLOATING%' 				THEN 1
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%TRANSITIONAL%' 			THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%FOSTER%' 				THEN 1
-			-- WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%PARKING%' 			THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%ILLUMIN%' 			THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%FOSTER%' 					THEN 1
+			-- WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%PARKING%' 				THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%ILLUMIN%' 				THEN 1
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%RESIDENCE DISTRICT%' 		THEN 1
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%LANDMARKS PRESERVATION COMMISSION%' THEN 1
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%EXISTING HOME%' 			THEN 1
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%EXISTING HOUSE%' 			THEN 1
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%NUMBER OF BEDS%' 			THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%EATING AND DRINKING%' 		THEN 1
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%EATING AND DRINKING%' 	THEN 1
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%NO INCREASE%' 			THEN 1
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%ENLARGEMENT%' 			THEN 1
 			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%NON-RESIDENTIAL%' 		THEN 1
-			WHEN upper(concat(a.project_description,' ',a.project_brief)) like  '%LIVINGSTON%' 			THEN 1 
-			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%AMBULATORY%' 			THEN 1 
+			WHEN upper(concat(a.project_description,' ',a.project_brief)) like  '%LIVINGSTON%' 				THEN 1 
+			WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%AMBULATORY%' 				THEN 1 
 					  									ELSE 0
 					  									END
-		,0) 														AS Potential_Residential,
+		,0) 																										AS Potential_Residential,
 
 		/*Identifying senior housing projects*/
 		CASE WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%SENIOR%' THEN 1 ELSE 0 END 		AS SENIOR_HOUSING_flag,
@@ -127,13 +127,13 @@ FROM
 		  WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%ELDERLY%' THEN 1
 		  WHEN upper(concat(a.project_description,' ',a.project_brief))  like '%SHELTER%' THEN 1 ELSE 0 END 		as Assisted_Living_Supportive_Housing_flag,
 
-		case when a.process_stage_name_stage_id_process_stage = 'Initiation' then 1 else 0 end 				as Initiation_Flag, /*Potential exclusion if 1*/
-		case when a.process_stage_name_stage_id_process_stage = 'Pre-Pas' then 1 else 0 end 				as Pre_PAS_Flag, /*Potential exclusion if 1*/
+		case when a.process_stage_name_stage_id_process_stage = 'Initiation' then 1 else 0 end 						as Initiation_Flag, /*Potential exclusion if 1*/
+		case when a.process_stage_name_stage_id_process_stage = 'Pre-Pas' then 1 else 0 end 						as Pre_PAS_Flag, /*Potential exclusion if 1*/
 		case when date_part('year',cast(a.project_completed as date)) < 2012 or date_part('year',cast(a.certified_referred as date)) < 2012 then 1 else 0 end 
 													      			as Historical_Project_Pre_2012, /*Assessing recency of the project. Potential exclusion if 1.*/ 
 		case when date_part('year',cast(a.project_completed as date)) < 2008 or date_part('year',cast(a.certified_referred as date)) < 2008 then 1 else 0 end 
 													      			as Historical_Project_Pre_2008, /*Assessing recency of the project. Potential exclusion if 1.*/ 
-		abs(coalesce(total_dwelling_units_in_project,0) - coalesce(new_dwelling_units,0)) 				as Diff_Between_Total_and_New_Units /*Flag for future BO input.*/
+		abs(coalesce(total_dwelling_units_in_project,0) - coalesce(new_dwelling_units,0)) 							as Diff_Between_Total_and_New_Units /*Flag for future BO input.*/
 	from
 		capitalplanning.dcp_zap_consolidated_ms a
 	left join

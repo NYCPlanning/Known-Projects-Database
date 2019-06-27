@@ -96,9 +96,9 @@ where
   	  only attribute 040499 to Hudson Yards. I am adding on the polygon from 040499 to geocode Hudson Yards.*/
 
 update capitalplanning.dcp_zap_consolidated_20190510_ms a
-set the_geom = 			coalesce(a.the_geom,b.the_geom),
-	THE_GEOM_WEBMERCATOR=	coalesce(a.THE_GEOM_WEBMERCATOR,b.THE_GEOM_WEBMERCATOR),
-	match_nyzma_geom = 	1
+set the_geom 				=	coalesce(a.the_geom,b.the_geom),
+	THE_GEOM_WEBMERCATOR 	=	coalesce(a.THE_GEOM_WEBMERCATOR,b.THE_GEOM_WEBMERCATOR),
+	match_nyzma_geom 		= 	1
 from capitalplanning.nyzma_december2018 b
 where 
 	  case when 

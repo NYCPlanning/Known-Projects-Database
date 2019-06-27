@@ -20,6 +20,8 @@ METHODOLOGY:
 
 ***************************************************************************************************************************************************************************************/
 
+drop table if exists relevant_dcp_projects_housing_pipeline_ms_v2_pre;
+drop table if exists relevant_dcp_projects_housing_pipeline_ms_v2;
 
 
 SELECT
@@ -245,7 +247,7 @@ from
 
 			case
 				when potential_residential_total_units is not null 																									then 'Potential Residential Total Units'
-				when new_dwelling_units not in(null, 0) 																											then 'New Dwelling Units'
+				when new_dwelling_units is not null and new_dwelling_units <> 0																						then 'New Dwelling Units'
 				when total_dwelling_units_in_project is not null 																									then 'Total Dwelling Units in Project'
 				when coalesce(mih_dwelling_units_higher_number,mih_dwelling_units_lower_number,0) + coalesce(voluntary_affordable_dwelling_units_non_mih,0) <> 0	then 'MIH + Voluntary Affordable Units'
 				when residential_sq_ft is not null 																													then 'Residential Square Feet' end 
@@ -274,7 +276,7 @@ from
 		st_intersects(a.the_geom,b.the_geom) 
 	)
 	select * from relevant_dcp_projects_3
-) x
+) x;
 
 SELECT
 	*
@@ -437,11 +439,4 @@ from
 		on
 			a.project_id = b.project_id
 
-) AS DCP_FINAL
-
-/**********************RUN IN REGULAR CARTO**************************/
-
-
-select cdb_cartodbfytable('capitalplanning', 'relevant_dcp_projects_housing_pipeline_ms_v2')
-
-
+) AS DCP_FINAL;

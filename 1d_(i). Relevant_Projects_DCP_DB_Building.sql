@@ -33,9 +33,9 @@ ADD COLUMN match_lookup_pluto_geom numeric;
 /*Merge in available polygons from HEIP's polygon data. 102 relevant project_ids joined successfully.*/
 update capitalplanning.dcp_zap_consolidated_ms
 set 
-	the_geom 		= a.the_geom, 
+	the_geom 				= a.the_geom, 
 	THE_GEOM_WEBMERCATOR 	= a.the_geom_webmercator,
-	match_heip_geom 	= 1
+	match_heip_geom 		= 1
 from capitalplanning.heip_zap_polygons a
 where 	project_id = a.projectid and 
 	a.projectid is not null;
@@ -43,8 +43,8 @@ where 	project_id = a.projectid and
 
 /*Merge in available Polygons from DCP 2018 SCA Inputs Share. 293 relevant project_ids joined successfully*/
 update capitalplanning.dcp_zap_consolidated_ms a
-set the_geom = 					coalesce(a.the_geom,b.the_geom),
-	THE_GEOM_WEBMERCATOR =			coalesce(a.THE_GEOM_WEBMERCATOR,b.THE_GEOM_WEBMERCATOR),
+set the_geom 				=			coalesce(a.the_geom,b.the_geom),
+	THE_GEOM_WEBMERCATOR 	=			coalesce(a.THE_GEOM_WEBMERCATOR,b.THE_GEOM_WEBMERCATOR),
 	match_dcp_2018_sca_inputs_share_geom = 	1
 from capitalplanning.dcp_2018_sca_inputs_share b
 where 
@@ -73,18 +73,18 @@ where
   	  only attribute 040499 to Hudson Yards. I am adding on the polygon from 040499 to geocode Hudson Yards.*/
 
 update capitalplanning.dcp_zap_consolidated_ms a
-set the_geom = 			coalesce(a.the_geom,b.the_geom),
-	THE_GEOM_WEBMERCATOR=	coalesce(a.THE_GEOM_WEBMERCATOR,b.THE_GEOM_WEBMERCATOR),
-	match_nyzma_geom = 	1
+set the_geom 				= 	coalesce(a.the_geom,b.the_geom),
+	THE_GEOM_WEBMERCATOR 	=	coalesce(a.THE_GEOM_WEBMERCATOR,b.THE_GEOM_WEBMERCATOR),
+	match_nyzma_geom 		= 	1
 from capitalplanning.nyzma_december2018 b
 where 
-	  case when 
-		substring(a.ulurp_number,1,1) = '1' 	then substring(a.ulurp_number,1,6)
-							else substring(a.ulurp_number,2,6) end																	 = substring(b.ulurpno,1,6) and 
+	  case 
+	  	when substring(a.ulurp_number,1,1) = '1' 	then substring(a.ulurp_number,1,6)
+		else substring(a.ulurp_number,2,6) 			end
+													= substring(b.ulurpno,1,6) and 
 	  a.ulurp_number is not null and
 	  a.match_heip_geom is null and
-	  a.match_dcp_2018_sca_inputs_share_geom is null
-	  ;
+	  a.match_dcp_2018_sca_inputs_share_geom is null;
 
 /********************************************************************************************
 Merge in polygons from PLUTO to BBLs included in each Project ID (exported from ZAP).
@@ -93,7 +93,7 @@ Then merge in polygons by Project_ID using this updated BBL file.
 
 update capitalplanning.dcp_project_bbls_zap_ms a
 set 
-	the_geom 		= b.the_geom,
+	the_geom 				= b.the_geom,
 	the_geom_webmercator 	= b.the_geom_webmercator
 from capitalplanning.mappluto_v_18v1_1 b
 where 
@@ -116,17 +116,17 @@ with dcp_project_bbls_zap_ms_consolidated as
 
 update capitalplanning.dcp_zap_consolidated_ms a
 set 
-	the_geom = 		coalesce(a.the_geom,b.the_geom),
-	THE_GEOM_WEBMERCATOR=	coalesce(a.THE_GEOM_WEBMERCATOR,b.THE_GEOM_WEBMERCATOR),
+	the_geom 				=	coalesce(a.the_geom,b.the_geom),
+	THE_GEOM_WEBMERCATOR 	=	coalesce(a.THE_GEOM_WEBMERCATOR,b.THE_GEOM_WEBMERCATOR),
 	match_pluto_geom = 	1
 from dcp_project_bbls_zap_ms_consolidated b
 where 
-	a.project_id 				= b.project	and 
-	a.project_id 				is not null	and
-	b.the_geom 				is not null	and
-	match_heip_geom 			is null		and
+	a.project_id 							= b.project	and 
+	a.project_id 							is not null	and
+	b.the_geom 								is not null	and
+	match_heip_geom 						is null		and
 	match_dcp_2018_sca_inputs_share_geom 	is null		and
-	match_nyzma_geom 			is null;
+	match_nyzma_geom 						is null;
 
 
 
@@ -198,14 +198,14 @@ set
 	match_lookup_pluto_geom = 	1
 from zap_project_missing_geom_lookup_1 b
 where 
-	a.project_id 				= b.project_id 	and 
-	a.project_id 				is not null 	and
-	b.the_geom 				is not null 	and
-	match_heip_geom 			is null 	and
-	match_dcp_2018_sca_inputs_share_geom 	is null 	and
-	match_nyzma_geom 			is null 	and
-	match_pluto_geom 			is null 	and
-	match_impact_poly_latest 		is null;
+	a.project_id 							= b.project_id 	and 
+	a.project_id 							is not null 	and
+	b.the_geom 								is not null 	and
+	match_heip_geom 						is null 		and
+	match_dcp_2018_sca_inputs_share_geom 	is null 		and
+	match_nyzma_geom 						is null 		and
+	match_pluto_geom 						is null 		and
+	match_impact_poly_latest 				is null;
 
 											
 /*****************************************************************
@@ -217,7 +217,7 @@ where
   actual inputs.*/
 
 update capitalplanning.dcp_zap_consolidated_ms a
-set 	system_target_certification_date 	= null
+set 	system_target_certification_date 		= null
 where 	system_target_certification_date::date 	= '2022-01-01'						
 											
 
@@ -235,13 +235,13 @@ where project_id = '2019K0093';
 /*Hudson Yards: Units taken from MQL's last June 2018 SCA Input areawide data.*/	
 update capitalplanning.dcp_zap_consolidated_ms a
 set 	total_dwelling_units_in_project = 13508
-	new_dwelling_units		= 13508
+		new_dwelling_units				= 13508
 where project_id = 'P2005M0053';
 
 /*Western Rail Yards: Units taken from Table S-5 of the Western Rail Yards EIS.*/	
 update capitalplanning.dcp_zap_consolidated_ms a
-set 	total_dwelling_units_in_project = 6074
-	new_dwelling_units		= 6074
+set 	total_dwelling_units_in_project 	= 6074
+		new_dwelling_units					= 6074
 where project_id = 'P2009M0294';
 
 
