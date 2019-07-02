@@ -144,12 +144,12 @@ set
 	match_pluto_geom = 	1
 from dcp_project_bbls_zap_ms_consolidated b
 where 
-	a.project_id 				= b.project	and 
-	a.project_id 				is not null	and
-	b.the_geom 				is not null	and
-	match_heip_geom 			is null		and
+	a.project_id = b.project							and 
+	a.project_id 							is not null	and
+	b.the_geom 								is not null	and
+	match_heip_geom 						is null		and
 	match_dcp_2018_sca_inputs_share_geom 	is null		and
-	match_nyzma_geom 			is null;
+	match_nyzma_geom 						is null;
 
 
 
@@ -183,6 +183,8 @@ BBLs, the first merge creates doubles. I then use st_union to aggregate these do
 26 projects matched using the following method.
 **********************************************************************************************/
 
+drop table if exists zap_project_missing_geom_lookup_20190609;
+
 select
 	project_id,
 	count(*) 						as Match_Count,
@@ -201,16 +203,24 @@ from
 	left join
 		capitalplanning.mappluto_v_18v1_1 b
 	on
-		case when 	a.associated_bbl is not null 
+		case when 			a.associated_bbl is not null 
 							then a.associated_bbl = b.bbl
-			 				else 	a.block is not null and
-			 	  				a.block = b.block and
-			 	  				concat(b.lot) in
-									(
-									trim(split_part(a.lot,',',1)),
-									trim(split_part(a.lot,',',2)),
-									trim(split_part(a.lot,',',3))
-									) end
+			 else 
+		 					a.block is not null and
+		 					(
+		 						(a.project_borough 	= 'Brooklyn' 		and b.borough = 'BK') or
+		 						(a.project_borough 	= 'Queens' 			and b.borough = 'QN') or
+		 						(a.project_borough 	= 'Bronx' 			and b.borough = 'BX') or
+		 						(a.project_borough 	= 'Staten Island'	and b.borough = 'SI') or
+		 						(a.project_borough  = 'Manhattan'		and b.borough = 'MN')
+		 					)					and
+		 	  				a.block = b.block 	and
+		 	  				concat(b.lot) in
+								(
+								trim(split_part(a.lot,',',1)),
+								trim(split_part(a.lot,',',2)),
+								trim(split_part(a.lot,',',3))
+								) end
 	union all
 	select
 		a.project_id,
@@ -232,13 +242,13 @@ from
 
 ) as Lookup_Pluto_Merge
 group by 
-	project_id
+	project_id;
 
 
 update capitalplanning.dcp_zap_consolidated_20190510_ms a
 set 
-	the_geom = 					coalesce(a.the_geom,b.the_geom),
-	THE_GEOM_WEBMERCATOR=		coalesce(a.THE_GEOM_WEBMERCATOR,b.THE_GEOM_WEBMERCATOR),
+	the_geom = 					coalesce(b.the_geom,a.the_geom),
+	THE_GEOM_WEBMERCATOR=		coalesce(b.THE_GEOM_WEBMERCATOR,a.THE_GEOM_WEBMERCATOR),
 	match_lookup_pluto_geom = 	1
 from zap_project_missing_geom_lookup_20190609 b
 where 
@@ -250,7 +260,6 @@ where
 	match_nyzma_geom 							is null 		and
 	match_pluto_geom 							is null 		and
 	match_impact_poly_latest 					is null;
-
 
 							
 /*****************************************************************

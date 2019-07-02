@@ -13,7 +13,11 @@ RUN THIS SCRIPT IN CARTO BATCH
 *************************************************************************************/ 
 
 /*********************MODIFYING THESE PROJECTS WITH PLANNER INPUTS****************/
-
+drop table if exists relevant_dcp_projects_housing_pipeline_ms_v2_1;
+drop table if exists relevant_dcp_projects_housing_pipeline_ms_v2_2;
+drop table if exists relevant_dcp_projects_housing_pipeline_ms_v3;
+drop table if exists relevant_dcp_projects_housing_pipeline_ms_v4;
+drop table if exists relevant_dcp_projects_housing_pipeline_ms_v5;
 
 /*Flag projects which planners indicated should be omitted due to overlaps, non-residential, withdrawals, inactivity, or otherwise*/
 
@@ -35,7 +39,7 @@ from
 			else null end as Planner_Noted_Omission
 	from
 		relevant_dcp_projects_housing_pipeline_ms_v2
-) relevant_dcp_projects_housing_pipeline_ms_v2_1
+) relevant_dcp_projects_housing_pipeline_ms_v2_1;
 
 
 /*Replace ZAP unit count and ZAP geom, where appropriate, with planner input. There are 60 planner inputs on unit count and all are within reason. Hudson Yards also has a planner input of 13,508 (EAS) joined on,
@@ -104,7 +108,7 @@ on
 	a.project_id = b.project_id or
 	(a.project_id = 'P2018R0276' and b.map_id = 94518) /*Matching Sea View in ZAP data with planner geometry for Sea View City Hall Public Sites project*/ or
 	(a.project_id = '2019K0177'	 and b.map_id = 85357) /*Matching Greenpoint Hospital in ZAP data with planner geometry for Greenpoint Hospital */
-) x
+) x;
 
 select
 	*
@@ -151,7 +155,7 @@ from
 			project_id in('P2017Q0067','P2018Q0046')
 	) x
 	order by
-		project_id asc
+		project_id asc;
 
 /*********************RUN IN CARTO BATCH**************************/
 
@@ -286,7 +290,7 @@ from
 						when length(b.ks_assumed_units)<2 or position('units' in b.ks_assumed_units)<1 then null
 						else substring(b.ks_assumed_units,1,position('units' in b.ks_assumed_units)-1)::numeric end
 				) <> 0 
-) x
+) x;
 
 
 
@@ -414,13 +418,21 @@ from
 			) 													
 		)														AND
 		not	(project_status is not null and upper(project_status) in('WITHDRAWN','RECORD CLOSED'))	/*Omitting one planner-added project with Record Closed*/
-		AND NOT	project_id in('P2012Q0313','P2012K0231')											/*Planner-noted in 2018 that these units are already existing 
+		AND NOT	project_id in('P2012Q0313','P2012K0231');											/*Planner-noted in 2018 that these units are already existing 
 																									  for the former, and for the latter the planner has added
 																									  an overriding polygon in the planner-added projects section*/
 
 
-select cdb_cartodbfytable('capitalplanning', 'relevant_dcp_projects_housing_pipeline_ms_v5')
+select cdb_cartodbfytable('capitalplanning', 'relevant_dcp_projects_housing_pipeline_ms_v5');
 
+
+
+
+
+
+
+
+/************************************************SUPERSEDED**************************************/
 
 select
 	*

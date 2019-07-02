@@ -1,35 +1,35 @@
 /**********************************************************************************************************************************************************************************
 AUTHOR: Mark Shapiro
-SCRIPT: Adding elementary school zone boundaries to aggregated pipeline
-START DATE: 6/11/2019
+SCRIPT: Adding TAZ boundaries to aggregated pipeline
+START DATE: 7/2/2019
 COMPLETION DATE: 
 Sources: 
 *************************************************************************************************************************************************************************************/
 
-drop table if exists aggregated_es_zone;
-drop table if exists ungeocoded_projects_es_zone;
-drop table if exists aggregated_es_zone_longform;
-drop table if exists aggregated_es_zone_PROJEct_level;
+drop table if exists aggregated_taz;
+drop table if exists ungeocoded_projects_taz;
+drop table if exists aggregated_taz_longform;
+drop table if exists aggregated_taz_PROJEct_level;
 
 
 SELECT
 	*
 into
-	aggregated_es_zone
+	aggregated_taz
 from
 (
-	with aggregated_boundaries_es_zone as
+	with aggregated_boundaries_taz as
 (
 	SELECT
 		a.*,
-		b.the_geom as es_zone_geom,
-		b.dbn AS es_zone,
-		b.remarks as es_remarks,
-		st_distance(a.the_geom::geography,b.the_geom::geography) as es_zone_Distance
+		b.the_geom as taz_geom,
+		b.bpm2012taz AS taz,
+		b.distname as distname,
+		st_distance(a.the_geom::geography,b.the_geom::geography) as taz_Distance
 	from
 		capitalplanning.known_projects_db_20190610_v4_cp_assumptions a
 	left join
-		capitalplanning.doe_school_zones_es_2019 b
+		capitalplanning.nybpm2012_tazboundaryrev2 b
 	on 
 	case
 		/*Treating large developments as polygons*/
@@ -71,7 +71,7 @@ from
 		source,
 		PROJECT_id
 	from
-		aggregated_boundaries_es_zone
+		aggregated_boundaries_taz
 	group by
 		source,
 		PROJECT_id
@@ -79,64 +79,64 @@ from
 		count(*)>1
 ),
 
-	aggregated_boundaries_es_zone_2 as
+	aggregated_boundaries_taz_2 as
 (
 	SELECT
 		a.*,
 		case when 	concat(a.source,a.PROJECT_id) in(SELECT concat(source,PROJECT_id) from multi_geocoded_PROJECTs) and st_area(a.the_geom) > 0	then 
-					CAST(ST_Area(ST_INTERSECTion(a.the_geom,a.es_zone_geom))/ST_Area(a.the_geom) AS DECIMAL) 										else
-					1 end																														as proportion_in_es_zone
+					CAST(ST_Area(ST_INTERSECTion(a.the_geom,a.taz_geom))/ST_Area(a.the_geom) AS DECIMAL) 										else
+					1 end																														as proportion_in_taz
 	from
-		aggregated_boundaries_es_zone a
+		aggregated_boundaries_taz a
 ),
 
-	aggregated_boundaries_es_zone_3 as
+	aggregated_boundaries_taz_3 as
 (
 	SELECT
 		source,
 		PROJECT_id,
-		sum(proportion_in_es_zone) as total_proportion
+		sum(proportion_in_taz) as total_proportion
 	from
-		aggregated_boundaries_es_zone_2
+		aggregated_boundaries_taz_2
 	group by
 		source,
 		PROJECT_id
 ),
 
-	aggregated_boundaries_es_zone_4 as
+	aggregated_boundaries_taz_4 as
 (
 	SELECT
 		a.*,
-		case when b.total_proportion is not null then cast(a.proportion_in_es_zone/b.total_proportion as decimal)
-			 else 1 			  end as proportion_in_es_zone_1,
-		case when b.total_proportion is not null then round(a.counted_units * cast(a.proportion_in_es_zone/b.total_proportion as decimal)) 
+		case when b.total_proportion is not null then cast(a.proportion_in_taz/b.total_proportion as decimal)
+			 else 1 			  end as proportion_in_taz_1,
+		case when b.total_proportion is not null then round(a.counted_units * cast(a.proportion_in_taz/b.total_proportion as decimal)) 
 			 else a.counted_units end as counted_units_1
 	from
-		aggregated_boundaries_es_zone_2 a
+		aggregated_boundaries_taz_2 a
 	left join
-		aggregated_boundaries_es_zone_3 b
+		aggregated_boundaries_taz_3 b
 	on
 		a.PROJECT_id = b.PROJECT_id and a.source = b.source
 )
 
-	SELECT * from aggregated_boundaries_es_zone_4
+	SELECT * from aggregated_boundaries_taz_4
 
 ) as _1;
 
 SELECT
 	*
 into
-	ungeocoded_PROJECTs_es_zone
+	ungeocoded_PROJECTs_taz
 from
 (
-	with ungeocoded_PROJECTs_es_zone as
+	with ungeocoded_PROJECTs_taz as
 (
 	SELECT
 		a.*,
-		coalesce(a.es_zone,b.dbn) 			as es_zone_1,
-		coalesce(a.es_remarks,b.remarks)	as es_remarks_1,
+		coalesce(a.taz,b.bpm2012taz) 	as taz_1,
+		coalesce(a.distname,b.distname)	as distname_1,
 		coalesce(
-					a.es_zone_distance,
+					a.taz_distance,
 					st_distance(
 								b.the_geom::geography,
 								case
@@ -144,13 +144,13 @@ from
 									when st_area(a.the_geom) > 0 																										then st_centroid(a.the_geom)::geography
 									else a.the_geom::geography 																											end
 								)
-				) as es_zone_distance1
+				) as taz_distance1
 	from
-		aggregated_es_zone a 
+		aggregated_taz a 
 	left join
-		capitalplanning.doe_school_zones_es_2019 b
+		capitalplanning.nybpm2012_tazboundaryrev2 b
 	on 
-		a.es_zone_distance is null and
+		a.taz_distance is null and
 		case
 			when (st_area(a.the_geom::geography)>10000 or total_units > 500) and a.source in('DCP Applications','DCP Planner-Added PROJECTs') 		then
 				st_dwithin(a.the_geom::geography,b.the_geom::geography,500)
@@ -159,56 +159,49 @@ from
 			else
 				st_dwithin(a.the_geom::geography,b.the_geom::geography,500)																			end
 )
-	SELECT * from ungeocoded_PROJECTs_es_zone
+	SELECT * from ungeocoded_PROJECTs_taz
 ) as _2;
 
 
 SELECT
 	*
 into
-	aggregated_es_zone_longform
+	aggregated_taz_longform
 from
 (
 	with	min_distances as
 (
 	SELECT
 		PROJECT_id,
-		min(es_zone_distance1) as min_distance
+		min(taz_distance1) as min_distance
 	from
-		ungeocoded_PROJECTs_es_zone
+		ungeocoded_PROJECTs_taz
 	group by 
 		PROJECT_id
 ),
 
-	all_PROJECTs_es_zone as
+	all_PROJECTs_taz as
 (
 	SELECT
 		a.*
 	from
-		ungeocoded_PROJECTs_es_zone a 
+		ungeocoded_PROJECTs_taz a 
 	inner join
 		min_distances b
 	on
 		a.PROJECT_id = b.PROJECT_id and
-		a.es_zone_distance1=b.min_distance
+		a.taz_distance1=b.min_distance
 )
 
 	SELECT 
 		a.*, 
-		b.es_zone_1 as es_zone, 
-		b.es_remarks_1 as es_remarks,
-		coalesce(
-				b.es_zone_1,
-				case 
-					when b.es_remarks_1 like '%Contact %' then substring(b.es_remarks_1,1,position('Contact' in b.es_remarks_1) - 1)
-					else b.es_remarks_1 end
-				)											as es_zone_remarks,
-		b.proportion_in_es_zone_1 							as proportion_in_es_zone,
-		round(a.counted_units * b.proportion_in_es_zone_1) 	as counted_units_in_es_zone
+		b.taz_1 as taz, 
+		b.proportion_in_taz_1 							as proportion_in_taz,
+		round(a.counted_units * b.proportion_in_taz_1) 	as counted_units_in_taz
 	from 
 		known_projects_db_20190610_v4_cp_assumptions a 
 	left join 
-		all_PROJECTs_es_zone b 
+		all_PROJECTs_taz b 
 	on 
 		a.source = b.source and 
 		a.PROJECT_id = b.PROJECT_id 
@@ -217,14 +210,14 @@ from
 		PROJECT_id asc,
 		PROJECT_name_address asc,
 		status asc,
-		b.es_zone_1 asc
+		b.taz_1 asc
 ) as _3;
 
 
 SELECT
 	*
 into
-	aggregated_es_zone_PROJECT_level
+	aggregated_taz_PROJECT_level
 from
 (
 	SELECT
@@ -273,15 +266,15 @@ from
 						': ',
 						nullif
 							(
-								es_zone_remarks,
+								taz_distname,
 								''
 							),
-						concat(round(100*proportion_in_es_zone,0),'%')
+						concat(round(100*proportion_in_taz,0),'%')
 					),
 				'')),
-		' | ') 	as es_zone 
+		' | ') 	as taz 
 	from
-		aggregated_es_zone_longform
+		aggregated_taz_longform
 	group by
 		the_geom,
 		the_geom_webmercator,
@@ -322,12 +315,12 @@ from
 		assisted_living_flag
 ) x;
 
-drop table if exists longform_es_zone_output;
+drop table if exists longform_taz_output;
 SELECT
 	*
 into
-	longform_es_zone_output
+	longform_taz_output
 from
 (
-SELECT *  FROM capitalplanning.aggregated_es_zone_longform where not (source = 'DOB' and status in('Complete','Complete (demolition)'))
+SELECT *  FROM capitalplanning.aggregated_taz_longform where not (source = 'DOB' and status in('Complete','Complete (demolition)'))
 ) x;

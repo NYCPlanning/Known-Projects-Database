@@ -337,8 +337,3 @@ from
 (
 SELECT *  FROM capitalplanning.aggregated_nta_longform_cp_assumptions where not (source = 'DOB' and status in('Complete','Complete (demolition)'))
 ) x;
-
-update longform_nta_output_cp_assumptions
-set cartodb_id = cartodb_id_replacement;
-
-select cdb_cartodbfytable('capitalplanning','longform_nta_output_cp_assumptions');

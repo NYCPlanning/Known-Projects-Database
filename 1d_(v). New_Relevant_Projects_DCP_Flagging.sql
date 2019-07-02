@@ -10,7 +10,7 @@ METHODOLOGY:
 /*************************************************************************************
 RUN THIS SCRIPT IN CARTO BATCH
 *************************************************************************************/ 
-
+drop table if exists dcp_project_flags_v2;
 
 
 SELECT
@@ -142,7 +142,4 @@ FROM
 	on
 		a.project_id = b.project_id and 
 		a.project_id is not null
-) as DCP_Project_Flagging
-
-
-select cdb_cartodbfytable('capitalplanning', 'DCP_PROJECT_FLAGS_V2')
+) as DCP_Project_Flagging;
