@@ -134,7 +134,6 @@ from
 	SELECT
 		a.*,
 		coalesce(a.taz,b.bpm2012taz) 	as taz_1,
-		coalesce(a.distname,b.distname)	as distname_1,
 		coalesce(
 					a.taz_distance,
 					st_distance(
