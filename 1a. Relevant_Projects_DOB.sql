@@ -73,6 +73,7 @@ select
 	A.longitude,
 	geo_bin												as bin,
 	geo_bbl												as bbl,
+	x_inactive											as inactive_job,
 
 	/*Identifying NYCHA Projects*/
 	CASE 
@@ -124,8 +125,8 @@ on
 
 /*Filtering out jobs from pipeline*/	
 where
-	status 		<>'Withdrawn' 							and 
-	x_inactive 	= 'false' 								and /*Non-permitted job w/o update since two years ago*/
+	-- status 		<>'Withdrawn' 							and 
+	-- x_inactive 	= 'false' 								and /*Non-permitted job w/o update since two years ago*/
 	units_net 	<> 0									and /*Removing administrative and no work jobs which do not create units*/
 	upper(job_description) not like '%NO WORK%' 		and
 	upper(job_description) not like '%ADMINISTRATIVE%'  and
