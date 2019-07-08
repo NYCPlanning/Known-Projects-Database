@@ -129,7 +129,7 @@ where
 	units_net 	<> 0									and /*Removing administrative and no work jobs which do not create units*/
 	upper(job_description) not like '%NO WORK%' 		and
 	upper(job_description) not like '%ADMINISTRATIVE%'  and
-	job_number not in(220453168,220600446) 					/*Omitting two jobs at 29 Featherbed Lane which are duplicates of a third job, 220673162. All other significant duplicates
+	job_number not in(220453168,220600446) 						/*Omitting two jobs at 29 Featherbed Lane which are duplicates of a third job, 220673162. All other significant duplicates
 																have been already removed by HEIP and EDM prior to Housing DB publication*/
 
 order by
