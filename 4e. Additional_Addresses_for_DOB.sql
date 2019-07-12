@@ -5,7 +5,7 @@ SCRIPT: Adding in DOB-provided addresses when Geosupport did not return addresse
 
 /************************************************************************************************************************************************************************************
 METHODOLOGY: 
-1. Merge DOB raw DOB file with dob_2018_sca_inputs_ms. This merge only occurs after deduplication because we do not want to deduplicate using DOB-provided addresses. We only want
+1. Merge raw DOB file with dob_2018_sca_inputs_ms. This merge only occurs after deduplication because we do not want to deduplicate using DOB-provided addresses. We only want
 to provide DOB-provided addresses for context, if Geosupport was unable to return addresses.
 ************************************************************************************************************************************************************************************/
 /*************************RUN IN CARTO BATCH********************/

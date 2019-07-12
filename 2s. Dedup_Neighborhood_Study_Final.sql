@@ -137,8 +137,3 @@ from
 select cdb_cartodbfytable('capitalplanning','nstudy_deduped');
 
 
-/**********************************
-SOURCE-SPECIFIC OUTPUT
-**********************************/
-
-select * from nstudy_deduped  order by PROJECT_ID asc

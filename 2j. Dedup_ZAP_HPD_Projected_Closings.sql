@@ -10,6 +10,12 @@ METHODOLOGY:
 3. Eliminate inaccurate proximity-based matches
 ************************************************************************************************************************************************************************************/
 /*************************RUN IN CARTO BATCH********************/
+drop table if exists zap_hpd_projected_closings;
+drop table if exists multi_dcp_hpd_projected_closings_matches;
+drop table if exists zap_hpd_projected_closings_1;
+drop table if exists zap_hpd_projected_closings_2_pre;
+drop table if exists zap_hpd_projected_closings_2;
+drop table if exists zap_hpd_projected_closings_final;
 
 select
 	*
@@ -72,7 +78,7 @@ from
 			position(upper(b.address) in upper(a.project_name)) > 0 and
 			case when position('-' in a.project_name) = 0 then left(upper(a.project_name),5) = left(upper(b.address),5) end
 		)
-) zap_hpd_projected_closings
+) zap_hpd_projected_closings;
 
 
 
@@ -103,7 +109,7 @@ from
 			hpd_project_id
 		having
 			count(*) > 1
-) multi_dcp_hpd_projected_closings_matches
+) multi_dcp_hpd_projected_closings_matches;
 
 
 /*2 HPD Projected Closings match with multiple ZAP projects.*/
@@ -176,7 +182,7 @@ from
 		) b
 	on
 		a.project_id = b.project_id
-) zap_hpd_projected_closings_1
+) zap_hpd_projected_closings_1;
 
 /*Checking proximity matches. There are 0 matches by proximity. 
   If there are >0 proximity-based matches, create 
@@ -221,7 +227,7 @@ from
 		b.accurate_match = 0
 	where
 		b.zap_project_id is null
-) zap_hpd_projected_closings_2_pre
+) zap_hpd_projected_closings_2_pre;
 
 select
 	*
@@ -238,7 +244,7 @@ from
 		zap_hpd_projected_closings_2_pre b
 	on
 		a.project_id = b.zap_project_id_temp
-) zap_hpd_projected_closings_2
+) zap_hpd_projected_closings_2;
 
 select
 	*
@@ -281,9 +287,9 @@ from
 		sum(HPD_Project_Incremental_Units) 																				as HPD_Project_Incremental_Units
 	from
 		zap_hpd_projected_closings_2
-	where
-		project_id <> 85321 /*Eliminating inaccurate matches to Chestnut Commons future site -- the matched project has been zeroed out by another DOB job
-								matching to DOB job 321384177, which does not match to Chestnut Commons.*/ 
+	-- where
+		-- project_id <> 85321 Eliminating inaccurate matches to Chestnut Commons future site -- the matched project has been zeroed out by another DOB job
+		-- 						matching to DOB job 321384177, which does not match to Chestnut Commons. 
 	group by
 		cartodb_id,
 		the_geom,
@@ -314,7 +320,7 @@ from
 		portion_built_2035,
 		portion_built_2055,
 		si_seat_cert
-) zap_hpd_projected_closings_final
+) zap_hpd_projected_closings_final;
 
 
 /**********************************************************DIAGNOSTICS**************************************************************/

@@ -11,6 +11,10 @@ METHODOLOGY:
 4. Calculate incremental units.
 ************************************************************************************************************************************************************************************/
 /*************************RUN IN CARTO BATCH********************/
+drop table if exists nstudy_hpd_projected_closings;
+drop table if exists multi_nstudy_hpd_projected_closings_matches;
+drop table if exists nstudy_hpd_projected_closings_final;
+
 
 select
 	*

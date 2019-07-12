@@ -132,6 +132,9 @@ where
 	upper(job_description) not like '%ADMINISTRATIVE%'  and
 	job_number not in(220453168,220600446) 						/*Omitting two jobs at 29 Featherbed Lane which are duplicates of a third job, 220673162. All other significant duplicates
 																have been already removed by HEIP and EDM prior to Housing DB publication*/
+														and
+	job_number <> 520137780								and		/*Omitting duplicate 475 Bay St Withdrawn Job*/
+	job_number not in(420652948,420652966)						/*Omitting two duplicates for 131-02 40th Road. The two active jobs for this address are not duplicates*/
 
 order by
 	job_number

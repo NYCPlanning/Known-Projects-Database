@@ -1,9 +1,9 @@
 /*Aggregating deduplicated data*/
 
-drop table if exists known_projects_db_20190610_v4_cp_assumptions;
+drop table if exists known_projects_db_20190712_v5_cp_assumptions;
 
 create table
-	known_projects_db_20190610_v4_cp_assumptions
+	known_projects_db_20190712_v5_cp_assumptions
 as
 (
 	select
@@ -493,3 +493,5 @@ order by
 	project_name_address asc,
 	status asc;
 
+
+select cdb_cartodbfytable('capitalplanning','known_projects_db_20190712_v5_cp_assumptions') ;

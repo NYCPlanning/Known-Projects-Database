@@ -11,6 +11,12 @@ METHODOLOGY:
 3. Omit inaccurate proximity-based matches within 20 meters.
 ************************************************************************************************************************************************************************************/
 /*************************RUN IN CARTO BATCH********************/
+drop table if exists planner_projects_zap;
+drop table if exists planner_projects_zap_1;
+drop table if exists planner_projects_zap_2_pre;
+drop table if exists planner_projects_zap_2;
+drop table if exists multi_planner_projects_zap_matches;
+drop table if exists planner_projects_zap_final;
 
 select
 	*
@@ -43,7 +49,7 @@ from
 		st_dwithin(cast(a.the_geom as geography),cast(b.the_geom as geography),20) 	
 	order by
 		a.map_id asc 													 
-)   planner_projects_zap
+)   planner_projects_zap;
 
 /*****************************************************************DIAGNOSTICS******************************************************************************************/
 
@@ -102,7 +108,7 @@ from
 		b.status <> 'Complete'
 	order by
 		a.map_id asc 													 
-)   planner_projects_zap_1
+)   planner_projects_zap_1;
 
 /************************************************************DIAGNOSTICS**************************************************************/
 
@@ -132,7 +138,7 @@ from
 		zap_project_id
 	having
 		count(*)>1
-) multi_planner_projects_zap_matches
+) multi_planner_projects_zap_matches;
 
 
 
@@ -178,7 +184,7 @@ from
 		b.accurate_match = 0
 	where
 		b.zap_project_id is null
-) planner_projects_zap_2_pre
+) planner_projects_zap_2_pre;
 
 select
 	*
@@ -195,7 +201,7 @@ from
 		planner_projects_zap_2_pre b
 	on
 		a.map_id = b.planner_project_id_temp
-) planner_projects_zap_2
+) planner_projects_zap_2;
 
 
 /*Aggregate projects*/
@@ -232,5 +238,5 @@ from
 		planner_input
 	order by 
 		map_id asc
-)	planner_projects_zap_final	
+)	planner_projects_zap_final;
 

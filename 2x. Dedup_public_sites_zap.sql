@@ -11,6 +11,9 @@ METHODOLOGY:
 4. Calculate incremental units.
 ************************************************************************************************************************************************************************************/
 /*************************RUN IN CARTO BATCH********************/
+drop table if exists public_sites_zap;
+drop table if exists public_sites_zap_1;
+drop table if exists public_sites_zap_final;
 
 select
 	*
@@ -43,7 +46,7 @@ from
 		st_dwithin(a.the_geom::geography,b.the_geom::geography,20) 
 	order by
 		public_sites_id asc
-)  public_sites_zap
+)  public_sites_zap;
 
 /*There is only 1 match, and it is proximity-based. It is between Public Site Pipeline 28 (351 Powers Avenue) and ZAP ID 2019X0196 (WIN Powers), ~19 meters apart.
   These are clearly separate projects -- the project description shows WIN Powers targeting 346 Powers Avenue, and the lot of 351 Powers is currently owned by DCAS/DOE. 
@@ -80,7 +83,7 @@ from
 --		st_dwithin(a.the_geom::geography,b.the_geom::geography,20) 
 	order by
 		public_sites_id asc
-)  public_sites_zap_1
+)  public_sites_zap_1;
 
 
 /*Aggregating projects*/
@@ -127,4 +130,4 @@ from
 		planner_input
 	order by
 		public_sites_id asc
-) public_sites_zap_final
+) public_sites_zap_final;

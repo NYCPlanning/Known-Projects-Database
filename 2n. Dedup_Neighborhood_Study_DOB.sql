@@ -67,9 +67,9 @@ from
 		sum(case when dob_match_type = 'Spatial' 		then 1 else 0 end) 											as Spatial_Matches,
 		sum(case when dob_match_type = 'Proximity' 		then 1 else 0 end) 											as Proximity_Matches,
 		count(*)																									as total_matches,
-		min(case when dob_match_type = 'Proximity' then dob_distance end)											as minimum_proximity_distance,
-		min(case when dob_match_type = 'Spatial' then abs(dob_units_net - coalesce(units,0)) end) 					as min_unit_difference_spatial,
-		min(case when dob_match_type = 'Proximity' then abs(dob_units_net - coalesce(units,0)) end)					as min_unit_difference_proximity			
+		min(case when dob_match_type = 'Proximity' 	then dob_distance end)											as minimum_proximity_distance,
+		min(case when dob_match_type = 'Spatial' 	then abs(dob_units_net - coalesce(units,0)) end)				as min_unit_difference_spatial,
+		min(case when dob_match_type = 'Proximity' 	then abs(dob_units_net - coalesce(units,0)) end)				as min_unit_difference_proximity			
 	from
 		nstudy_dob
 	where
@@ -123,7 +123,8 @@ from
 		concat(a.project_id,a.dob_job_number) = concat(b.neighborhood_study_id,b.dob_job_number) and
 		b.accurate_match = 0
 	where
-		b.neighborhood_study_id is null
+		b.neighborhood_study_id is null and
+		not (a.dob_match_type = 'Proximity' and b.accurate_match is null)
 ) nstudy_dob_1_pre;
 
 select
