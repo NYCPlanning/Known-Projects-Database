@@ -219,6 +219,87 @@ from
 select cdb_cartodbfytable('capitalplanning', 'dob_2018_sca_inputs_ms');
 
 
+/*Deduplicating inactive jobs against other inactive jobs. HEIP has not accounted for potential duplicates which are inactive.
+  Matching duplicates by geom and job_type, and preferencing the match with the more recent status date. This omits ~2,500 units.*/ 
+
+drop table if exists inactive_deduped_against_inactive;
+select
+	*
+into 
+	inactive_deduped_against_inactive
+from
+(	
+	select
+		a.*,
+		b.job_number 					as match_job_number,
+		b.job_description				as match_job_description,
+		b.job_type 						as match_job_type,  
+		b.status 						as match_status,  
+		b.address 						as match_address, 
+		b.units_init					as match_units_init,
+		b.units_prop					as match_units_prop, 
+		b.units_net						as match_units_net,
+		b.most_recent_status_date		as match_most_recent_status_date,
+		b.pre_filing_date 				as match_pre_filing_date,
+		b.completed_application_date	as match_completed_application_date,
+		b.partial_permit_issued_date	as match_partial_permit_issued_date,
+		b.full_permit_issued_date		as match_full_permit_issued_date,
+		b.job_completion_date 			as match_job_completion_date,
+		b.earliest_cofo_date			as match_earliest_cofo_date,
+		b.latest_cofo_date				as match_latest_cofo_date
+	from
+		(select * from capitalplanning.dob_2018_sca_inputs_ms where inactive_job is true) a
+	left join
+		(select * from capitalplanning.dob_2018_sca_inputs_ms where inactive_job is true) b
+	on
+		a.the_geom = b.the_geom 												and
+		a.most_recent_status_date::date > b.most_recent_status_date::date 		and
+		a.job_type = b.job_type 												and
+		a.job_number <> b.job_number
+	order by
+		a.units_net desc,
+		b.units_net desc
+) x;
+
+/*Deduplicating the inactive jobs which haven't been deduplicated against another inactive job, against active jobs. Preferencing the active job. This omits ~10K units.*/ 
+
+drop table if exists inactive_deduped_against_active;
+select
+	*
+into
+	inactive_deduped_against_active
+from
+(	
+	select
+		a.*,
+		b.job_number 					as match_job_number,
+		b.job_description				as match_job_description,
+		b.job_type 						as match_job_type,  
+		b.status 						as match_status,  
+		b.address 						as match_address, 
+		b.units_init					as match_units_init,
+		b.units_prop					as match_units_prop, 
+		b.units_net						as match_units_net,
+		b.most_recent_status_date		as match_most_recent_status_date,
+		b.pre_filing_date 				as match_pre_filing_date,
+		b.completed_application_date	as match_completed_application_date,
+		b.partial_permit_issued_date	as match_partial_permit_issued_date,
+		b.full_permit_issued_date		as match_full_permit_issued_date,
+		b.job_completion_date 			as match_job_completion_date,
+		b.earliest_cofo_date			as match_earliest_cofo_date,
+		b.latest_cofo_date				as match_latest_cofo_date
+	from
+		(select * from capitalplanning.dob_2018_sca_inputs_ms where inactive_job is false) a
+	left join
+		(select * from capitalplanning.dob_2018_sca_inputs_ms where inactive_job is true and job_number not in(select match_job_number from inactive_deduped_against_inactive where match_job_number is not null) ) b
+	on
+		a.the_geom = b.the_geom	and
+		a.job_type = b.job_type
+	order by
+		a.units_net desc,
+		b.units_net desc
+) x;
+
 
 
 
@@ -277,28 +358,6 @@ from
 
 
 select cdb_cartodbfytable('capitalplanning', 'dob_2018_sca_inputs_ms_cp_build_year');
-
-
-
-
-
-
-
-
-
-
-/**********************************
-SOURCE-SPECIFIC OUTPUT
-**********************************/
-
-/*Complete jobs*/
-select * from dob_2018_sca_inputs_ms where status in('Complete','Complete (demolition)') order by job_number asc
-
-/*Incomplete jobs*/
-
-select * from dob_2018_sca_inputs_ms where status not in('Complete','Complete (demolition)') order by job_number asc
-
-
 
 
 
