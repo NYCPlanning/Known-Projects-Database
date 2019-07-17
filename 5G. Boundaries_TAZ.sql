@@ -265,8 +265,8 @@ from
 					concat_ws
 					(
 						': ',
-						nullif(taz,''),
-						concat(round(100*proportion_in_nta,0),'%')
+						taz,
+						concat(round(100*proportion_in_taz,0),'%')
 					),
 				'')),
 		' | ') 	as taz,
@@ -277,7 +277,7 @@ from
 					(
 						': ',
 						nullif(distname,''),
-						concat(round(100*proportion_in_nta,0),'%')
+						concat(round(100*proportion_in_taz,0),'%')
 					),
 				'')),
 		' | ') 	as tazname 
