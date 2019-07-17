@@ -134,6 +134,7 @@ from
 	SELECT
 		a.*,
 		coalesce(a.taz,b.bpm2012taz) 	as taz_1,
+		coalesce(a.distname,b.distname) as distname_1,
 		coalesce(
 					a.taz_distance,
 					st_distance(
@@ -194,7 +195,8 @@ from
 
 	SELECT 
 		a.*, 
-		b.taz_1 as taz, 
+		b.taz_1 as taz,
+		b.distname_1 as distname
 		b.proportion_in_taz_1 							as proportion_in_taz,
 		round(a.counted_units * b.proportion_in_taz_1) 	as counted_units_in_taz
 	from 
@@ -263,15 +265,22 @@ from
 					concat_ws
 					(
 						': ',
-						nullif
-							(
-								taz_distname,
-								''
-							),
-						concat(round(100*proportion_in_taz,0),'%')
+						nullif(taz,''),
+						concat(round(100*proportion_in_nta,0),'%')
 					),
 				'')),
-		' | ') 	as taz 
+		' | ') 	as taz,
+		array_to_string(
+			array_agg(
+				nullif(
+					concat_ws
+					(
+						': ',
+						nullif(distname,''),
+						concat(round(100*proportion_in_nta,0),'%')
+					),
+				'')),
+		' | ') 	as tazname 
 	from
 		aggregated_taz_longform
 	group by
