@@ -196,7 +196,7 @@ from
 	SELECT 
 		a.*, 
 		b.taz_1 as taz,
-		b.distname_1 as distname
+		b.distname_1 as distname,
 		b.proportion_in_taz_1 							as proportion_in_taz,
 		round(a.counted_units * b.proportion_in_taz_1) 	as counted_units_in_taz
 	from 
