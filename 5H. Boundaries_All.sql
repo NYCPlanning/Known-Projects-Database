@@ -23,7 +23,7 @@ from
 		f.Census_Tract
 		-- ,g.taz 
 	from
-		known_projects_db_20190610_v4 a
+		known_projects_db_20190712_v5 a
 	left join
 		aggregated_CSD_PROJECT_level b
 	on

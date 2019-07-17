@@ -16,7 +16,7 @@ from
 		f.Census_Tract
 		-- ,g.taz 
 	from
-		known_projects_db_20190610_v4_cp_assumptions a
+		known_projects_db_20190712_v5_cp_assumptions a
 	left join
 		aggregated_CSD_PROJECT_level b
 	on
