@@ -27,7 +27,7 @@ from
 		b.ntacode,
 		st_distance(a.the_geom::geography,b.the_geom::geography) as nta_Distance
 	from
-		capitalplanning.known_PROJECTs_db_20190610_v4_cp_assumptions a
+		capitalplanning.known_projects_db_20190712_v5_cp_assumptions a
 	left join
 		dcpadmin.support_admin_ntaboundaries b
 	on 
@@ -203,7 +203,7 @@ from
 		b.proportion_in_nta_1 as proportion_in_nta,
 		round(a.counted_units * b.proportion_in_nta_1) as counted_units_in_nta
 	from 
-		known_PROJECTs_db_20190610_v4_cp_assumptions a 
+		known_projects_db_20190712_v5_cp_assumptions a 
 	left join 
 		all_PROJECTs_nta b 
 	on 

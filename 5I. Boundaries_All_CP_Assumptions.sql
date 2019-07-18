@@ -14,7 +14,7 @@ from
 		d.ES_Zone,
 		e.MS_Zone,
 		f.Census_Tract
-		-- ,g.taz 
+		,g.taz 
 	from
 		known_projects_db_20190712_v5_cp_assumptions a
 	left join
@@ -42,11 +42,11 @@ from
 	on
 		a.source 		= f.source 		and
 		a.project_id 	= f.project_id 
-	-- left join
-	-- 	aggregated_taz_project_level g
-	-- on
-	-- 	a.source 		= g.Source 		and
-	-- 	a.project_id  	= g.project_id 
+	left join
+		aggregated_taz_project_level g
+	on
+		a.source 		= g.Source 		and
+		a.project_id  	= g.project_id 
 ) x
 order by
 	source,

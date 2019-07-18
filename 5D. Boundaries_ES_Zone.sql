@@ -27,7 +27,7 @@ from
 		b.remarks as es_remarks,
 		st_distance(a.the_geom::geography,b.the_geom::geography) as es_zone_Distance
 	from
-		capitalplanning.known_projects_db_20190610_v4_cp_assumptions a
+		capitalplanning.known_projects_db_20190712_v5_cp_assumptions a
 	left join
 		capitalplanning.doe_school_zones_es_2019 b
 	on 
@@ -206,7 +206,7 @@ from
 		b.proportion_in_es_zone_1 							as proportion_in_es_zone,
 		round(a.counted_units * b.proportion_in_es_zone_1) 	as counted_units_in_es_zone
 	from 
-		known_projects_db_20190610_v4_cp_assumptions a 
+		known_projects_db_20190712_v5_cp_assumptions a 
 	left join 
 		all_PROJECTs_es_zone b 
 	on 

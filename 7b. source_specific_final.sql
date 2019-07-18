@@ -34,9 +34,10 @@ from
 		b.subdistrict 												as subdistrict,
 		b.ES_Zone 													as es_zone,
 		b.ms_zone 													as ms_zone,
-		b.Census_Tract  											as ct
+		b.Census_Tract  											as ct,
+		b.taz
 	from
-		(select * from dob_2018_sca_inputs_ms_cp_build_year_2 where status in('Complete','Complete (demolition)')) a
+		(select * from dob_2018_sca_inputs_ms_cp_build_year_3 where status in('Complete','Complete (demolition)')) a
 	left join
 		Known_Projects_DB_Project_Level_Boundaries b
 	on
@@ -59,7 +60,8 @@ from
 		b.Subdistrict,
 		b.ES_Zone,
 		b.MS_Zone,
-		b.Census_Tract 
+		b.Census_Tract,
+		b.taz
 	from
 		(select * from dob_2018_sca_inputs_ms_2 where status not in('Complete','Complete (demolition)')) a
 	left join
@@ -84,9 +86,10 @@ from
 		b.Subdistrict,
 		b.ES_Zone,
 		b.MS_Zone,
-		b.Census_Tract 
+		b.Census_Tract,
+		b.taz 
 	from
-		(select * from dob_2018_sca_inputs_ms_cp_build_year_2 where status not in('Complete','Complete (demolition)')) a
+		(select * from dob_2018_sca_inputs_ms_cp_build_year_3 where status not in('Complete','Complete (demolition)')) a
 	left join
 		Known_Projects_DB_Project_Level_Boundaries_cp_assumptions b
 	on
@@ -109,7 +112,8 @@ from
 		b.Subdistrict,
 		b.ES_Zone,
 		b.MS_Zone,
-		b.Census_Tract 
+		b.Census_Tract,
+		b.taz 
 	from
 		hpd_deduped a
 	left join
@@ -133,7 +137,8 @@ from
 		b.Subdistrict,
 		b.ES_Zone,
 		b.MS_Zone,
-		b.Census_Tract 
+		b.Census_Tract,
+		b.taz 
 	from
 		hpd_rfp_deduped a
 	left join
@@ -156,7 +161,8 @@ from
 		b.Subdistrict,
 		b.ES_Zone,
 		b.MS_Zone,
-		b.Census_Tract 
+		b.Census_Tract,
+		b.taz 
 	from
 		edc_deduped a
 	left join
@@ -181,7 +187,8 @@ from
 		b.Subdistrict,
 		b.ES_Zone,
 		b.MS_Zone,
-		b.Census_Tract 
+		b.Census_Tract,
+		b.taz 
 	from
 		zap_deduped_build_year a
 	left join
@@ -207,7 +214,8 @@ from
 		b.Subdistrict,
 		b.ES_Zone,
 		b.MS_Zone,
-		b.Census_Tract 
+		b.Census_Tract,
+		b.taz 
 	from
 		zap_deduped_build_year a
 	left join
@@ -234,7 +242,8 @@ from
 		b.Subdistrict,
 		b.ES_Zone,
 		b.MS_Zone,
-		b.Census_Tract 
+		b.Census_Tract,
+		b.taz 
 	from
 		nstudy_deduped a
 	left join
@@ -258,7 +267,8 @@ from
 		b.Subdistrict,
 		b.ES_Zone,
 		b.MS_Zone,
-		b.Census_Tract 
+		b.Census_Tract,
+		b.taz 
 	from
 		public_sites_deduped a
 	left join
@@ -282,7 +292,8 @@ from
 		b.Subdistrict,
 		b.ES_Zone,
 		b.MS_Zone,
-		b.Census_Tract 
+		b.Census_Tract,
+		b.taz 
 	from
 		planner_projects_deduped a
 	left join
@@ -307,7 +318,8 @@ from
 		b.Subdistrict,
 		b.ES_Zone,
 		b.MS_Zone,
-		b.Census_Tract 
+		b.Census_Tract,
+		b.taz 
 	from	
 		nstudy_projected_potential_areawide_deduped_final a
 	left join
@@ -332,7 +344,8 @@ from
 		b.Subdistrict,
 		b.ES_Zone,
 		b.MS_Zone,
-		b.Census_Tract 
+		b.Census_Tract,
+		b.taz 
 	from	
 		nstudy_future a
 	left join

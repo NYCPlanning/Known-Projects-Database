@@ -26,7 +26,7 @@ from
 		b.distzone AS subdistrict,
 		st_distance(a.the_geom::geography,b.the_geom::geography) as subdistrict_Distance
 	from
-		capitalplanning.known_PROJECTs_db_20190610_v4 a
+		capitalplanning.known_projects_db_20190712_v5 a
 	left join
 		dcpadmin.doe_schoolsubdistricts b
 	on 
@@ -198,7 +198,7 @@ from
 		round(a.counted_units * b.proportion_in_subdistrict_1) as counted_units_in_subdistrict,
 		concat('"',subdistrict,'"') as subdist_concat
 	from 
-		known_PROJECTs_db_20190610_v4 a 
+		known_projects_db_20190712_v5 a 
 	left join 
 		all_PROJECTs_subdistrict b 
 	on 
