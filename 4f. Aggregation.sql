@@ -50,7 +50,7 @@ as
 		senior_housing_flag,
 		assisted_living_flag
 	from
-		dob_2018_sca_inputs_ms_2
+		dob_2018_sca_inputs_ms_2_1
 	-- where
 	-- 	status not in('Complete','Complete (demolition)')
 	union all

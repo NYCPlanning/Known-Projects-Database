@@ -19,7 +19,7 @@ as
 	select
 		*
 	from
-		dob_2018_sca_inputs_ms_cp_build_year_2
+		dob_2018_sca_inputs_ms_cp_build_year_2_1
 );
 
 update dob_2018_sca_inputs_ms_cp_build_year_3 a
@@ -34,7 +34,7 @@ where
 	position(concat(a.job_number) in b.dob_matches) > 0		and
 	(
 		b.source in('HPD Projected Closings', 'HPD RFPs'					) or 
-		(b.source = 'EDC Projected Projects' and b.portion_built_2025 = 1	)
+		(b.source = 'EDC Projected Projects' and b.project_id = '5'			) --Ensuring that an inactive DOB job for Stapleton Phase 1 (EDC Project ID #5) is placed to materialize in 2025.
 	);
 
 

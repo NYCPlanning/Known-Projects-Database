@@ -86,15 +86,15 @@ from
   lookup nstudy_dob_proximate_matches_190529_v2 with manual
   checks on the accuracy of each proximity match. */
 
-  -- select
-  -- 	*
-  -- from
-  --  	nstudy_dob
-  -- where
-  --  	dob_Match_Type = 'Proximity' and units <> dob_units_net
-  -- order by
-  -- 	dob_distance asc
-
+/*  select
+  	*
+  from
+   	nstudy_dob
+  where
+   	dob_Match_Type = 'Proximity' and units <> dob_units_net
+  order by
+  	dob_distance asc
+*/
 
 /*Removing the inaccurate proximate matches by selecting the subset of all NStudy projects which are not inaccurately proximity-matched,
  and then placing all matches back onto the original relevant projects list. This would be done by creating the nstudy_dob_1_pre
@@ -124,7 +124,7 @@ from
 		b.accurate_match = 0
 	where
 		b.neighborhood_study_id is null and
-		not (a.dob_match_type = 'Proximity' and b.accurate_match is null)
+		not (a.dob_match_type = 'Proximity' and b.accurate_match is null and a.units <> a.dob_units_net)
 ) nstudy_dob_1_pre;
 
 select

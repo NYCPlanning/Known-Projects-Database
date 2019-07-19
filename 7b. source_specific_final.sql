@@ -63,7 +63,7 @@ from
 		b.Census_Tract,
 		b.taz
 	from
-		(select * from dob_2018_sca_inputs_ms_2 where status not in('Complete','Complete (demolition)')) a
+		(select * from dob_2018_sca_inputs_ms_2_1 where status not in('Complete','Complete (demolition)')) a
 	left join
 		Known_Projects_DB_Project_Level_Boundaries b
 	on
