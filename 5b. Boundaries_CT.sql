@@ -352,3 +352,20 @@ from
 		assisted_living_flag
 ) x
 ;
+
+
+drop table if exists longform_ct_output;
+SELECT
+	*
+into
+	longform_ct_output
+from
+(
+	SELECT 
+		*  
+	FROM 
+		capitalplanning.aggregated_ct_longform 
+	where 
+		not (source = 'DOB' and status in('Complete','Complete (demolition)')) and
+		source not in('Future Neighborhood Studies','Neighborhood Study Projected Development Sites')
+) x;
