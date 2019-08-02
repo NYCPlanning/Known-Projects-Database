@@ -58,5 +58,8 @@ This repository contains the SQL and processing steps for creating New York City
       - DCP active and on-hold applications - Application may be on-hold, withdrawn, disapproved, or change use
       - Future City-Sponsored RFPs/RFEIs - These projects include highly speculative conversations with developers.
       - DCP Planner-Added Projects - These projects include highly speculative conversations with developers.
+    - Lowest certainty
+      - Neighborhood study projected developments - These are not known projects, nor are they site-specific.
+      - Future neighborhood studies - These are neighborhood studies which may or may not be adopted.
       
       
