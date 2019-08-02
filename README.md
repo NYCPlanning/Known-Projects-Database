@@ -31,7 +31,7 @@ This repository contains the SQL and processing steps for creating New York City
 - **Neighborhood study projected developments**- The count of units each adopted neighborhood study from the current administration is expected to develop. These projections are not site-specific, and are highly speculative. **These projects should not necessarily be included for planning purposes, depending on need.**
 - **Future neighborhood studies**- The count of units each future neighborhood study is projected to develop. These projections are not site-specific, and are highly speculative. Because these rezonings have not yet been adopted, we include a certainty discount factor, and we do not deduplicate. **These projects should not necessarily be included for planning purposes.**
 
-## Prerequisites
+### Prerequisites
 - Obtain DCP Housing Developments database
 - Obtain HPD Projected Closings and HPD RFP data from HPD
 - Obtain EDC Projected Projects data from EDC
@@ -39,8 +39,11 @@ This repository contains the SQL and processing steps for creating New York City
   * Project data
   * Project actions
   * Project BBLs
-- Obtain list of polygons create to represent applicant-owned sites in DCP applications from HEIP. Available [here](https://nycplanning.carto.com/u/capitalplanning/dataset/heip_zap_polygons)
+- Obtain list of polygons create to represent applicant-owned sites in DCP applications from HEIP. Available **[here]**(https://nycplanning.carto.com/u/capitalplanning/dataset/heip_zap_polygons)
 - Download **[NYC Zoning Map Amendments](https://www1.nyc.gov/site/planning/data-maps/open-data/dwn-gis-zoning.page)** - This dataset contains project area polygons for all certified or approved projects seeking a zoning map amendment (ZM action)
-- Obtain DCP's imPACT Visualization polygons - This dataset contains the polygons associated with all DCP projects. Because there are accuracy concerns with this dataset, nyzma was used where possible  
+- Obtain DCP's imPACT Visualization polygons - This dataset contains the polygons associated with all DCP projects. Because there are accuracy concerns with this dataset, nyzma was used where possible
 
+## Limitations and future improvements
+- **Limitations**
+ * Exercise discretion when deciding how to use inputs because data inputs vary in level of certainty. Projects within data inputs also vary 			in level of certainty.
 
