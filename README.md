@@ -46,4 +46,17 @@ This repository contains the SQL and processing steps for creating New York City
 ## Limitations and future improvements
 - **Limitations**
  *  Exercise discretion when deciding how to use inputs because data inputs vary in level of certainty. Projects within data inputs also   vary in level of certainty.
-
+    - Higher certainty
+      - DOB permit issued & permit apps - Historical analysis suggest 95% of permits issued are completed within 5 years and 75% of permit    apps in-progress or filed are completed within 5 years. While 2/3 of permit apps are disapproved or withdrawn in the first year, that figure drops sharply by year 2, averaging ~10-15% overall
+      - HPD-financed projects - Projected projects listed are expected to close financing by FY2024
+      - HPD RFPs - Projects listed are expected to be built by 2025
+      - EDC-sponsored projects - Projected projects listed are expected to be complete given agreement with EDC
+      - Empire State Development Projected Projects: These are public and planned projects.
+      - Neighborhood Study Affordable Housing Commitments: These are administration commitments.
+    - Lower certainty
+      - DCP approved applications - Applicant may decide to not pursue proposed project or change use
+      - DCP active and on-hold applications - Application may be on-hold, withdrawn, disapproved, or change use
+      - Future City-Sponsored RFPs/RFEIs - These projects include highly speculative conversations with developers.
+      - DCP Planner-Added Projects - These projects include highly speculative conversations with developers.
+      
+      
