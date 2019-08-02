@@ -42,6 +42,11 @@ This repository contains the SQL and processing steps for creating New York City
 - Obtain list of polygons create to represent applicant-owned sites in DCP applications from HEIP. Available **[here]**(https://nycplanning.carto.com/u/capitalplanning/dataset/heip_zap_polygons)
 - Download **[NYC Zoning Map Amendments](https://www1.nyc.gov/site/planning/data-maps/open-data/dwn-gis-zoning.page)** - This dataset contains project area polygons for all certified or approved projects seeking a zoning map amendment (ZM action)
 - Obtain DCP's imPACT Visualization polygons - This dataset contains the polygons associated with all DCP projects. Because there are accuracy concerns with this dataset, nyzma was used where possible
+- Research Empire State Development projects online and receive project input from to HEIP, borough planners
+- Review Points of Agreement from adopted neighborhood studies
+- Receive new list of future city-sponsored RFPs/RFEIs
+- Perform borough office outreach to receive DCP Planner-Added Projects
+- Perform borough office outreach to identify updates to DCP applications, Empire State project, affordable housing commitments, and future city-sponsored RFPs/RFEIs
 
 ## Limitations and future improvements
 - **Limitations**
@@ -61,5 +66,10 @@ This repository contains the SQL and processing steps for creating New York City
     - Lowest certainty
       - Neighborhood study projected developments - These are not known projects, nor are they site-specific.
       - Future neighborhood studies - These are neighborhood studies which may or may not be adopted.
+      
+## Methodology
+
+- **1. Identify housing projects to be included from each data source**
+    - DOB: 
       
       
