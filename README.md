@@ -16,3 +16,4 @@ This repository contains the SQL and processing steps for creating New York City
 - **Disclaimer** - This information does NOT represent a housing projection produced by DCP, nor can DCP attest to the certainty that each of these developments will lead to future housing starts
 
 ## Data Sources
+- **[DCP Housing Developments Database](https://github.com/NYCPlanning/db-developments)** - This database is created by DCP using DOB permit and certificate of occupany data
