@@ -69,7 +69,7 @@ This repository contains the SQL and processing steps for creating New York City
       
 ## Methodology
 
-- **1. Identify housing projects to be included from each data source**
+### 1. Identify housing projects to be included from each data source
 
 | Step  | Script | Description |
 | :--- | :--- | :--- |
@@ -84,7 +84,7 @@ This repository contains the SQL and processing steps for creating New York City
 | Future City-Sponsored RFPs/RFEIs | [1f. Relevant_Projects_Public_Sites.sql](https://github.com/NYCPlanning/Known_Projects_Database/blob/master/1f.%Relevant_Projects_Public_Sites.sql) | Identifying future city-sponsored RFPs/RFEIs which haven't been manually identified in any other data sources. Limiting to these projects. | 
 | Planner-Added Projects | [1g. Relevant_Planner_Added_Projects.sql](https://github.com/NYCPlanning/Known_Projects_Database/blob/master/1g.%Relevant_Planner_Added_Projects.sql) | Importing DCP planner-added projects and limiting to those which are not already included in the other data sources. | 
 
-- **2. Deduplicate projects across each data source**
+### 2. Deduplicate projects across each data source
 
 
 
