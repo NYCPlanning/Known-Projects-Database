@@ -76,5 +76,7 @@ This repository contains the SQL and processing steps for creating New York City
 | DOB | [1a_Relevant_Projects_DOB.sql](https://github.com/NYCPlanning/Known-Projects-Database/blob/master/1a.%20Relevant_Projects_DOB.sql) | Filter [DCP Housing Development Database](https://github.com/NYCPlanning/db-developments) to relevant residential jobs. Jobs completed before 2010 are excluded. Inactive jobs are included. Redefine project statuses where necessary. |
 | HPD | [1b_Relevant_Projects_HPD.sql](https://github.com/NYCPlanning/Known-Projects-Database/blob/master/1b.%20Relevant_Projects_HPD.sql) | Aggregate HPD projected closings and HPD RFPs. |
 | EDC | [1c_Relevant_Projects_EDC.sql](https://github.com/NYCPlanning/Known-Projects-Database/blob/master/1b.%20Relevant_Projects_EDC.sql) | Clean EDC data and add geometries. |
+| DCP Applications -- DB Building | [1d_(i). Relevant_DCP_DB_Building.sql](https://github.com/NYCPlanning/Known_Projects_Database/blob/master/1d_(i).%Relevant_DCP_DB_Building.sql) | Consolidating DCP applications from various Zoning Application Portal exports. Adding geometries for all projects using previous HEIP work, NYZMA, imPACT, and PLUTO. | 
+
       
       
