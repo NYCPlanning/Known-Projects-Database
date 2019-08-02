@@ -45,5 +45,5 @@ This repository contains the SQL and processing steps for creating New York City
 
 ## Limitations and future improvements
 - **Limitations**
- * Exercise discretion when deciding how to use inputs because data inputs vary in level of certainty. Projects within data inputs also vary 			in level of certainty.
+ *  Exercise discretion when deciding how to use inputs because data inputs vary in level of certainty. Projects within data inputs also   vary in level of certainty.
 
