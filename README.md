@@ -70,6 +70,7 @@ This repository contains the SQL and processing steps for creating New York City
 ## Methodology
 
 - **1. Identify housing projects to be included from each data source**
+
 | Step  | Description |
 | :--- | :--- |
 | [1a_Relevant_Projects_DOB.sql](https://github.com/NYCPlanning/Known-Projects-Database/blob/master/1a.%20Relevant_Projects_DOB.sql) | Filter [DCP Housing Development Database](https://github.com/NYCPlanning/db-developments) to relevant residential jobs. Jobs completed before 2010 are excluded. Inactive jobs are included. |
