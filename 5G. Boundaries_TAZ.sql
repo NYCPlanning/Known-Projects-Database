@@ -29,7 +29,7 @@ from
 	from
 		capitalplanning.known_projects_db_20190712_v5 a
 	left join
-		capitalplanning.nybpm2012_tazboundaryrev2 b
+		(select * from capitalplanning.nybpm2012_tazboundaryrev2 where distname in('Queens','Richmond', 'CBD: Lower','CBD: Valley','CBD Midtown','Bronx','Other Manhattan','Kings'))  b
 	on 
 	case
 		/*Treating large developments as polygons*/
@@ -148,7 +148,7 @@ from
 	from
 		aggregated_taz a 
 	left join
-		capitalplanning.nybpm2012_tazboundaryrev2 b
+		(select * from capitalplanning.nybpm2012_tazboundaryrev2 where distname in('Queens','Richmond', 'CBD: Lower','CBD: Valley','CBD Midtown','Bronx','Other Manhattan','Kings')) b
 	on 
 		a.taz_distance is null and
 		case

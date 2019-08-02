@@ -329,6 +329,7 @@ from
 
 select cdb_cartodbfytable('capitalplanning','dob_complete_shapefile_20190718');
 select cdb_cartodbfytable('capitalplanning','dob_incomplete_shapefile_20190718');
+select cdb_cartodbfytable('capitalplanning','dob_incomplete_shapefile_cp_assumptions_20190718');
 select cdb_cartodbfytable('capitalplanning','hpd_projected_closings_shapefile_20190718');
 select cdb_cartodbfytable('capitalplanning','hpd_rfps_shapefile_20190718');
 select cdb_cartodbfytable('capitalplanning','edc_shapefile_20190718');
