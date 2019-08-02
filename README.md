@@ -75,5 +75,6 @@ This repository contains the SQL and processing steps for creating New York City
 | :--- | :--- | :--- |
 | DOB | [1a_Relevant_Projects_DOB.sql](https://github.com/NYCPlanning/Known-Projects-Database/blob/master/1a.%20Relevant_Projects_DOB.sql) | Filter [DCP Housing Development Database](https://github.com/NYCPlanning/db-developments) to relevant residential jobs. Jobs completed before 2010 are excluded. Inactive jobs are included. Redefine project statuses where necessary. |
 | HPD | [1b_Relevant_Projects_HPD.sql](https://github.com/NYCPlanning/Known-Projects-Database/blob/master/1b.%20Relevant_Projects_HPD.sql) | Aggregate HPD projected closings and HPD RFPs. |
+| HPD | [1c_Relevant_Projects_EDC.sql](https://github.com/NYCPlanning/Known-Projects-Database/blob/master/1b.%20Relevant_Projects_EDC.sql) | Clean EDC data and add geometries. |
       
       
