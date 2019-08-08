@@ -7,7 +7,6 @@ This repository contains the SQL and processing steps for creating New York City
 2. Data sources
 3. Prerequisites
 4. Methodology
-5. Process diagram
 
 ## Introduction to Known Projects DB
 - The Known Projects DB contains information on future housing starts. It gathers data from 9-11 data sources (depending on use case, see below), compares the information in each data source to ensure that units existing in multiple sources are not counted more than once, and then aggregates these sources. It incorporates granular information at the project-level, including project statuses, estimated project phasing, and borough planner input on projects where available.
@@ -101,7 +100,32 @@ Projects are deduplicated across each source using 4 types of matching, where da
 
 ### 3. Calculate incremental units count for pipeline
 
-Once sources are deduplicated, incremental units for each project are calculated. If a project is not matched in any other sources, its full unit count is added to the pipeline. If a project is matched with other sources, it's full unit count is subtracted by the unit counts of projects to which it matches, from sources closer to materialized units. Diagram provided below. 
+Once sources are deduplicated, incremental units for each project are calculated. If a project is not matched in any other sources, its full unit count is added to the pipeline. If a project is matched with other sources, it's full unit count is subtracted by the unit counts of projects to which it matches, from sources closer to materialized units. Diagram provided below.
+
+A project's characteristics will change as it progresses, and this is reflected if it appears in multiple data sources. For instance, unit count estimates may change. We assume that if >80% of a project's listed new units have appeared in a source which indicates it is closer to materializing, we zero that project's contribution to our pipeline. 
 
 ![Materialization Diagram](https://github.com/NYCPlanning/Known-Projects-Database/blob/master/Capture1.PNG)
+
+### 4. Borough planner inputs 
+
+After steps 1-3, borough planners are solicited for input on developments with large unit counts, developments which have not updated their information despite registering before 2016, and developments with uncertain unit counts.
+
+Borough planners clarified the information above. They also comprehensively reviewed projects to confirm residential status and deduplication results. They have also provided build year estimates (by 2025, 2026-2035, 2036-2055) where available.
+
+### 5. Build year assignments
+Build year assumptions on developments are made using the following hierarchy:
+
+1. Borough planner inputs, reviewed and normalized by HEIP and Capital Planning
+2. DOB jobs: See HEIP phasing methodology
+3: HPD Projected Closings: By 2025 unless indicated otherwise by planner
+4. HPD RFPs: By 2025 unless indicated otherwise by planner or HPD
+5. EDC: Build year provided by EDC
+6. DCP Applications: See: https://docs.google.com/document/d/1Jj4PVD3yuQkLB-jzUTk9deIrDMr0NZCTl9E84At6wnM/edit?usp=sharing
+7. ESD Projects: Borough planner inputs
+8: Neighborhood Study Affordable Housing Commitments: Individual reviews based on the project. A mix of borough planner inputs and 
+Capital Planning normalization.
+9. Future City-Sponsored RFPs/RFEIs: Borough planner inputs
+10. Planner-Added Projects: Placed in 2036-2055 unless otherwise indicated by borough planner, normalized by Capital Planning.
+
+### 6. Group quarters and assisted living homes are excluded
 
