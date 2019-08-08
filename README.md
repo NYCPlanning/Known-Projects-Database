@@ -86,6 +86,6 @@ This repository contains the SQL and processing steps for creating New York City
 
 
 ### 2. Deduplicate projects across each data source
-
+![sources](https://github.com/NYCPlanning/Known-Projects-Database/blob/master/Capture.PNG)
 
 
