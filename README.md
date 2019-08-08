@@ -91,4 +91,16 @@ This repository contains the SQL and processing steps for creating New York City
 
 ### 2. Deduplicate projects across each data source
 
+Projects are deduplicated across each source using 4 types of matching, where data fields allow.
+
+1. Address-matching (including parsing project names)
+2. BBL-based matching
+3. Matching by spatial overlap
+4. Matching by spatial proximity (matches by spatial proximity are then reviewed to determine if they are accurate. The vast majority of proximity-based matches are inaccurate.)
+
+
+### 3. Calculate incremental units count for pipeline
+
+Once sources are deduplicated, incremental units for each project are calculated. If a project is not matched in any other sources, its full unit count is added to the pipeline. If a project is matched with other sources, it's full unit count is subtracted by the unit counts of projects to which it matches, from sources closer to materialized units. Diagram provided below. 
+
 
