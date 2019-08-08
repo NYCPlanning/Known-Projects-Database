@@ -31,6 +31,10 @@ This repository contains the SQL and processing steps for creating New York City
 - **Neighborhood study projected developments**- The count of units each adopted neighborhood study from the current administration is expected to develop. These projections are not site-specific, and are highly speculative. **These projects should not necessarily be included for planning purposes, depending on need.**
 - **Future neighborhood studies**- The count of units each future neighborhood study is projected to develop. These projections are not site-specific, and are highly speculative. Because these rezonings have not yet been adopted, we include a certainty discount factor, and we do not deduplicate. **These projects should not necessarily be included for planning purposes.**
 
+####Diagram
+![sources](https://github.com/NYCPlanning/Known-Projects-Database/blob/master/Capture.PNG)
+
+
 ### Prerequisites
 - Obtain DCP Housing Developments database
 - Obtain HPD Projected Closings and HPD RFP data from HPD
@@ -86,6 +90,5 @@ This repository contains the SQL and processing steps for creating New York City
 
 
 ### 2. Deduplicate projects across each data source
-![sources](https://github.com/NYCPlanning/Known-Projects-Database/blob/master/Capture.PNG)
 
 
