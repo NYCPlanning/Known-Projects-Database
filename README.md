@@ -103,4 +103,5 @@ Projects are deduplicated across each source using 4 types of matching, where da
 
 Once sources are deduplicated, incremental units for each project are calculated. If a project is not matched in any other sources, its full unit count is added to the pipeline. If a project is matched with other sources, it's full unit count is subtracted by the unit counts of projects to which it matches, from sources closer to materialized units. Diagram provided below. 
 
+![Materialization Diagram](https://github.com/NYCPlanning/Known-Projects-Database/blob/master/Capture1.PNG)
 
