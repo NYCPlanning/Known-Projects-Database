@@ -15,6 +15,7 @@ from
 		e.MS_Zone,
 		f.Census_Tract
 		,g.taz 
+		,h.Community_District
 	from
 		known_projects_db_20190712_v5_cp_assumptions a
 	left join
@@ -47,6 +48,11 @@ from
 	on
 		a.source 		= g.Source 		and
 		a.project_id  	= g.project_id 
+	left join
+		aggregated_cd_project_level h
+	on
+		a.source 		= h.Source 		and
+		a.project_id  	= h.project_id 
 ) x
 order by
 	source,

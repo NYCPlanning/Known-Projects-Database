@@ -35,11 +35,12 @@ from
 		b.ES_Zone 													as es_zone,
 		b.ms_zone 													as ms_zone,
 		b.Census_Tract  											as ct,
-		b.taz
+		b.taz,
+		b.community_district
 	from
 		(select * from dob_2018_sca_inputs_ms_cp_build_year_3 where status in('Complete','Complete (demolition)')) a
 	left join
-		Known_Projects_DB_Project_Level_Boundaries b
+		Known_Projects_DB_Project_Level_Boundaries_CP_Assumptions b
 	on
 		b.source = 'DOB' and
 		concat(a.job_number) = b.project_id
@@ -61,11 +62,12 @@ from
 		b.ES_Zone,
 		b.MS_Zone,
 		b.Census_Tract,
-		b.taz
+		b.taz,
+		b.community_district
 	from
 		(select * from dob_2018_sca_inputs_ms_2_1 where status not in('Complete','Complete (demolition)')) a
 	left join
-		Known_Projects_DB_Project_Level_Boundaries b
+		Known_Projects_DB_Project_level_boundaries_cp_assumptions b
 	on
 		b.source = 'DOB' and
 		concat(a.job_number) = b.project_id
@@ -87,11 +89,12 @@ from
 		b.ES_Zone,
 		b.MS_Zone,
 		b.Census_Tract,
-		b.taz 
+		b.taz,
+		b.community_district 
 	from
 		(select * from dob_2018_sca_inputs_ms_cp_build_year_3 where status not in('Complete','Complete (demolition)')) a
 	left join
-		Known_Projects_DB_Project_Level_Boundaries_cp_assumptions b
+		Known_Projects_DB_Project_level_boundaries_cp_assumptions b
 	on
 		b.source = 'DOB' and
 		concat(a.job_number) = b.project_id
@@ -113,11 +116,12 @@ from
 		b.ES_Zone,
 		b.MS_Zone,
 		b.Census_Tract,
-		b.taz 
+		b.taz,
+		b.community_district 
 	from
 		hpd_deduped a
 	left join
-		Known_Projects_DB_Project_Level_Boundaries b
+		Known_Projects_DB_Project_level_boundaries_cp_assumptions b
 	on
 		b.source = 'HPD Projected Closings' and
 		a.project_id = b.project_id
@@ -138,11 +142,12 @@ from
 		b.ES_Zone,
 		b.MS_Zone,
 		b.Census_Tract,
-		b.taz 
+		b.taz,
+		b.community_district 
 	from
 		hpd_rfp_deduped a
 	left join
-		Known_Projects_DB_Project_Level_Boundaries b
+		Known_Projects_DB_Project_level_boundaries_cp_assumptions b
 	on
 		b.source = 'HPD RFPs' and
 		concat(a.project_id) = b.project_id
@@ -162,11 +167,12 @@ from
 		b.ES_Zone,
 		b.MS_Zone,
 		b.Census_Tract,
-		b.taz 
+		b.taz,
+		b.community_district 
 	from
 		edc_deduped a
 	left join
-		Known_Projects_DB_Project_Level_Boundaries b
+		Known_Projects_DB_Project_level_boundaries_cp_assumptions b
 	on
 		b.source = 'EDC Projected Projects' and
 		concat(a.project_id) = b.project_id
@@ -188,11 +194,12 @@ from
 		b.ES_Zone,
 		b.MS_Zone,
 		b.Census_Tract,
-		b.taz 
+		b.taz,
+		b.community_district 
 	from
 		zap_deduped_build_year a
 	left join
-		Known_Projects_DB_Project_Level_Boundaries b
+		Known_Projects_DB_Project_level_boundaries_cp_assumptions b
 	on
 		b.source = 'DCP Applications' and
 		a.project_id = b.project_id
@@ -215,11 +222,12 @@ from
 		b.ES_Zone,
 		b.MS_Zone,
 		b.Census_Tract,
-		b.taz 
+		b.taz,
+		b.community_district 
 	from
 		zap_deduped_build_year a
 	left join
-		Known_Projects_DB_Project_Level_Boundaries b
+		Known_Projects_DB_Project_level_boundaries_cp_assumptions b
 	on
 		b.source = 'Empire State Development Projected Projects' and
 		a.project_id = b.project_id
@@ -243,11 +251,12 @@ from
 		b.ES_Zone,
 		b.MS_Zone,
 		b.Census_Tract,
-		b.taz 
+		b.taz,
+		b.community_district 
 	from
 		nstudy_deduped a
 	left join
-		Known_Projects_DB_Project_Level_Boundaries b
+		Known_Projects_DB_Project_level_boundaries_cp_assumptions b
 	on
 		b.source = 'Neighborhood Study Rezoning Commitments' and
 		a.project_id = b.project_id
@@ -268,11 +277,12 @@ from
 		b.ES_Zone,
 		b.MS_Zone,
 		b.Census_Tract,
-		b.taz 
+		b.taz,
+		b.community_district 
 	from
 		public_sites_deduped a
 	left join
-		Known_Projects_DB_Project_Level_Boundaries b
+		Known_Projects_DB_Project_level_boundaries_cp_assumptions b
 	on
 		b.source = 'Future City-Sponsored RFPs/RFEIs' and
 		a.project_id = b.project_id
@@ -293,11 +303,12 @@ from
 		b.ES_Zone,
 		b.MS_Zone,
 		b.Census_Tract,
-		b.taz 
+		b.taz,
+		b.community_district 
 	from
 		planner_projects_deduped a
 	left join
-		Known_Projects_DB_Project_Level_Boundaries b
+		Known_Projects_DB_Project_level_boundaries_cp_assumptions b
 	on
 		b.source = 'DCP Planner-Added Projects' and
 		concat(a.project_id) = b.project_id
@@ -319,11 +330,12 @@ from
 		b.ES_Zone,
 		b.MS_Zone,
 		b.Census_Tract,
-		b.taz 
+		b.taz,
+		b.community_district 
 	from	
 		nstudy_projected_potential_areawide_deduped_final a
 	left join
-		Known_Projects_DB_Project_Level_Boundaries b
+		Known_Projects_DB_Project_level_boundaries_cp_assumptions b
 	on
 		b.source = 'Neighborhood Study Projected Development Sites' and
 		a.project_id = b.project_id
@@ -345,11 +357,12 @@ from
 		b.ES_Zone,
 		b.MS_Zone,
 		b.Census_Tract,
-		b.taz 
+		b.taz,
+		b.community_district 
 	from	
 		nstudy_future a
 	left join
-		Known_Projects_DB_Project_Level_Boundaries b
+		Known_Projects_DB_Project_level_boundaries_cp_assumptions b
 	on
 		b.source = 'Future Neighborhood Studies' and
 		a.project_id = b.project_id
