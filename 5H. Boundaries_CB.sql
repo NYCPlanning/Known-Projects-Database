@@ -345,6 +345,8 @@ from
 ) x;
 
 
+
+/*
 drop table if exists cb_average_unit_size;
 select
 	*
@@ -390,7 +392,7 @@ from
 
 select cdb_cartodbfytable('capitalplanning','cb_average_unit_size');
 
-update cb_average_unit_size a
+update cb_average_unit_size a */
 set
 	the_geom = b.the_geom,
 	the_geom_webmercator = b.the_geom_webmercator
@@ -399,3 +401,7 @@ from
 where
 	a.cb = b.bctcb::text
 	
+=======
+		not (source = 'DOB' and status in('Complete','Complete (demolition)')) and
+		source not in('Future Neighborhood Studies','Neighborhood Study Projected Development Sites')
+) x; */
