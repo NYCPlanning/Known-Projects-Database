@@ -35,8 +35,11 @@ from
 		b.ES_Zone 													as es_zone,
 		b.ms_zone 													as ms_zone,
 		b.Census_Tract  											as ct,
-		b.taz,
-		b.community_district
+		b.taz
+		-- ,
+		-- b.community_district,
+		-- b.ntaname,
+		-- b.ntacode
 	from
 		(select * from dob_2018_sca_inputs_ms_cp_build_year_3 where status in('Complete','Complete (demolition)')) a
 	left join
@@ -62,8 +65,9 @@ from
 		b.ES_Zone,
 		b.MS_Zone,
 		b.Census_Tract,
-		b.taz,
-		b.community_district
+		b.taz
+		-- ,
+		-- b.community_district
 	from
 		(select * from dob_2018_sca_inputs_ms_2_1 where status not in('Complete','Complete (demolition)')) a
 	left join
@@ -89,8 +93,9 @@ from
 		b.ES_Zone,
 		b.MS_Zone,
 		b.Census_Tract,
-		b.taz,
-		b.community_district 
+		b.taz
+		-- ,
+		-- b.community_district 
 	from
 		(select * from dob_2018_sca_inputs_ms_cp_build_year_3 where status not in('Complete','Complete (demolition)')) a
 	left join
@@ -116,8 +121,9 @@ from
 		b.ES_Zone,
 		b.MS_Zone,
 		b.Census_Tract,
-		b.taz,
-		b.community_district 
+		b.taz
+		-- ,
+		-- b.community_district 
 	from
 		hpd_deduped a
 	left join
@@ -142,8 +148,9 @@ from
 		b.ES_Zone,
 		b.MS_Zone,
 		b.Census_Tract,
-		b.taz,
-		b.community_district 
+		b.taz
+		-- ,
+		-- b.community_district 
 	from
 		hpd_rfp_deduped a
 	left join
@@ -167,8 +174,9 @@ from
 		b.ES_Zone,
 		b.MS_Zone,
 		b.Census_Tract,
-		b.taz,
-		b.community_district 
+		b.taz
+		-- ,
+		-- b.community_district 
 	from
 		edc_deduped a
 	left join
@@ -194,8 +202,9 @@ from
 		b.ES_Zone,
 		b.MS_Zone,
 		b.Census_Tract,
-		b.taz,
-		b.community_district 
+		b.taz
+		-- ,
+		-- b.community_district 
 	from
 		zap_deduped_build_year a
 	left join
@@ -222,8 +231,9 @@ from
 		b.ES_Zone,
 		b.MS_Zone,
 		b.Census_Tract,
-		b.taz,
-		b.community_district 
+		b.taz
+		-- ,
+		-- b.community_district 
 	from
 		zap_deduped_build_year a
 	left join
@@ -251,8 +261,9 @@ from
 		b.ES_Zone,
 		b.MS_Zone,
 		b.Census_Tract,
-		b.taz,
-		b.community_district 
+		b.taz
+		-- ,
+		-- b.community_district 
 	from
 		nstudy_deduped a
 	left join
@@ -277,8 +288,9 @@ from
 		b.ES_Zone,
 		b.MS_Zone,
 		b.Census_Tract,
-		b.taz,
-		b.community_district 
+		b.taz
+		-- ,
+		-- b.community_district 
 	from
 		public_sites_deduped a
 	left join
@@ -303,8 +315,9 @@ from
 		b.ES_Zone,
 		b.MS_Zone,
 		b.Census_Tract,
-		b.taz,
-		b.community_district 
+		b.taz
+		-- ,
+		-- b.community_district 
 	from
 		planner_projects_deduped a
 	left join
@@ -330,8 +343,9 @@ from
 		b.ES_Zone,
 		b.MS_Zone,
 		b.Census_Tract,
-		b.taz,
-		b.community_district 
+		b.taz
+		-- ,
+		-- b.community_district 
 	from	
 		nstudy_projected_potential_areawide_deduped_final a
 	left join
@@ -357,8 +371,9 @@ from
 		b.ES_Zone,
 		b.MS_Zone,
 		b.Census_Tract,
-		b.taz,
-		b.community_district 
+		b.taz
+		-- ,
+		-- b.community_district 
 	from	
 		nstudy_future a
 	left join

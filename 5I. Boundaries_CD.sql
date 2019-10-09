@@ -342,3 +342,6 @@ from
 		not (source = 'DOB' and status in('Complete','Complete (demolition)')) and
 		source not in('Future Neighborhood Studies','Neighborhood Study Projected Development Sites')
 ) x;
+
+
+select cdb_cartodbfytable('capitalplanning','longform_cd_output') ;

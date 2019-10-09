@@ -28,7 +28,7 @@ set
 	portion_built_2035 = 0,
 	portion_built_2055 = 0
 from
-	capitalplanning.known_projects_db_20190712_v5 b
+	capitalplanning.known_projects_db_20190917_v6 b
 where
 	a.inactive_job is true 									and
 	position(concat(a.job_number) in b.dob_matches) > 0		and

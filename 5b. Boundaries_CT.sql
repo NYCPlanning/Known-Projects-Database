@@ -74,7 +74,7 @@ from
 		b.boro_ct201,
 		st_distance(a.the_geom::geography,b.the_geom::geography) as ct_Distance
 	from
-		capitalplanning.known_projects_db_20190712_v5 a
+		capitalplanning.known_projects_db_20190917_v6 a
 	left join
 		capitalplanning.census_tract_2010_190412_ms b
 	on 
@@ -240,7 +240,7 @@ from
 		b.proportion_in_ct_1 as proportion_in_ct,
 		round(a.counted_units * b.proportion_in_ct_1) as counted_units_in_ct 
 	from 
-		known_projects_db_20190712_v5 a 
+		known_projects_db_20190917_v6 a 
 	left join 
 		all_projects_ct b 
 	on 

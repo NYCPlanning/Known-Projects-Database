@@ -26,7 +26,7 @@ from
 		b.bctcb2010,
 		st_distance(a.the_geom::geography,b.the_geom::geography) as cb_distance
 	from
-		capitalplanning.known_projects_db_20190712_v5_cp_assumptions a
+		capitalplanning.known_projects_db_20190917_v6_cp_assumptions a
 	left join
 		dcpadmin.dcp_nycbctcb2010 b
 	on 
@@ -213,7 +213,7 @@ from
 		b.proportion_in_cb_1 as proportion_in_cb,
 		round(a.counted_units * b.proportion_in_cb_1) as counted_units_in_cb 
 	from 
-		known_projects_db_20190712_v5_cp_assumptions a 
+		known_projects_db_20190917_v6_cp_assumptions a 
 	left join 
 		all_projects_cb b 
 	on 
@@ -339,6 +339,63 @@ from
 	FROM 
 		capitalplanning.aggregated_cb_longform 
 	where 
-		not (source = 'DOB' and status in('Complete','Complete (demolition)')) and
+		not (source = 'DOB' and status in('Complete','Complete (demolition)')) 
+		and
 		source not in('Future Neighborhood Studies','Neighborhood Study Projected Development Sites')
 ) x;
+
+
+drop table if exists cb_average_unit_size;
+select
+	*
+into
+	cb_average_unit_size
+from
+(
+
+	with _1 as
+	(
+	select
+		cb,
+		count(*) as cb_dob_count,
+		avg(total_units) as cb_average_unit_size
+	from
+		longform_cb_output
+	where
+		source = 'DOB' and
+		dob_job_type = 'New Building'
+	group by
+		cb
+	),
+
+	_2 as
+	(
+		select
+			row_number() over() as cartodb_id,
+			b.the_geom,
+			b.the_geom_webmercator,
+			a.cb,
+			a.cb_dob_count,
+			a.cb_average_unit_size
+		from
+			_1 a
+		left join
+			dcpadmin.dcp_housingbctcb_2010 b
+		on
+			a.cb = b.bctcb::text
+	)
+
+	select * from _2
+) x;
+
+select cdb_cartodbfytable('capitalplanning','cb_average_unit_size');
+
+update cb_average_unit_size a
+set
+	the_geom = b.the_geom,
+	the_geom_webmercator = b.the_geom_webmercator
+from
+	dcpadmin.dcp_housingbctcb_2010 b
+where
+	a.cb = b.bctcb::text
+	

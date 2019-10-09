@@ -66,6 +66,8 @@ select
 	A.longitude,
 	geo_bin												as bin,
 	geo_bbl												as bbl,
+	geo_ntacode_edit,
+	geo_ntaname_edit,
 	x_inactive											as inactive_job,
 
 	/*Identifying NYCHA Projects*/
@@ -228,6 +230,8 @@ from
 (
 	SELECT DISTINCT
 		a.*,
+	geo_ntacode_edit,
+	geo_ntaname_edit,
 		case
 			when a.status like 'Complete%' 				then a.units_net
 			when a.status like '%Partial Complete' 		then a.latest_cofo
