@@ -26,7 +26,7 @@ from
 		b.SCHOOLDIST AS CSD,
 		st_distance(a.the_geom::geography,b.the_geom::geography) as CSD_Distance
 	from
-		capitalplanning.known_PROJECTs_db_20190610_v4 a
+		capitalplanning.known_projects_db_20190917_v6_cp_assumptions a
 	left join
 		capitalplanning.nyc_school_districts b
 	on 
@@ -197,7 +197,7 @@ from
 		b.proportion_in_CSD_1 as proportion_in_CSD,
 		round(a.counted_units * b.proportion_in_CSD_1) as counted_units_in_CSD 
 	from 
-		known_PROJECTs_db_20190610_v4 a 
+		known_projects_db_20190917_v6_cp_assumptions a 
 	left join 
 		all_PROJECTs_CSD b 
 	on 
@@ -311,3 +311,19 @@ from
 		assisted_living_flag
 ) x
 ;
+
+
+drop table if exists longform_csd_output;
+SELECT
+	*
+into
+	longform_csd_output
+from
+(
+SELECT *  FROM capitalplanning.aggregated_csd_longform where not (source = 'DOB' and status in('Complete','Complete (demolition)'))
+	order by 
+		source asc,
+		PROJECT_id asc,
+		PROJECT_name_address asc,
+		status asc
+) x;

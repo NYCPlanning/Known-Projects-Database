@@ -47,7 +47,12 @@ from
 		capitalplanning.zap_deduped b
 	on
 		case
-			when a.status = 'Rezoning Commitment' then 	st_dwithin(a.the_geom::geography,b.the_geom::geography,20) 
+			when a.status = 'Rezoning Commitment' then 	(
+															st_dwithin(a.the_geom::geography,b.the_geom::geography,20) or
+															--Facilitating a manual match between the 125th St MEC Center and the 201 East 125th St ZAP Application
+															(a.project_name = '125th St MEC Center' and b.project_id = '2019M0031')
+														)
+
 			else 										st_intersects(a.the_geom,b.the_geom) end
 ) nstudy_zap;	
 

@@ -6,24 +6,25 @@ COMPLETION DATE:
 Sources: 
 *************************************************************************************************************************************************************************************/
 
-drop table if exists dob_complete_shapefile_20190613;
-drop table if exists dob_incomplete_shapefile_20190613;
-drop table if exists hpd_projected_closings_shapefile_20190613;
-drop table if exists hpd_rfps_shapefile_20190613;
-drop table if exists edc_shapefile_20190613;
-drop table if exists dcp_applications_shapefile_20190613;
-drop table if exists esd_shapefile_20190613;
-drop table if exists nstudy_rezoning_commitments_shapefile_20190613;
-drop table if exists future_rfp_rfei_shapefile_20190613;
-drop table if exists dcp_planner_added_projects_shapefile_20190613;
-drop table if exists nstudy_projected_development_shapefile_20190613;
-drop table if exists future_nstudy_shapefile_20190613;
+drop table if exists dob_complete_shapefile_20191008;
+drop table if exists dob_incomplete_shapefile_20191008;
+drop table if exists dob_incomplete_shapefile_cp_assumptions_20191008;
+drop table if exists hpd_projected_closings_shapefile_20191008;
+drop table if exists hpd_rfps_shapefile_20191008;
+drop table if exists edc_shapefile_20191008;
+drop table if exists dcp_applications_shapefile_20191008;
+drop table if exists esd_shapefile_20191008;
+drop table if exists nstudy_rezoning_commitments_shapefile_20191008;
+drop table if exists future_rfp_rfei_shapefile_20191008;
+drop table if exists dcp_planner_added_projects_shapefile_20191008;
+drop table if exists nstudy_projected_development_shapefile_20191008;
+drop table if exists future_nstudy_shapefile_20191008;
 
 
 select
 	*
 into
-	dob_complete_shapefile_20190613
+	dob_complete_shapefile_20191008
 from
 (
 	select
@@ -37,7 +38,7 @@ from
 		portion_built_2035,
 		portion_built_2055
 	from
-		(select * from dob_2018_sca_inputs_ms_cp_build_year_2 where status in('Complete','Complete (demolition)')) a
+		(select * from dob_2018_sca_inputs_ms_cp_build_year_3 where status in('Complete','Complete (demolition)')) a
 ) x
 	order by 
 		job_number asc;
@@ -46,7 +47,7 @@ from
 select
 	*
 into
-	dob_incomplete_shapefile_20190613
+	dob_incomplete_shapefile_20191008
 from
 (
 	select
@@ -54,6 +55,7 @@ from
 		the_geom_webmercator,
 		source,
 		job_number,
+		job_type,
 		address,
 		units_net,
 		units_net_incomplete,
@@ -61,7 +63,32 @@ from
 		portion_built_2035,
 		portion_built_2055
 	from
-		(select * from dob_2018_sca_inputs_ms_cp_build_year_2 where status not in('Complete','Complete (demolition)')) a 
+		(select * from dob_2018_sca_inputs_ms_2 where status not in('Complete','Complete (demolition)')) a 
+) x
+	order by 
+		job_number asc;
+
+
+select
+	*
+into
+	dob_incomplete_shapefile_cp_assumptions_20191008
+from
+(
+	select
+		the_geom,
+		the_geom_webmercator,
+		source,
+		job_number,
+		job_type,
+		address,
+		units_net,
+		units_net_incomplete,
+		portion_built_2025,
+		portion_built_2035,
+		portion_built_2055
+	from
+		(select * from dob_2018_sca_inputs_ms_cp_build_year_3 where status not in('Complete','Complete (demolition)')) a 
 ) x
 	order by 
 		job_number asc;
@@ -69,7 +96,7 @@ from
 select
 	*
 into
-	hpd_projected_closings_shapefile_20190613
+	hpd_projected_closings_shapefile_20191008
 from
 (
 	select
@@ -79,7 +106,7 @@ from
 		project_id,
 		address,
 		total_units,
-		counted_units as deduplicated_units,
+		counted_units,
 		portion_built_2025,
 		portion_built_2035,
 		portion_built_2055
@@ -92,7 +119,7 @@ from
 select
 	*
 into
-	hpd_rfps_shapefile_20190613
+	hpd_rfps_shapefile_20191008
 from
 (
 	select
@@ -102,7 +129,7 @@ from
 		project_id,
 		project_name,
 		total_units,
-		counted_units as deduplicated_units,
+		counted_units,
 		portion_built_2025,
 		portion_built_2035,
 		portion_built_2055
@@ -115,7 +142,7 @@ from
 select
 	*
 into
-	edc_shapefile_20190613
+	edc_shapefile_20191008
 from
 (
 	select
@@ -125,7 +152,7 @@ from
 		project_id,
 		project_name,
 		total_units,
-		counted_units as deduplicated_units,
+		counted_units,
 		portion_built_2025,
 		portion_built_2035,
 		portion_built_2055
@@ -138,7 +165,7 @@ from
 select
 	*
 into
-	dcp_applications_shapefile_20190613
+	dcp_applications_shapefile_20191008
 from
 (
 	select
@@ -148,7 +175,7 @@ from
 		project_id,
 		project_name,
 		total_units,
-		counted_units as deduplicated_units,
+		counted_units,
 		portion_built_2025,
 		portion_built_2035,
 		portion_built_2055
@@ -164,7 +191,7 @@ from
 select
 	*
 into
-	esd_shapefile_20190613
+	esd_shapefile_20191008
 from
 (
 	select
@@ -174,7 +201,7 @@ from
 		project_id,
 		project_name,
 		total_units,
-		counted_units as deduplicated_units,
+		counted_units,
 		portion_built_2025,
 		portion_built_2035,
 		portion_built_2055
@@ -190,7 +217,7 @@ from
 select
 	*
 into
-	nstudy_rezoning_commitments_shapefile_20190613
+	nstudy_rezoning_commitments_shapefile_20191008
 from
 (
 	select
@@ -200,7 +227,7 @@ from
 		project_id,
 		project_name,
 		total_units,
-		counted_units as deduplicated_units,
+		counted_units,
 		portion_built_2025,
 		portion_built_2035,
 		portion_built_2055
@@ -213,7 +240,7 @@ from
 select
 	*
 into
-	future_rfp_rfei_shapefile_20190613
+	future_rfp_rfei_shapefile_20191008
 from
 (
 	select
@@ -223,7 +250,7 @@ from
 		project_id,
 		project_name,
 		total_units,
-		counted_units as deduplicated_units,
+		counted_units,
 		portion_built_2025,
 		portion_built_2035,
 		portion_built_2055
@@ -236,7 +263,7 @@ from
 select
 	*
 into
-	dcp_planner_added_projects_shapefile_20190613
+	dcp_planner_added_projects_shapefile_20191008
 from
 (
 	select
@@ -246,7 +273,7 @@ from
 		project_id,
 		project_name,
 		total_units,
-		counted_units as deduplicated_units,
+		counted_units,
 		portion_built_2025,
 		portion_built_2035,
 		portion_built_2055
@@ -260,7 +287,7 @@ from
 select
 	*
 into
-	nstudy_projected_development_shapefile_20190613
+	nstudy_projected_development_shapefile_20191008
 from
 (
 	select
@@ -269,7 +296,7 @@ from
 		source,
 		project_id,
 		total_units,
-		nstudy_projected_potential_incremental_units as deduplicated_units,
+		nstudy_projected_potential_incremental_units as counted_units,
 		portion_built_2025,
 		portion_built_2035,
 		portion_built_2055
@@ -283,7 +310,7 @@ from
 select
 	*
 into
-	future_nstudy_shapefile_20190613
+	future_nstudy_shapefile_20191008
 from
 (
 	select
@@ -302,15 +329,16 @@ from
 	order by
 		project_id asc;
 
-select cdb_cartodbfytable('capitalplanning','dob_complete_shapefile_20190613');
-select cdb_cartodbfytable('capitalplanning','dob_incomplete_shapefile_20190613');
-select cdb_cartodbfytable('capitalplanning','hpd_projected_closings_shapefile_20190613');
-select cdb_cartodbfytable('capitalplanning','hpd_rfps_shapefile_20190613');
-select cdb_cartodbfytable('capitalplanning','edc_shapefile_20190613');
-select cdb_cartodbfytable('capitalplanning','dcp_applications_shapefile_20190613');
-select cdb_cartodbfytable('capitalplanning','esd_shapefile_20190613');
-select cdb_cartodbfytable('capitalplanning','nstudy_rezoning_commitments_shapefile_20190613');
-select cdb_cartodbfytable('capitalplanning','future_rfp_rfei_shapefile_20190613');
-select cdb_cartodbfytable('capitalplanning','dcp_planner_added_projects_shapefile_20190613');
-select cdb_cartodbfytable('capitalplanning','nstudy_projected_development_shapefile_20190613');
-select cdb_cartodbfytable('capitalplanning','future_nstudy_shapefile_20190613');
+select cdb_cartodbfytable('capitalplanning','dob_complete_shapefile_20191008');
+select cdb_cartodbfytable('capitalplanning','dob_incomplete_shapefile_20191008');
+select cdb_cartodbfytable('capitalplanning','dob_incomplete_shapefile_cp_assumptions_20191008');
+select cdb_cartodbfytable('capitalplanning','hpd_projected_closings_shapefile_20191008');
+select cdb_cartodbfytable('capitalplanning','hpd_rfps_shapefile_20191008');
+select cdb_cartodbfytable('capitalplanning','edc_shapefile_20191008');
+select cdb_cartodbfytable('capitalplanning','dcp_applications_shapefile_20191008');
+select cdb_cartodbfytable('capitalplanning','esd_shapefile_20191008');
+select cdb_cartodbfytable('capitalplanning','nstudy_rezoning_commitments_shapefile_20191008');
+select cdb_cartodbfytable('capitalplanning','future_rfp_rfei_shapefile_20191008');
+select cdb_cartodbfytable('capitalplanning','dcp_planner_added_projects_shapefile_20191008');
+select cdb_cartodbfytable('capitalplanning','nstudy_projected_development_shapefile_20191008');
+select cdb_cartodbfytable('capitalplanning','future_nstudy_shapefile_20191008');

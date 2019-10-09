@@ -89,12 +89,12 @@ from
 	on 
 		b.job_type = 'New Building'									and
 		case
-			when extract(year from b.pre_filing_date::date) >= 2017 						then b.job_number is not null 					/*Projects with recent filings are not restricted based on unit count*/
+			when extract(year from b.pre_filing_date::date) >= 2017 							then b.job_number is not null 					/*Projects with recent filings are not restricted based on unit count*/
 			when upper(concat(coalesce(e.dob_address,a.address),' ',a.borough)) = 															/*Projects with address-based matches are not restricted based on unit count*/
 				 upper(concat(b.address,' ',b.borough)) 	and
-				 a.address is not null 														then b.job_number is not null
-			when a.bbl::bigint = b.bbl and b.bbl is not null    							then abs(a.total_units - b.units_net) <= 1 		/*Projects with BBL-based matches that are not recently filed are restricted based on unit count. This omits two inaccurate matches*/
-			else b.job_number is not null end 												and
+				 a.address is not null 															then b.job_number is not null
+			when a.bbl::bigint = b.bbl and b.bbl is not null    								then abs(a.total_units - b.units_net) <= 1 		/*Projects with BBL-based matches that are not recently filed are restricted based on unit count. This omits two inaccurate matches*/
+			else b.job_number is not null end 													and
 		(
 
 			(
@@ -108,16 +108,14 @@ from
 			) 																		or
 			(
 				st_intersects(a.the_geom,b.the_geom)
-			)																		
-																					-- or
-			-- (
-			-- 	st_dwithin(a.the_geom::geography,b.the_geom::geography,20)			and
-			-- 	(
-			-- 		(a.total_units > 10 and abs(a.total_units-b.units_net)::float/a.total_units::float <.2) or
-			-- 		(a.total_units <=10 and abs(a.total_units - b.units_net) <2)
-			-- 	)																							/*Limiting proximity-matches to those that are close with unit count,
-			-- 																  								  with a threshold for smaller buildings*/
-			-- )
+			)																		or
+			(																		
+				st_dwithin(a.the_geom::geography,b.the_geom::geography,20) 	and
+				a.total_units = b.units_net 								and
+				-- Omitting the 3 inaccurate matches of the below DOB jobs to the below HPD project
+				not (a.project_id = '44368/927673' and b.job_number in(321248235,321282982,321283188))
+			)																								/*Limiting proximity-matches to those that are close with unit count,
+			 																  								  with a threshold for smaller buildings*/
 		)
 	order by
 		a.project_id
@@ -292,18 +290,18 @@ from
 /*EXPORT THE FOLLOWING QUERY AS HPD_DOB_PROXIMATE_MATCHES.
   IDENTIFY WHETHER THE MATCHES IN THIS DATASET ARE ACCURATE BY FLAGGING.
   REIMPORT AS A LOOKUP (hpd_dob_proximate_matches_190603_v3) AND OMIT INACCURATE MATCHES. */
-(
-	select
-		*
-	from
-		hpd_dob_match_3
-	where
-		dob_match_type = 'Proximity' and
-		units_net<>total_units
-	order by
-		project_id asc,
-		geom_distance asc
-)
+-- (
+-- 	select
+-- 		*
+-- 	from
+-- 		hpd_dob_match_3
+-- 	where
+-- 		dob_match_type = 'Proximity' and
+-- 		units_net<>total_units
+-- 	order by
+-- 		project_id asc,
+-- 		geom_distance asc
+-- )
 
 /*End of lookup creation*/
 
@@ -533,18 +531,6 @@ order by
 		      
 /*Run in regular Carto to display table*/		      
 select cdb_cartodbfytable('capitalplanning','hpd_deduped');
-
-
-
-
-/**********************************
-SOURCE-SPECIFIC OUTPUT
-**********************************/
-
-select * from hpd_deduped order by PROJECT_ID asc
-
-
-
 
 
 

@@ -27,9 +27,9 @@ from
 		b.distname as distname,
 		st_distance(a.the_geom::geography,b.the_geom::geography) as taz_Distance
 	from
-		capitalplanning.known_projects_db_20190610_v4_cp_assumptions a
+		capitalplanning.known_projects_db_20190917_v6 a
 	left join
-		capitalplanning.nybpm2012_tazboundaryrev2 b
+		(select * from capitalplanning.nybpm2012_tazboundaryrev2 where distname in('Queens','Richmond', 'CBD:  Lower','CBD: Valley','CBD: Midtown','Bronx','Other Manhattan','Kings'))  b
 	on 
 	case
 		/*Treating large developments as polygons*/
@@ -134,6 +134,7 @@ from
 	SELECT
 		a.*,
 		coalesce(a.taz,b.bpm2012taz) 	as taz_1,
+		coalesce(a.distname,b.distname) as distname_1,
 		coalesce(
 					a.taz_distance,
 					st_distance(
@@ -147,7 +148,7 @@ from
 	from
 		aggregated_taz a 
 	left join
-		capitalplanning.nybpm2012_tazboundaryrev2 b
+		(select * from capitalplanning.nybpm2012_tazboundaryrev2 where distname in('Queens','Richmond', 'CBD:  Lower','CBD: Valley','CBD: Midtown','Bronx','Other Manhattan','Kings')) b
 	on 
 		a.taz_distance is null and
 		case
@@ -194,11 +195,12 @@ from
 
 	SELECT 
 		a.*, 
-		b.taz_1 as taz, 
+		b.taz_1 as taz,
+		b.distname_1 as distname,
 		b.proportion_in_taz_1 							as proportion_in_taz,
 		round(a.counted_units * b.proportion_in_taz_1) 	as counted_units_in_taz
 	from 
-		known_projects_db_20190610_v4_cp_assumptions a 
+		known_projects_db_20190917_v6 a 
 	left join 
 		all_PROJECTs_taz b 
 	on 
@@ -263,15 +265,22 @@ from
 					concat_ws
 					(
 						': ',
-						nullif
-							(
-								taz_distname,
-								''
-							),
+						taz,
 						concat(round(100*proportion_in_taz,0),'%')
 					),
 				'')),
-		' | ') 	as taz 
+		' | ') 	as taz,
+		array_to_string(
+			array_agg(
+				nullif(
+					concat_ws
+					(
+						': ',
+						nullif(distname,''),
+						concat(round(100*proportion_in_taz,0),'%')
+					),
+				'')),
+		' | ') 	as tazname 
 	from
 		aggregated_taz_longform
 	group by
@@ -321,5 +330,11 @@ into
 	longform_taz_output
 from
 (
-SELECT *  FROM capitalplanning.aggregated_taz_longform where not (source = 'DOB' and status in('Complete','Complete (demolition)'))
+	SELECT 
+		*  
+	FROM 
+		capitalplanning.aggregated_taz_longform 
+	where 
+		not (source = 'DOB' and status in('Complete','Complete (demolition)')) and
+		source not in('Future Neighborhood Studies','Neighborhood Study Projected Development Sites')
 ) x;

@@ -11,7 +11,7 @@ Sources:
   There are 94 projects > 200 units and <10K square meters. These projects are mostly distinct buildings and can be based on 
   centroid. Choosing polygons for projects <10K square meters if they are >600 units (18 projects)*/
 
--- SELECT * FROM capitalplanning.known_projects_db_20190610_v4 where st_area(the_geom::geography)<10000 and total_units > 500 and source in('DCP Applications','DCP Planner-Added Projects')
+-- SELECT * FROM capitalplanning.known_projects_db_20190712_v5 where st_area(the_geom::geography)<10000 and total_units > 500 and source in('DCP Applications','DCP Planner-Added Projects')
 
 
 /*This provides a list of ZAP projects with >=10 BBLs that are currently treated as points. After review,
@@ -74,7 +74,7 @@ from
 		b.boro_ct201,
 		st_distance(a.the_geom::geography,b.the_geom::geography) as ct_Distance
 	from
-		capitalplanning.known_projects_db_20190610_v4 a
+		capitalplanning.known_projects_db_20190917_v6 a
 	left join
 		capitalplanning.census_tract_2010_190412_ms b
 	on 
@@ -240,7 +240,7 @@ from
 		b.proportion_in_ct_1 as proportion_in_ct,
 		round(a.counted_units * b.proportion_in_ct_1) as counted_units_in_ct 
 	from 
-		known_projects_db_20190610_v4 a 
+		known_projects_db_20190917_v6 a 
 	left join 
 		all_projects_ct b 
 	on 
@@ -352,3 +352,20 @@ from
 		assisted_living_flag
 ) x
 ;
+
+
+drop table if exists longform_ct_output;
+SELECT
+	*
+into
+	longform_ct_output
+from
+(
+	SELECT 
+		*  
+	FROM 
+		capitalplanning.aggregated_ct_longform 
+	where 
+		not (source = 'DOB' and status in('Complete','Complete (demolition)')) and
+		source not in('Future Neighborhood Studies','Neighborhood Study Projected Development Sites')
+) x;

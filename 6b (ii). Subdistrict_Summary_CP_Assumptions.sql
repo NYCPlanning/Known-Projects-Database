@@ -4,13 +4,13 @@ SCRIPT: Summarizing 2025, 2035, and 2055 growth by Subdistrict
 START DATE: 6/11/2019
 *************************************************************************************************************************************************************************************/
 
-drop table if exists subdistrict_Growth_Summary_Known_Projects_20190611_cp_assumptions;
+drop table if exists subdistrict_Growth_Summary_Known_Projects_20190726;
 
 select
 	row_number() over() as cartodb_id,
 	*
 into
-	subdistrict_Growth_Summary_Known_Projects_20190611_cp_assumptions
+	subdistrict_Growth_Summary_Known_Projects_20190726
 from
 (
 	select
@@ -263,11 +263,12 @@ from
 			select 
 				* 
 			from 
-				aggregated_subdistrict_longform_cp_assumptions 
+				longform_subdist_output_cp_assumptions 
 			where 
-				not(source = 'DOB' and status in('Complete','Complete (demolition)')) 	and
-				(assisted_living_flag 	= 0 or assisted_living_flag is null)		 	and
-				(senior_housing_flag 	= 0 or senior_housing_flag 	is null) 			and
+				(not(source = 'DOB' and status in('Complete','Complete (demolition)'))) 	and
+				(dob_inactive_job is null or dob_inactive_job = 0)							and
+				(assisted_living_flag 	= 0 or assisted_living_flag is null)		 		and
+				(senior_housing_flag 	= 0 or senior_housing_flag 	is null) 				and
 				(gq_flag 				= 0 or gq_flag 				is null)
 		) a
 	on
@@ -280,7 +281,7 @@ from
 	order by 
 	substring(a.subdistrict,1,position('/' in a.subdistrict) -1)::numeric asc,
 	substring(a.subdistrict,position('/' in a.subdistrict) +1,2)::numeric asc
-) subdistrict_Growth_Summary_Known_Projects_20190611_cp_assumptions;
+) subdistrict_Growth_Summary_Known_Projects_20190723_cp_assumptions;
 
 
-select cdb_cartodbfytable('capitalplanning','subdistrict_Growth_Summary_Known_Projects_20190611_cp_assumptions') ;	
+select cdb_cartodbfytable('capitalplanning','subdistrict_Growth_Summary_Known_Projects_20190726')	

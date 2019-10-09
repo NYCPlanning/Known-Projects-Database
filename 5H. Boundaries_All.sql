@@ -15,15 +15,18 @@ into
 from
 (
 	select
-		a.*,
-		b.CSD,
-		c.Subdistrict,
-		d.ES_Zone,
-		e.MS_Zone,
-		f.Census_Tract
-		-- ,g.taz 
+		a.*
+		,b.CSD
+		,c.Subdistrict
+		,d.ES_Zone
+		,e.MS_Zone
+		-- ,i.ntacode
+		-- ,i.ntaname
+		,f.Census_Tract
+		,g.taz 
+		-- ,h.Community_District
 	from
-		known_projects_db_20190610_v4 a
+		known_projects_db_20190917_v6 a
 	left join
 		aggregated_CSD_PROJECT_level b
 	on
@@ -49,11 +52,22 @@ from
 	on
 		a.source 		= f.source 		and
 		a.project_id 	= f.project_id 
+	left join
+		aggregated_taz_project_level g
+	on
+		a.source 		= g.Source 		and
+		a.project_id  	= g.project_id 
 	-- left join
-	-- 	aggregated_taz_project_level g
+	-- 	aggregated_cd_project_level h
 	-- on
-	-- 	a.source 		= g.Source 		and
-	-- 	a.project_id  	= g.project_id 
+	-- 	a.source 		= h.Source 		and
+	-- 	a.project_id  	= h.project_id 
+	-- left join
+	-- 	aggregated_nta_project_level_cp_assumptions i
+	-- on
+	-- 	a.source 		= h.Source 		and
+	-- 	a.project_id  	= h.project_id 
+
 ) x
 order by
 	source,

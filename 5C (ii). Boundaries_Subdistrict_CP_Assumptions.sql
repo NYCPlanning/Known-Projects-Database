@@ -26,7 +26,7 @@ from
 		b.distzone AS subdistrict,
 		st_distance(a.the_geom::geography,b.the_geom::geography) as subdistrict_Distance
 	from
-		capitalplanning.known_PROJECTs_db_20190610_v4_cp_assumptions a
+		capitalplanning.known_projects_db_20190917_v6_cp_assumptions a
 	left join
 		dcpadmin.doe_schoolsubdistricts b
 	on 
@@ -201,7 +201,7 @@ from
 		b.proportion_in_subdistrict_1 as proportion_in_subdistrict,
 		round(a.counted_units * b.proportion_in_subdistrict_1) as counted_units_in_subdistrict
 	from 
-		known_PROJECTs_db_20190610_v4_cp_assumptions a 
+		known_projects_db_20190917_v6_cp_assumptions a 
 	left join 
 		all_PROJECTs_subdistrict b 
 	on 
@@ -229,6 +229,7 @@ from
 		PROJECT_id,
 		PROJECT_name_address,
 		dob_job_type,
+		dob_inactive_job,
 		status,
 		borough,
 		total_units,
@@ -280,6 +281,7 @@ from
 		PROJECT_id,
 		PROJECT_name_address,
 		dob_job_type,
+		dob_inactive_job,
 		status,
 		borough,
 		total_units,

@@ -27,7 +27,7 @@ from
 		b.remarks as ms_remarks,
 		st_distance(a.the_geom::geography,b.the_geom::geography) as ms_zone_Distance
 	from
-		capitalplanning.known_projects_db_20190610_v4_cp_assumptions a
+		capitalplanning.known_projects_db_20190917_v6_cp_assumptions a
 	left join
 		capitalplanning.doe_school_zones_ms_2019 b
 	on 
@@ -197,10 +197,16 @@ from
 		a.*, 
 		b.ms_zone_1 as ms_zone, 
 		b.ms_remarks_1 as ms_remarks,
+		coalesce(
+				b.ms_zone_1,
+				case 
+					when b.ms_remarks_1 like '%Contact %' then substring(b.ms_remarks_1,1,position('Contact' in b.ms_remarks_1) - 1)
+					else b.ms_remarks_1 end
+				)											as ms_zone_remarks,
 		b.proportion_in_ms_zone_1 as proportion_in_ms_zone,
 		round(a.counted_units * b.proportion_in_ms_zone_1) as counted_units_in_ms_zone 
 	from 
-		known_projects_db_20190610_v4_cp_assumptions a 
+		known_projects_db_20190917_v6_cp_assumptions a 
 	left join 
 		all_PROJECTs_ms_zone b 
 	on 
@@ -319,3 +325,15 @@ from
 		assisted_living_flag
 ) x
 ;
+
+drop table if exists longform_ms_zone_output;
+SELECT
+	*
+into
+	longform_ms_zone_output
+from
+(
+SELECT *  FROM capitalplanning.aggregated_ms_zone_longform where not (source = 'DOB' and status in('Complete','Complete (demolition)'))
+) x;
+
+select cdb_cartodbfytable('capitalplanning','longform_ms_zone_output');

@@ -1,9 +1,9 @@
 /*Aggregating deduplicated data*/
 
-drop table if exists known_projects_db_20190712_v5;
+drop table if exists known_projects_db_20190917_v6;
 
 create table
-	known_projects_db_20190712_v5
+	known_projects_db_20190917_v6
 as
 (
 	select
@@ -13,6 +13,9 @@ as
 		concat(job_number) 			as project_id,
 		address						as project_name_address,
 		job_type					as dob_job_type,
+		case
+			when inactive_job is true then 1
+			else 0 	end 			as dob_inactive_job,
 		status						as status,
 		borough,
 		units_net_incomplete		as total_units,
@@ -47,7 +50,7 @@ as
 		senior_housing_flag,
 		assisted_living_flag
 	from
-		dob_2018_sca_inputs_ms_2
+		dob_2018_sca_inputs_ms_2_1
 	-- where
 	-- 	status not in('Complete','Complete (demolition)')
 	union all
@@ -58,6 +61,7 @@ as
 		project_id 					as project_id,
 		address						as project_name_address,
 		''							as dob_job_type,
+		null 						as dob_inactive_job,
 		'Projected'					as status,
 		borough,
 		total_units,
@@ -103,6 +107,7 @@ as
 		concat(project_id) 										as project_id,
 		project_name											as project_name_address,
 		''														as dob_job_type,
+		null 													as dob_inactive_job,
 		status,
 		borough,
 		total_units,
@@ -146,6 +151,7 @@ as
 		concat(project_id) 										as project_id,
 		project_name											as project_name_address,
 		''														as dob_job_type,
+		null 													as dob_inactive_job,
 		'Projected'												as status,
 		borough,
 		total_units,
@@ -189,6 +195,7 @@ as
 		project_id 												as project_id,
 		project_name											as project_name_address,
 		''														as dob_job_type,
+		null 													as dob_inactive_job,
 		status													as status,
 		borough,
 		total_units,
@@ -234,6 +241,7 @@ as
 		project_id 												as project_id,
 		project_name											as project_name_address,
 		''														as dob_job_type,
+		null 													as dob_inactive_job,
 		'Projected'												as status,
 		borough,
 		total_units,
@@ -279,6 +287,7 @@ as
 		project_id 												as project_id,
 		project_name											as project_name_address,
 		''														as dob_job_type,
+		null 													as dob_inactive_job,
 		status													as status,
 		borough,
 		total_units,
@@ -322,6 +331,7 @@ as
 		project_id 													as project_id,
 		project_name												as project_name_address,
 		''															as dob_job_type,
+		null 														as dob_inactive_job,
 		'Projected'													as status,
 		borough,
 		total_units,
@@ -365,6 +375,7 @@ as
 		concat(project_id)											as project_id,
 		project_name												as project_name_address,
 		''															as dob_job_type,
+		null 														as dob_inactive_job,
 		'Potential'													as status,
 		borough,
 		total_units,
@@ -408,6 +419,7 @@ as
 		project_id,
 		neighborhood 												as project_name_address,
 		''															as dob_job_type,
+		null 														as dob_inactive_job,
 		status,
 		borough,
 		total_units,
@@ -451,6 +463,7 @@ as
 		project_id,
 		neighborhood 												as project_name_address,
 		''															as dob_job_type,
+		null 														as dob_inactive_job,
 		status,
 		borough,
 		incremental_units_with_certainty_factor,
@@ -494,4 +507,4 @@ order by
 	status asc;
 
 
-select cdb_cartodbfytable('capitalplanning','known_projects_db_20190712_v5') ;
+select cdb_cartodbfytable('capitalplanning','known_projects_db_20190917_v6') ;

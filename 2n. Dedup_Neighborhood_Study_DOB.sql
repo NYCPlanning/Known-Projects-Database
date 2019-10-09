@@ -19,7 +19,6 @@ drop table if exists nstudy_dob_1_pre;
 drop table if exists nstudy_dob_1;
 drop table if exists nstudy_dob_final;
 
-
 select
 	*
 into
@@ -44,14 +43,21 @@ from
 	left join
 		capitalplanning.dob_2018_sca_inputs_ms b
 	on 
-		st_dwithin(cast(a.the_geom as geography),cast(b.the_geom as geography),20) 	and
-		b.job_type <> 'Demolition' and
-		case 
-			when a.status <> 	'Rezoning Commitment' then st_intersects(a.the_geom,b.the_geom)
-			else a.status = 	'Rezoning Commitment' end
+		(
+			st_dwithin(cast(a.the_geom as geography),cast(b.the_geom as geography),20) 	and
+			b.job_type <> 'Demolition' and
+			case 
+				when a.status <> 	'Rezoning Commitment' then st_intersects(a.the_geom,b.the_geom)
+				else a.status = 	'Rezoning Commitment' end
+		)
+		or
+		(
+			a.project_name = '125th St MEC Center' and b.job_number = 121204464
+			--This step matches the 125th St MEC Center with a development on the same block as part of the affordable housing commitment: 201 E 125th St. The
+			--DOB project is part of the rezoning commitment, but is >50 meters away from the rezoning commitment.
+		)
 
 ) nstudy_dob;
-
 
 /*Assessing whether any DOB jobs match with multiple projects. Preferencing spatial matches over proximity matches. 
   THERE ARE NO DOB JOBS MATCHING WITH MULTIPLE NSTUDY PROJECTS.*/
@@ -86,15 +92,15 @@ from
   lookup nstudy_dob_proximate_matches_190529_v2 with manual
   checks on the accuracy of each proximity match. */
 
-  -- select
-  -- 	*
-  -- from
-  --  	nstudy_dob
-  -- where
-  --  	dob_Match_Type = 'Proximity' and units <> dob_units_net
-  -- order by
-  -- 	dob_distance asc
-
+/*  select
+  	*
+  from
+   	nstudy_dob
+  where
+   	dob_Match_Type = 'Proximity' and units <> dob_units_net
+  order by
+  	dob_distance asc
+*/
 
 /*Removing the inaccurate proximate matches by selecting the subset of all NStudy projects which are not inaccurately proximity-matched,
  and then placing all matches back onto the original relevant projects list. This would be done by creating the nstudy_dob_1_pre
@@ -123,8 +129,18 @@ from
 		concat(a.project_id,a.dob_job_number) = concat(b.neighborhood_study_id,b.dob_job_number) and
 		b.accurate_match = 0
 	where
-		b.neighborhood_study_id is null and
-		not (a.dob_match_type = 'Proximity' and b.accurate_match is null)
+		(	
+			b.neighborhood_study_id is null and
+			not (a.dob_match_type = 'Proximity' and b.accurate_match is null and a.units <> a.dob_units_net) 	
+		)																									or
+		--Accomodating for additional accurate proximity matches
+		(
+			a.project_id = 'East Harlem Rezoning Commitment 4' and a.dob_job_number = 121204464
+		) 																									or
+		(
+			a.project_id = 'East Harlem Rezoning Commitment 8' and a.dob_job_number = 121191432		
+		)
+
 ) nstudy_dob_1_pre;
 
 select

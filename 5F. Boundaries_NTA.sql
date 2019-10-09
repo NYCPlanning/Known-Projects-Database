@@ -27,7 +27,7 @@ from
 		b.ntacode,
 		st_distance(a.the_geom::geography,b.the_geom::geography) as nta_Distance
 	from
-		capitalplanning.known_PROJECTs_db_20190610_v4_cp_assumptions a
+		capitalplanning.known_projects_db_20190917_v6_cp_assumptions a
 	left join
 		dcpadmin.support_admin_ntaboundaries b
 	on 
@@ -203,7 +203,7 @@ from
 		b.proportion_in_nta_1 as proportion_in_nta,
 		round(a.counted_units * b.proportion_in_nta_1) as counted_units_in_nta
 	from 
-		known_PROJECTs_db_20190610_v4_cp_assumptions a 
+		known_projects_db_20190917_v6_cp_assumptions a 
 	left join 
 		all_PROJECTs_nta b 
 	on 
@@ -337,3 +337,23 @@ from
 (
 SELECT *  FROM capitalplanning.aggregated_nta_longform_cp_assumptions where not (source = 'DOB' and status in('Complete','Complete (demolition)'))
 ) x;
+
+drop table if exists longform_nta_output_cp_assumptions_incl_complete;
+SELECT
+	*, row_number() over() as cartodb_id_replacement
+into
+	longform_nta_output_cp_assumptions_incl_complete
+from
+(
+SELECT *  FROM capitalplanning.aggregated_nta_longform_cp_assumptions
+) x;
+
+update longform_nta_output_cp_assumptions_incl_complete a
+set 
+	total_units = b.units_net_complete
+from
+	dob_2018_sca_inputs_ms_cp_build_year b
+where
+	a.project_id = b.job_number::text and
+	b.status = 'Complete'
+

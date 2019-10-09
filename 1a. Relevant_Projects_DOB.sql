@@ -45,15 +45,8 @@ select
 				(units_net - co_latest_units >=5 														and units_net between 5 and 19)
 			)
 											then 'Partial Complete'
-
-		-- when	/*~100 NB jobs have been labeled as complete without associated COs. Reverting to status
-		-- 	  'Permit Issued'*/	
-		-- 	job_type = 'New Building' 	and
-		-- 	status = 'Complete'			and
-		-- 	co_latest_units is null		
-		-- 									then 'Permit Issued'
-
-		else status end									as status,
+											else status end
+														as status,
 	status_date 										as most_recent_status_date,
 	status_a 		 									as pre_filing_date,
 	status_d 											as completed_application_date,
@@ -73,6 +66,8 @@ select
 	A.longitude,
 	geo_bin												as bin,
 	geo_bbl												as bbl,
+	geo_ntacode_edit,
+	geo_ntaname_edit,
 	x_inactive											as inactive_job,
 
 	/*Identifying NYCHA Projects*/
@@ -140,85 +135,6 @@ order by
 	job_number
 ) as dob_2018_sca_inputs_ms_pre;
 
-
-
-/*Limiting to the duplicates to delete (will delete anything with an instance > 1)*/
-
-
--- select
--- 	*
--- into
--- 	qc_potentialdups_1
--- from
--- (
--- 	select
--- 		*,
--- 		row_number() over(partition by job_type, geo_address order by status_date::date desc, job_number desc) as instance
--- 	from
--- 		qc_potentialdups
--- ) x;
-
-
-
-
-drop table if exists dob_2018_sca_inputs_ms;
-
-/*Omitting old dups from table*/
-SELECT
-	*
-into
-	dob_2018_sca_inputs_ms
-from
-(
-	SELECT DISTINCT
-		a.*,
-		case
-			when a.status like 'Complete%' 			then a.units_net
-			when a.status like '%Partial Complete' 	then a.latest_cofo
-			else null end 																			 	as units_net_complete, 
-		case
-			when a.status like 'Complete%' 			then null
-			when a.status like '%Partial Complete' 	then a.units_net - a.latest_cofo
-			else a.units_net end 																		as units_net_incomplete,
-		case
-			when a.status like 'Complete%' 			then null
-			when a.status like '%Partial Complete' 	then a.units_net - a.latest_cofo
-			else a.units_net end 																		as counted_units,
-		case
-			when a.status like 'Complete%' 			then null
-			when a.status = 'Partial Complete'		then 1
-			when c.job_number is not null 			then completion_rate_2025 							end as portion_built_2025,
-		case
-			when a.status like 'Complete%' 			then null
-			when a.status = 'Partial Complete'		then 0
-			when c.job_number is not null 			then round((1 -completion_rate_2025)::numeric,2) 	end as portion_built_2035,
-		case
-			when a.status like 'Complete%' 			then null
-			when a.status = 'Partial Complete'		then 0
-			when c.job_number is not null 			then 0												end	as portion_built_2055
-	from
-		(select * from capitalplanning.dob_2018_sca_inputs_ms_pre where job_number_instance = 1) a
-	-- left join
-	-- 	capitalplanning.qc_potentialdups_1 b
-	-- on
-	-- 	a.job_number = b.job_number and
-	-- 	b.instance > 1
-	/*Adding in HEIP-developed phasing for DOB jobs.*/
-	left join
-		(select job_number, completion_rate_2025, row_number() over(partition by job_number order by cartodb_id) as job_number_instance from capitalplanning.housingdb_19v1_rl_test_0612) c
-	on
-		a.job_number = c.job_number and
-		c.job_number_instance = 1 /*Using a created job_number_instance field to deduplicate housing-phasing data. Only omits one match.*/
-	-- where
-	-- 	b.job_number is null
-) x
-	order by
-		x.job_number asc;
-
-
-select cdb_cartodbfytable('capitalplanning', 'dob_2018_sca_inputs_ms');
-
-
 /*Deduplicating inactive jobs against other inactive jobs. HEIP has not accounted for potential duplicates which are inactive.
   Matching duplicates by geom and job_type, and preferencing the match with the more recent status date. This omits ~2,500 units.*/ 
 
@@ -248,9 +164,9 @@ from
 		b.earliest_cofo_date			as match_earliest_cofo_date,
 		b.latest_cofo_date				as match_latest_cofo_date
 	from
-		(select * from capitalplanning.dob_2018_sca_inputs_ms where inactive_job is true) a
+		(select * from capitalplanning.dob_2018_sca_inputs_ms_pre where inactive_job is true) a
 	left join
-		(select * from capitalplanning.dob_2018_sca_inputs_ms where inactive_job is true) b
+		(select * from capitalplanning.dob_2018_sca_inputs_ms_pre where inactive_job is true) b
 	on
 		a.the_geom = b.the_geom 												and
 		a.most_recent_status_date::date > b.most_recent_status_date::date 		and
@@ -289,9 +205,9 @@ from
 		b.earliest_cofo_date			as match_earliest_cofo_date,
 		b.latest_cofo_date				as match_latest_cofo_date
 	from
-		(select * from capitalplanning.dob_2018_sca_inputs_ms where inactive_job is false) a
+		(select * from capitalplanning.dob_2018_sca_inputs_ms_pre where inactive_job is false) a
 	left join
-		(select * from capitalplanning.dob_2018_sca_inputs_ms where inactive_job is true and job_number not in(select match_job_number from inactive_deduped_against_inactive where match_job_number is not null) ) b
+		(select * from capitalplanning.dob_2018_sca_inputs_ms_pre where inactive_job is true and job_number not in(select match_job_number from inactive_deduped_against_inactive where match_job_number is not null) ) b
 	on
 		a.the_geom = b.the_geom	and
 		a.job_type = b.job_type
@@ -299,6 +215,69 @@ from
 		a.units_net desc,
 		b.units_net desc
 ) x;
+
+
+
+
+drop table if exists dob_2018_sca_inputs_ms;
+
+/*Omitting old dups from table*/
+SELECT
+	*
+into
+	dob_2018_sca_inputs_ms
+from
+(
+	SELECT DISTINCT
+		a.*,
+	geo_ntacode_edit,
+	geo_ntaname_edit,
+		case
+			when a.status like 'Complete%' 				then a.units_net
+			when a.status like '%Partial Complete' 		then a.latest_cofo
+			else null end 																			 	as units_net_complete, 
+		case
+			when a.status like 'Complete%' 				then null
+			when a.status like '%Partial Complete' 		then a.units_net - a.latest_cofo
+			else a.units_net end 																		as units_net_incomplete,
+		case
+			when a.status like 'Complete%' 				then null
+			when a.status like '%Partial Complete' 		then a.units_net - a.latest_cofo
+			else a.units_net end 																		as counted_units,
+		case
+			when a.status like 'Complete%' 				then null
+			when a.status = 'Partial Complete'			then 1
+			when c.completion_rate_2025 is not null		then completion_rate_2025
+			when c.completion_rate_2025 is null 		then 0 											end as portion_built_2025,
+		case
+			when a.status like 'Complete%' 				then null
+			when a.status = 'Partial Complete'			then 0
+			when c.completion_rate_2025 is not null 	then round((1 -completion_rate_2025)::numeric,2)
+			when c.completion_rate_2025 is null 		then 1 											end as portion_built_2035,
+		case
+			when a.status like 'Complete%' 				then null
+			when a.status = 'Partial Complete'			then 0
+			when c.completion_rate_2025 is not null 	then 0
+			when c.completion_rate_2025 is null 		then 0 											end as portion_built_2055
+	from
+		(select * from capitalplanning.dob_2018_sca_inputs_ms_pre where job_number_instance = 1) a
+	/*Adding in HEIP-developed phasing for DOB jobs.*/
+	left join
+		(select job_number, completion_rate_2025, row_number() over(partition by job_number order by cartodb_id) as job_number_instance from capitalplanning.housingdb_19v1_rl_test_0612) c
+	on
+		a.job_number = c.job_number and
+		c.job_number_instance = 1 /*Using a created job_number_instance field to deduplicate housing-phasing data. Only omits one match.*/
+	where
+		--Omitting duplicate inactive jobs identified in the two steps above
+		a.job_number not in(select match_job_number from inactive_deduped_against_inactive where match_job_number is not null) and
+		a.job_number not in(select match_job_number from inactive_deduped_against_active   where match_job_number is not null)
+) x
+	order by
+		x.job_number asc;
+
+
+select cdb_cartodbfytable('capitalplanning', 'dob_2018_sca_inputs_ms');
+
 
 
 
@@ -327,31 +306,27 @@ from
 			when a.status like '%Partial Complete' 	then a.units_net - a.latest_cofo
 			else a.units_net end 																		as counted_units,
 		case
-			when a.status in('Complete','Complete (demolition)') 	then null 
+			when a.status in('Complete','Complete (demolition)') 	then null
+			when a.inactive_job is true								then 0
 			when a.status like '%In progress%' 						then .5
 			else 1 end 																					as portion_built_2025,
 		case
-			when a.status in('Complete','Complete (demolition)') 	then null 
+			when a.status in('Complete','Complete (demolition)') 	then null
+			when a.inactive_job is true								then 1 
 			when a.status like '%In progress%' 						then .5
 			else 0 end 																					as portion_built_2035,
 		case
-			when a.status in('Complete','Complete (demolition)') 	then null 
+			when a.status in('Complete','Complete (demolition)') 	then null
+			when a.inactive_job is true								then 0 
 			when a.status like '%In progress%' 						then 0
 			else 0 end 																					as portion_built_2055
 	from
-		(select * from capitalplanning.dob_2018_sca_inputs_ms_pre where job_number_instance = 1) a
-	-- left join
-	-- 	capitalplanning.qc_potentialdups_1 b
-	-- on
-	-- 	a.job_number = b.job_number and
-	-- 	b.instance > 1
-	/*Adding in HEIP-developed phasing for DOB jobs. 17 incomplete DOB jobs are not included in HEIP's list -- setting these to 2025.*/
-	left join
-		(select job_number, completion_rate_2025 from capitalplanning.housingdb_19v1_rl_test_0612) c
-	on
-		a.job_number = c.job_number
-	-- where
-	-- 	b.job_number is null
+		capitalplanning.dob_2018_sca_inputs_ms_pre a
+	where 
+		a.job_number_instance = 1 																								and
+		--Omitting duplicate inactive jobs identified in the two steps above
+		a.job_number not in(select match_job_number from inactive_deduped_against_inactive where match_job_number is not null) 	and
+		a.job_number not in(select match_job_number from inactive_deduped_against_active   where match_job_number is not null)
 ) x
 	order by
 		x.job_number asc;
