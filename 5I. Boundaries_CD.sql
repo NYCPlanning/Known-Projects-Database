@@ -26,7 +26,7 @@ from
 		b.borocd,
 		st_distance(a.the_geom::geography,b.the_geom::geography) as cd_distance
 	from
-		capitalplanning.known_projects_db_20190712_v5_cp_assumptions a
+		capitalplanning.known_projects_db_20190917_v6_cp_assumptions a
 	left join
 		capitalplanning.ny_community_districts b
 	on 
@@ -213,7 +213,7 @@ from
 		b.proportion_in_cd_1 as proportion_in_cd,
 		round(a.counted_units * b.proportion_in_cd_1) as counted_units_in_cd 
 	from 
-		known_projects_db_20190712_v5_cp_assumptions a 
+		known_projects_db_20190917_v6_cp_assumptions a 
 	left join 
 		all_projects_cd b 
 	on 
@@ -342,6 +342,9 @@ from
 		not (source = 'DOB' and status in('Complete','Complete (demolition)')) and
 		source not in('Future Neighborhood Studies','Neighborhood Study Projected Development Sites')
 ) x;
+
+alter table longform_cd_output
+drop cartodb_id;  
 
 
 select cdb_cartodbfytable('capitalplanning','longform_cd_output') ;

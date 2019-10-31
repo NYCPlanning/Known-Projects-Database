@@ -1,103 +1,76 @@
 /**********************************************************************************************************************************************************************************
 AUTHOR: Mark Shapiro
-SCRIPT: Adding Census Tract boundaries to aggregated pipeline
-START DATE: 6/10/2019
+SCRIPT: Adding Council District boundaries to aggregated pipeline
+START DATE: 10/28/2019
 COMPLETION DATE: 
 Sources: 
 *************************************************************************************************************************************************************************************/
 
 
-/*There are 150 projects > 10K square meters, average unit count of 816. These projects should certainly be treated as polygons.
-  There are 94 projects > 200 units and <10K square meters. These projects are mostly distinct buildings and can be based on 
-  centroid. Choosing polygons for projects <10K square meters if they are >600 units (18 projects)*/
-
--- SELECT * FROM capitalplanning.known_projects_db_20190712_v5 where st_area(the_geom::geography)<10000 and total_units > 500 and source in('DCP Applications','DCP Planner-Added Projects')
-
-
-/*This provides a list of ZAP projects with >=10 BBLs that are currently treated as points. After review,
-  it seems like most of these projects should still be points because they are individual buildings, except for "SD" 
-  subdivision projects, which should be treated as polygons.*/
-
--- select 
--- 	* 
--- into
--- 	zap_projects_many_bbls
--- from 
--- 	zap_deduped_build_year 
--- where 
--- 	st_area(the_geom::geography) < 10000 	and 
--- 	total_units < 500 						and
--- 	project_id in
--- 				( 
---   				SELECT
---   					project_id
---   				from
---   				(
---   					select 
---   						project as project_id, 
---   						bbl_number as bbl, 
---   						null as block, 
---   						null as lot 
---   					from dcp_project_bbls_zap_ms 
---   					union all  
---   					SELECT 
---   						project_id, 
---   							associated_bbl,
---   							block,
---   							lot 
---   					FROM zap_project_missing_geom_lookup
---   				) x 
---   				group by
---   					project_id
---   				having
---   					count(*)>=10
---   				)
-
-
-
-drop table if exists aggregated_ct;
-drop table if exists ungeocoded_PROJECTs_ct;
-drop table if exists aggregated_ct_longform;
-drop table if exists aggregated_ct_PROJECT_level;
+drop table if exists aggregated_coundist;
+drop table if exists ungeocoded_PROJECTs_coundist;
+drop table if exists aggregated_council_district_longform;
+drop table if exists aggregated_council_district_PROJECT_level;
 
 select
 	*
 into
-	aggregated_ct
+	aggregated_coundist
 from
 (
-	with aggregated_boundaries_ct as
+	with aggregated_boundaries_coundist as
 (
 	select
 		a.*,
-		b.the_geom as ct_geom,
-		b.boro_ct201,
-		st_distance(a.the_geom::geography,b.the_geom::geography) as ct_Distance
+		b.the_geom as coundist_geom,
+		b.coundist,
+		st_distance(a.the_geom::geography,b.the_geom::geography) as coundist_distance
 	from
-		capitalplanning.known_projects_db_20190917_v6 a
+		capitalplanning.known_projects_db_20190917_v6_cp_assumptions a
 	left join
-		capitalplanning.census_tract_2010_190412_ms b
+		capitalplanning.nyc_council_districts b
 	on 
 	case
 		/*Treating large developments as polygons*/
 		when (st_area(a.the_geom::geography)>10000 or total_units > 500) and a.source in('EDC Projected Projects','DCP Applications','DCP Planner-Added PROJECTs')	then
-			st_intersects(a.the_geom,b.the_geom) and CAST(ST_Area(ST_Intersection(a.the_geom,b.the_geom))/ST_Area(a.the_geom) AS DECIMAL) >= .1
+			st_intersects(a.the_geom,b.the_geom) and 
+			(
+				CAST(ST_Area(ST_Intersection(a.the_geom,b.the_geom))/ST_Area(a.the_geom) AS DECIMAL) >= .1 or
+				CAST(ST_Area(ST_Intersection(a.the_geom,b.the_geom))/ST_Area(b.the_geom) AS DECIMAL) >=.5
+			)
 
 		/*Treating subdivisions in SI across many lots as polygons*/
 		when a.project_id in(select project_id from zap_projects_many_bbls) and a.project_name_address like '%SD %'								then
-			st_intersects(a.the_geom,b.the_geom) and CAST(ST_Area(ST_Intersection(a.the_geom,b.the_geom))/ST_Area(a.the_geom) AS DECIMAL) >= .1
+			st_intersects(a.the_geom,b.the_geom) and 
+			(
+				CAST(ST_Area(ST_Intersection(a.the_geom,b.the_geom))/ST_Area(a.the_geom) AS DECIMAL) >= .1 or
+				CAST(ST_Area(ST_Intersection(a.the_geom,b.the_geom))/ST_Area(b.the_geom) AS DECIMAL) >=.5
+			)
 
 		/*Treating Resilient Housing Sandy Recovery PROJECTs, across many DISTINCT lots as polygons. These are three PROJECTs*/ 
 		when a.PROJECT_name_address like '%Resilient Housing%' and a.source in('DCP Applications','DCP Planner-Added PROJECTs')									then
-			st_INTERSECTs(a.the_geom,b.the_geom) and CAST(ST_Area(ST_INTERSECTion(a.the_geom,b.the_geom))/ST_Area(a.the_geom) AS DECIMAL) >= .1
-
+			st_INTERSECTs(a.the_geom,b.the_geom) and 
+			(
+				CAST(ST_Area(ST_Intersection(a.the_geom,b.the_geom))/ST_Area(a.the_geom) AS DECIMAL) >= .1 or
+				CAST(ST_Area(ST_Intersection(a.the_geom,b.the_geom))/ST_Area(b.the_geom) AS DECIMAL) >=.5
+			)
 		/*Treating NCP and NIHOP projects, which are usually noncontiguous clusters, as polygons*/ 
 		when (a.PROJECT_name_address like '%NIHOP%' or a.PROJECT_name_address like '%NCP%' )and a.source in('DCP Applications','DCP Planner-Added PROJECTs')	then
-			st_INTERSECTs(a.the_geom,b.the_geom) and CAST(ST_Area(ST_INTERSECTion(a.the_geom,b.the_geom))/ST_Area(a.the_geom) AS DECIMAL) >= .1
-
+			st_INTERSECTs(a.the_geom,b.the_geom) and 
+			(
+				CAST(ST_Area(ST_Intersection(a.the_geom,b.the_geom))/ST_Area(a.the_geom) AS DECIMAL) >= .1 or
+				CAST(ST_Area(ST_Intersection(a.the_geom,b.the_geom))/ST_Area(b.the_geom) AS DECIMAL) >=.5
+			)
 	/*Treating neighborhood study projected sites, and future neighborhood studies as polygons*/
 		when a.source in('Future Neighborhood Studies','Neighborhood Study Projected Development Sites') 														then
-			st_INTERSECTs(a.the_geom,b.the_geom) and CAST(ST_Area(ST_INTERSECTion(a.the_geom,b.the_geom))/ST_Area(a.the_geom) AS DECIMAL) >= .1
+			st_INTERSECTs(a.the_geom,b.the_geom) and 
+			(
+				CAST(ST_Area(ST_Intersection(a.the_geom,b.the_geom))/ST_Area(a.the_geom) AS DECIMAL) >= .1 or
+				CAST(ST_Area(ST_Intersection(a.the_geom,b.the_geom))/ST_Area(b.the_geom) AS DECIMAL) >=.5
+			)
+		/*Treating other polygons as points, using their centroid*/
+		when st_area(a.the_geom) > 0 																															then
+			 st_INTERSECTs(st_centroid(a.the_geom),b.the_geom) 
 
 		/*Treating points as points*/
 		else
@@ -113,7 +86,7 @@ from
 		source,
 		project_id
 	from
-		aggregated_boundaries_ct
+		aggregated_boundaries_coundist
 	group by
 		source,
 		project_id
@@ -121,63 +94,63 @@ from
 		count(*)>1
 ),
 
-	aggregated_boundaries_ct_2 as
+	aggregated_boundaries_coundist_2 as
 (
 	SELECT
 		a.*,
 		case when 	concat(a.source,a.project_id) in(select concat(source,project_id) from multi_geocoded_projects) and st_area(a.the_geom) > 0	then 
-					CAST(ST_Area(ST_Intersection(a.the_geom,a.ct_geom))/ST_Area(a.the_geom) AS DECIMAL) 										else
-					1 end																														as proportion_in_ct
+					CAST(ST_Area(ST_Intersection(a.the_geom,a.coundist_geom))/ST_Area(a.the_geom) AS DECIMAL) 										else
+					1 end																														as proportion_in_coundist
 	from
-		aggregated_boundaries_ct a
+		aggregated_boundaries_coundist a
 ),
 
-	aggregated_boundaries_ct_3 as
+	aggregated_boundaries_coundist_3 as
 (
 	SELECT
 		source,
 		project_id,
-		sum(proportion_in_ct) as total_proportion
+		sum(proportion_in_coundist) as total_proportion
 	from
-		aggregated_boundaries_ct_2
+		aggregated_boundaries_coundist_2
 	group by
 		source,
 		project_id
 ),
 
-	aggregated_boundaries_ct_4 as
+	aggregated_boundaries_coundist_4 as
 (
 	SELECT
 		a.*,
-		case when b.total_proportion is not null then cast(a.proportion_in_ct/b.total_proportion as decimal)
-			 else 1 			  end as proportion_in_ct_1,
-		case when b.total_proportion is not null then round(a.counted_units * cast(a.proportion_in_ct/b.total_proportion as decimal)) 
+		case when b.total_proportion is not null then cast(a.proportion_in_coundist/b.total_proportion as decimal)
+			 else 1 			  end as proportion_in_coundist_1,
+		case when b.total_proportion is not null then round(a.counted_units * cast(a.proportion_in_coundist/b.total_proportion as decimal)) 
 			 else a.counted_units end as counted_units_1
 	from
-		aggregated_boundaries_ct_2 a
+		aggregated_boundaries_coundist_2 a
 	left join
-		aggregated_boundaries_ct_3 b
+		aggregated_boundaries_coundist_3 b
 	on
 		a.project_id = b.project_id and a.source = b.source
 )
 
-	select * from aggregated_boundaries_ct_4
+	select * from aggregated_boundaries_coundist_4
 
 ) as _1;
 
 select
 	*
 into
-	ungeocoded_projects_ct
+	ungeocoded_projects_coundist
 from
 (
-	with ungeocoded_projects_ct as
+	with ungeocoded_projects_coundist as
 (
 	select
 		a.*,
-		coalesce(a.boro_ct201,b.boro_ct201) as boro_ct201_1,
+		coalesce(a.coundist,b.coundist) as coundist_1,
 		coalesce(
-					a.ct_distance,
+					a.coundist_distance,
 					st_distance(
 								b.the_geom::geography,
 								case
@@ -185,13 +158,13 @@ from
 									when st_area(a.the_geom) > 0 																										then st_centroid(a.the_geom)::geography
 									else a.the_geom::geography 																											end
 								)
-				) as ct_distance1
+				) as coundist_distance1
 	from
-		aggregated_ct a 
+		aggregated_coundist a 
 	left join
-		capitalplanning.census_tract_2010_190412_ms b
+		capitalplanning.nyc_council_districts b
 	on 
-		a.ct_distance is null and
+		a.coundist_distance is null and
 		case
 			when (st_area(a.the_geom::geography)>10000 or total_units > 500) and a.source in('DCP Applications','DCP Planner-Added Projects') 		then
 				st_dwithin(a.the_geom::geography,b.the_geom::geography,500)
@@ -200,49 +173,49 @@ from
 			else
 				st_dwithin(a.the_geom::geography,b.the_geom::geography,500)																			end
 )
-	select * from ungeocoded_projects_ct
+	select * from ungeocoded_projects_coundist
 ) as _2;
 
 
 select
 	*
 into
-	aggregated_ct_longform
+	aggregated_coundist_longform
 from
 (
 	with	min_distances as
 (
 	select
 		project_id,
-		min(ct_distance1) as min_distance
+		min(coundist_distance1) as min_distance
 	from
-		ungeocoded_projects_ct
+		ungeocoded_projects_coundist
 	group by 
 		project_id
 ),
 
-	all_projects_ct as
+	all_projects_coundist as
 (
 	select
 		a.*
 	from
-		ungeocoded_projects_ct a 
+		ungeocoded_projects_coundist a 
 	inner join
 		min_distances b
 	on
 		a.project_id = b.project_id and
-		a.ct_distance1=b.min_distance
+		a.coundist_distance1=b.min_distance
 )
 
 	select 
 		a.*, 
-		b.boro_ct201_1 as ct, 
-		b.proportion_in_ct_1 as proportion_in_ct,
-		round(a.counted_units * b.proportion_in_ct_1) as counted_units_in_ct 
+		b.coundist_1 as coundist, 
+		b.proportion_in_coundist_1 as proportion_in_coundist,
+		round(a.counted_units * b.proportion_in_coundist_1) as counted_units_in_coundist 
 	from 
-		known_projects_db_20190917_v6 a 
+		known_projects_db_20190917_v6_cp_assumptions a 
 	left join 
-		all_projects_ct b 
+		all_projects_coundist b 
 	on 
 		a.source = b.source and 
 		a.project_id = b.project_id 
@@ -251,14 +224,14 @@ from
 		project_id asc,
 		project_name_address asc,
 		status asc,
-		b.boro_ct201_1 asc
+		b.coundist_1 asc
 ) as _3
 ;
 
 select
 	*
 into
-	aggregated_ct_project_level
+	aggregated_coundist_project_level
 from
 (
 	SELECT
@@ -305,13 +278,13 @@ from
 					concat_ws
 					(
 						': ',
-						nullif(ct,''),
-						concat(round(100*proportion_in_ct,0),'%')
+						coundist,
+						concat(round(100*proportion_in_coundist,0),'%')
 					),
 				'')),
-		' | ') 	as Census_Tract 
+		' | ') 	as Community_District 
 	from
-		aggregated_ct_longform
+		aggregated_coundist_longform
 	group by
 		the_geom,
 		the_geom_webmercator,
@@ -354,20 +327,19 @@ from
 ;
 
 
-drop table if exists longform_ct_output;
+drop table if exists longform_coundist_output;
 SELECT
 	*
 into
-	longform_ct_output
+	longform_coundist_output
 from
 (
 	SELECT 
 		*  
 	FROM 
-		capitalplanning.aggregated_ct_longform 
+		capitalplanning.aggregated_coundist_longform 
 	where 
 		not (source = 'DOB' and status in('Complete','Complete (demolition)')) and
 		source not in('Future Neighborhood Studies','Neighborhood Study Projected Development Sites')
 ) x;
 
-select cdb_cartodbfytable('capitalplanning','longform_ct_output');

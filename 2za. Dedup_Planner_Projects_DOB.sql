@@ -93,12 +93,15 @@ from
 	left join
 		capitalplanning.dob_2018_sca_inputs_ms b
 	on 
+	(	
 		st_intersects(a.the_geom,b.the_geom)									 									and
 		b.job_type <> 'Demolition'																					and
 		case when b.job_type = 'Alteration' then a.total_units = b.units_net else b.job_number is not null end    	and not
 		(b.status in('Complete','Permit issued') and a.map_id <> 85339) /*Excepting complete matches for Greenpoint Landing, given
 																			that the planner-added project units encompass previous
 																			and future developments*/ 
+	) or
+	(a.map_id = 85133 and b.job_number = 121189784)
 	order by
 		a.map_id asc 													 
 ) planner_projects_dob_1;
