@@ -75,7 +75,7 @@ from
 					when a.EDC_Project_ID 	in(3,4) 	then 'Bronx'
 					when a.EDC_Project_ID 	= 2 		then 'Manhattan'
 					when a.EDC_Project_ID 	in(5,6,7) 	then 'Staten Island'
-					when a.EDC_Project_ID   >7 			then 'Staten Island'  end as borough,
+					when a.EDC_Project_ID   >7 			then 'Brooklyn'  end as borough,
 
 			a.build_year,
 			'Projected'															 as status,
