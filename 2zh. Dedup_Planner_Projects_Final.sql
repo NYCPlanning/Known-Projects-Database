@@ -84,14 +84,17 @@ from(
 			) as planner_projects_incremental_units,
 			case
 					when a.map_id = 85339																						then 0 /*Adding in planner-added phasing for Greenpoint Landing*/
+					when a.map_id = 85133																						then 0 /*Adding in improved phasing for East River Realty Co*/
 					when coalesce(a.portion_built_2025,0)+coalesce(a.portion_built_2035,0)+coalesce(a.portion_built_2055,0) > 0 then coalesce(a.portion_built_2025,0)
 					else 0 end as portion_built_2025,
 			case
 					when a.map_id = 85339																						then 1 /*Adding in planner-added phasing for Greenpoint Landing*/
+					when a.map_id = 85133																						then .5 /*Adding in improved phasing for East River Realty Co*/
 					when coalesce(a.portion_built_2025,0)+coalesce(a.portion_built_2035,0)+coalesce(a.portion_built_2055,0) > 0 then coalesce(a.portion_built_2035,0)
 					else 0 end as portion_built_2035,
 			case
 					when a.map_id = 85339																						then 0 /*Adding in planner-added phasing for Greenpoint Landing*/
+					when a.map_id = 85133																						then .5 /*Adding in improved phasing for East River Realty Co*/
 					when coalesce(a.portion_built_2025,0)+coalesce(a.portion_built_2035,0)+coalesce(a.portion_built_2055,0) > 0 then coalesce(a.portion_built_2055,0)
 					else 1 end as portion_built_2055,
 			a.planner_input,

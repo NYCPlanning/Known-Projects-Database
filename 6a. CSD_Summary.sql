@@ -4,13 +4,13 @@ SCRIPT: Summarizing 2025, 2035, and 2055 growth by CSD
 START DATE: 6/11/2019
 *************************************************************************************************************************************************************************************/
 
-drop table if exists CSD_Growth_Summary_Known_Projects_20190611;
+drop table if exists CSD_Growth_Summary_Known_Projects_20191008;
 
 select
 	row_number() over() as cartodb_id,
 	*
 into
-	CSD_Growth_Summary_Known_Projects_20190611
+	CSD_Growth_Summary_Known_Projects_20191008
 from
 (
 	select
@@ -20,6 +20,8 @@ from
 		sum(a.portion_built_2025*a.counted_units_in_csd) as Units_2025,
 		sum(a.portion_built_2035*a.counted_units_in_csd) as Units_2025_2035,
 		sum(a.portion_built_2055*a.counted_units_in_csd) as Units_2035_2055,
+		sum(a.portion_built_2025*a.counted_units_in_csd) + sum(a.portion_built_2035*a.counted_units_in_csd) as total_growth_2035,
+		sum(a.portion_built_2025*a.counted_units_in_csd) + sum(a.portion_built_2035*a.counted_units_in_csd) + sum(a.portion_built_2055*a.counted_units_in_csd) as totla_growth_2055,
 		array_to_string
 		(
 			array_agg
@@ -230,9 +232,9 @@ from
 		a.csd
 	order by 
 		a.csd asc 
-) CSD_Growth_Summary_Known_Projects_20190611
+) CSD_Growth_Summary_Known_Projects_20191008
 order by
 	csd asc;
 
 
-select cdb_cartodbfytable('capitalplanning','CSD_Growth_Summary_Known_Projects_20190611') 
+select cdb_cartodbfytable('capitalplanning','CSD_Growth_Summary_Known_Projects_20191008') 
