@@ -33,22 +33,27 @@ from
 	case
 		/*Treating large developments as polygons*/
 		when (st_area(a.the_geom::geography)>10000 or total_units > 500) and a.source in('EDC Projected Projects','DCP Applications','DCP Planner-Added PROJECTs')	then
+		/*Only distribute units to a geography if at least 10% of the project is within that boundary*/
 			st_INTERSECTs(a.the_geom,b.the_geom) and CAST(ST_Area(ST_INTERSECTion(a.the_geom,b.the_geom))/ST_Area(a.the_geom) AS DECIMAL) >= .1
 
 		/*Treating subdivisions in SI across many lots as polygons*/
 		when a.PROJECT_id in(SELECT PROJECT_id from zap_PROJECTs_many_bbls) and a.PROJECT_name_address like '%SD %'												then
+		/*Only distribute units to a geography if at least 10% of the project is within that boundary*/
 			st_INTERSECTs(a.the_geom,b.the_geom) and CAST(ST_Area(ST_INTERSECTion(a.the_geom,b.the_geom))/ST_Area(a.the_geom) AS DECIMAL) >= .1
 
 		/*Treating Resilient Housing Sandy Recovery PROJECTs, across many DISTINCT lots as polygons. These are three PROJECTs*/ 
 		when a.PROJECT_name_address like '%Resilient Housing%' and a.source in('DCP Applications','DCP Planner-Added PROJECTs')									then
+		/*Only distribute units to a geography if at least 10% of the project is within that boundary*/
 			st_INTERSECTs(a.the_geom,b.the_geom) and CAST(ST_Area(ST_INTERSECTion(a.the_geom,b.the_geom))/ST_Area(a.the_geom) AS DECIMAL) >= .1
 
 		/*Treating NCP and NIHOP projects, which are usually noncontiguous clusters, as polygons*/ 
 		when (a.PROJECT_name_address like '%NIHOP%' or a.PROJECT_name_address like '%NCP%' )and a.source in('DCP Applications','DCP Planner-Added PROJECTs')	then
+		/*Only distribute units to a geography if at least 10% of the project is within that boundary*/
 			st_INTERSECTs(a.the_geom,b.the_geom) and CAST(ST_Area(ST_INTERSECTion(a.the_geom,b.the_geom))/ST_Area(a.the_geom) AS DECIMAL) >= .1
 
 		/*Treating neighborhood study projected sites, and future neighborhood studies as polygons*/
 		when a.source in('Future Neighborhood Studies','Neighborhood Study Projected Development Sites') 														then
+		/*Only distribute units to a geography if at least 10% of the project is within that boundary*/
 			st_INTERSECTs(a.the_geom,b.the_geom) and CAST(ST_Area(ST_INTERSECTion(a.the_geom,b.the_geom))/ST_Area(a.the_geom) AS DECIMAL) >= .1
 
 
