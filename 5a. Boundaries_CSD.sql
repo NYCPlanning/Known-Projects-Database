@@ -32,7 +32,7 @@ from
 	on 
 	case
 		/*Treating large developments as polygons*/
-		when (st_area(a.the_geom::geography)>10000 or total_units > 500) and a.source in('EDC Projected Projects','DCP Applications','DCP Planner-Added PROJECTs')	then
+		when (st_area(a.the_geom::geography)>10000 or total_units > 500) and a.source in('EDC Projected Projects','DCP Applications','DCP Planner-Added Projects')	then
 		/*Only distribute units to a geography if at least 10% of the project is within that boundary*/
 			st_INTERSECTs(a.the_geom,b.the_geom) and CAST(ST_Area(ST_INTERSECTion(a.the_geom,b.the_geom))/ST_Area(a.the_geom) AS DECIMAL) >= .1
 
@@ -69,6 +69,7 @@ from
 		                           																	apportioned to its other boundaries only*/
 ),
 
+	/*Identify projects geocoded to multiple CSDs*/
 	multi_geocoded_PROJECTs as
 (
 	SELECT
@@ -83,6 +84,7 @@ from
 		count(*)>1
 ),
 
+	/*Calculate the proportion of each project in each CSD that it overlaps with*/
 	aggregated_boundaries_CSD_2 as
 (
 	SELECT
@@ -94,6 +96,11 @@ from
 		aggregated_boundaries_CSD a
 ),
 
+	/*
+	  If <10% of a project falls into a particular CSD, then the sum of all proportions of a project in each CSD would be <100%, because
+	  projects with less than 10% in a CSD are not assigned to that CSD. The next two steps ensure that 100% of each project's units are
+	  allocated to a CSD.
+	*/
 	aggregated_boundaries_CSD_3 as
 (
 	SELECT
@@ -127,6 +134,8 @@ from
 
 ) as _1;
 
+
+/*Identify projects which did not geocode to any CSD*/
 SELECT
 	*
 into
@@ -165,7 +174,7 @@ from
 	SELECT * from ungeocoded_PROJECTs_CSD
 ) as _2;
 
-
+/*Assign ungeocoded projects to their closest CSD*/
 SELECT
 	*
 into
@@ -218,7 +227,7 @@ from
 	order by
 		csd asc;
 
-
+/*Aggregate all results to the project-level, because if a project matches with multiple CSDs, it'll appear in multiple rows*/
 SELECT
 	*
 into
@@ -317,7 +326,10 @@ from
 ) x
 ;
 
-
+/*
+	Output final CSD-based KPDB. This is not at the project-level, but rather the project & CSD-level. It also omits Complete DOB jobs,
+  	as these jobs should not be included in the forward-looking KPDB pipeline.
+*/
 drop table if exists longform_csd_output;
 SELECT
 	*
