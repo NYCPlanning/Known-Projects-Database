@@ -59,7 +59,7 @@ select cdb_cartodbfytable('capitalplanning', 'added_development_sites_20190510_M
 
 
 /*Compile planner inputs*/
-
+drop table if exists planner_inputs_consolidated_ms;
 select
 	*
 into
@@ -79,6 +79,7 @@ from
 		ks_assumed_units,
 		units_remaining_not_accounted_for_in_other_sources,
 		lead_planner,
+		request_for_update,
 		initcap(remaining_units_likely_to_be_built)
 										 	as remaining_units_likely_to_be_built_2018,
 		rationale							as rationale_2018,
@@ -121,6 +122,7 @@ from
 		ks_assumed_units,
 		units_remaining_not_accounted_for_in_other_sources,
 		lead_planner,
+		request_for_update,
 		initcap(remaining_units_likely_to_be_built)
 										 	as remaining_units_likely_to_be_built_2018,
 		rationale							as rationale_2018,
@@ -163,6 +165,7 @@ from
 		ks_assumed_units,
 		units_remaining_not_accounted_for_in_other_sources,
 		lead_planner,
+		request_for_update,
 		initcap(remaining_units_likely_to_be_built)
 										 	as remaining_units_likely_to_be_built_2018,
 		rationale							as rationale_2018,
@@ -206,6 +209,7 @@ from
 		null as ks_assumed_units,
 		units_remaining_not_accounted_for_in_other_sources,
 		lead_planner,
+		request_for_update,
 		initcap(remaining_units_likely_to_be_built)
 										 	as remaining_units_likely_to_be_built_2018,
 		rationale							as rationale_2018,
@@ -248,6 +252,7 @@ from
 		units_ks as ks_assumed_units,
 		units_remaining_not_accounted_for_in_other_sources,
 		lead_planner,
+		request_for_update,
 		initcap(remaining_units_likely_to_be_built)
 										 	as remaining_units_likely_to_be_built_2018,
 		rationale							as rationale_2018,
@@ -276,18 +281,18 @@ from
 		planner_added_project
 	from 
 		capitalplanning.table_20190516_queens_planner_inputs_housing_pipeline
-) as planner_inputs
+) as planner_inputs;
 
 
 
 /**********************RUN IN REGULAR CARTO**************************/
 
 
-select cdb_cartodbfytable('capitalplanning', 'planner_inputs_consolidated_ms')
+select cdb_cartodbfytable('capitalplanning', 'planner_inputs_consolidated_ms');
 
 
 /*Join the planner inputs to the mapped developments. Then do the intersect and delete those projects which are based on the flag*/
-
+drop table if exists mapped_planner_inputs_consolidated_inputs_ms;
 select
 	*
 into
@@ -310,6 +315,7 @@ from
 			b.ks_assumed_units,
 			b.units_remaining_not_accounted_for_in_other_sources,
 			b.lead_planner,
+			b.request_for_update,
 			c.remaining_likely_to_be_built as remaining_units_likely_to_be_built_2018,
 			b.rationale_2018,
 			b.rationale_2019,
@@ -387,13 +393,13 @@ from
 		upper(c.rationale) not like '%TOO EARLY STAGE%' /*Omitting outdated rationales which may have changed*/
 
 	/*Two projects (in addition to SI incorrect, quarantined projects) do not exist in planner inputs. 94519 and 94500. These are incorrect geocodes according to KS, and are accurately not included.*/
-) as mapped_planner_inputs_consolidated_inputs_ms
+) as mapped_planner_inputs_consolidated_inputs_ms;
 
 
 /**********************RUN IN REGULAR CARTO**************************/
 
 
-select cdb_cartodbfytable('capitalplanning', 'mapped_planner_inputs_consolidated_inputs_ms')
+select cdb_cartodbfytable('capitalplanning', 'mapped_planner_inputs_consolidated_inputs_ms');
 
 
 /*********************RUN IN CARTO BATCH*******************************/
