@@ -120,7 +120,7 @@ Build year assumptions on developments are made using the following hierarchy:
 3: HPD Projected Closings: By 2025 unless indicated otherwise by planner
 4. HPD RFPs: By 2025 unless indicated otherwise by planner or HPD
 5. EDC: Build year provided by EDC
-6. DCP Applications: See: https://docs.google.com/document/d/1Jj4PVD3yuQkLB-jzUTk9deIrDMr0NZCTl9E84At6wnM/edit?usp=sharing
+6. DCP Applications: See: https://nyco365.sharepoint.com/:w:/s/NYCPLANNING/cp/Ecv9D-Jo2_5Hl_myliKnekcBO3Gr3hmBOPVNfeqAH3oE5A?e=Yr1NcV
 7. ESD Projects: Borough planner inputs
 8: Neighborhood Study Affordable Housing Commitments: Individual reviews based on the project. A mix of borough planner inputs and 
 Capital Planning normalization.
